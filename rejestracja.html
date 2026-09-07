@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rejestracja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #101c17;
+    --paper: #f4efe1;
+    --paper-ink: #241f16;
+    --paper-line: #ddd2b3;
+    --gold: #c9a15a;
+    --pos: #4d7a5f;
+    --neg: #a44650;
+    --radius-m: 8px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at top, #142720 0%, var(--bg) 55%);
+    color: var(--paper-ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    padding: 48px 16px;
+  }
+  .card{
+    background: var(--paper);
+    border-radius: 14px;
+    max-width: 480px;
+    width: 100%;
+    padding: 36px 32px 32px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    height: fit-content;
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 28px;
+    margin: 0 0 6px;
+  }
+  .subtitle{
+    color: #7a6f4d;
+    font-size: 13.5px;
+    margin: 0 0 26px;
+  }
+  label{
+    display:block;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 16px 0 6px;
+  }
+  label .opt{ color:#9a8d63; font-weight:400; }
+  input[type="text"], input[type="email"], input[type="password"]{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--paper-line);
+    border-radius: 6px;
+    background: #fffdf7;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    color: var(--paper-ink);
+  }
+  input:focus{ outline: none; border-color: var(--gold); }
+  .hint{ font-size: 12px; color:#9a8d63; margin-top: 4px; }
+  .hint.error{ color: var(--neg); }
+  .hint.ok{ color: var(--pos); }
+  .checkbox-row{
+    display:flex; align-items:flex-start; gap: 8px;
+    margin-top: 12px; font-size: 13px;
+  }
+  .checkbox-row input{ margin-top: 3px; }
+  .consent-block{
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .25s ease;
+  }
+  .consent-block.open{ max-height: 200px; }
+  .pin-row{ display:flex; gap: 12px; }
+  .pin-row > div{ flex:1; }
+  .honeypot{ position:absolute; left:-9999px; top:-9999px; }
+  button{
+    width: 100%;
+    margin-top: 26px;
+    background: #1b2e26;
+    color: #f4efe1;
+    border: none;
+    border-radius: 6px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  button:disabled{ opacity: 0.6; cursor: default; }
+  .banner{
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    margin-top: 18px;
+    display:none;
+  }
+  .banner.show{ display:block; }
+  .banner.error{ background: rgba(164,70,80,0.12); color: var(--neg); border: 1px solid rgba(164,70,80,0.3); }
+  .banner.ok{ background: rgba(77,122,95,0.12); color: var(--pos); border: 1px solid rgba(77,122,95,0.3); }
+  .privacy-note{
+    font-size: 11.5px;
+    color: #9a8d63;
+    margin-top: 20px;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Rejestracja</h1>
+  <p class="subtitle">Załóż konto, żeby dołączyć do systemu.</p>
+
+  <form id="regForm">
+    <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off">
+
+    <label for="login">Login</label>
+    <input type="text" id="login" required autocomplete="off">
+    <div class="hint" id="loginHint"></div>
+
+    <label for="imie">Imię</label>
+    <input type="text" id="imie" required>
+
+    <label for="nazwisko">Nazwisko</label>
+    <input type="text" id="nazwisko" required>
+
+    <label for="email">E-mail</label>
+    <input type="email" id="email" required>
+
+    <label for="adres">Adres <span class="opt">(opcjonalnie)</span></label>
+    <input type="text" id="adres" placeholder="ulica, miasto, kod pocztowy">
+
+    <div class="consent-block" id="consentBlock">
+      <div class="checkbox-row">
+        <input type="checkbox" id="zgodaEmail">
+        <label for="zgodaEmail" style="margin:0;font-weight:400;">Zgadzam się na kontakt mailowy</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="zgodaPocztowy">
+        <label for="zgodaPocztowy" style="margin:0;font-weight:400;">Zgadzam się na kontakt pocztowy</label>
+      </div>
+    </div>
+
+    <label>PIN (6 cyfr)</label>
+    <div class="pin-row">
+      <div>
+        <input type="password" id="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" required>
+      </div>
+      <div>
+        <input type="password" id="pinRepeat" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="powtórz PIN" required>
+      </div>
+    </div>
+    <div class="hint" id="pinHint"></div>
+
+    <button type="submit" id="submitBtn">Zarejestruj się</button>
+    <div class="banner" id="banner"></div>
+
+    <p class="privacy-note">
+      Podane dane (imię, nazwisko, e-mail, opcjonalnie adres) są przetwarzane wyłącznie
+      w celu założenia i obsługi konta w systemie. Zgody na kontakt e-mailowy/pocztowy są
+      dobrowolne i możesz je wycofać w dowolnym momencie, kontaktując się z nami.
+    </p>
+  </form>
+</div>
+
+<script>
+// TODO: podmień na URL Web App wygenerowany po wdrożeniu Apps Script (kończy się na /exec)
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygwnBxwBD-TB9yjIbVAHy4YEPEmuOf4hotfSBEGJc_sUrgReTG-8kxgWKIKDtGuW-J/exec';
+// TODO: podmień na docelowy adres kontaktowy pokazywany, gdy login jest zajęty
+const CONTACT_EMAIL = 'kontakt@twojadomena.pl';
+
+const formLoadedAt = Date.now();
+const form = document.getElementById('regForm');
+const loginInput = document.getElementById('login');
+const loginHint = document.getElementById('loginHint');
+const adresInput = document.getElementById('adres');
+const consentBlock = document.getElementById('consentBlock');
+const pinInput = document.getElementById('pin');
+const pinRepeatInput = document.getElementById('pinRepeat');
+const pinHint = document.getElementById('pinHint');
+const banner = document.getElementById('banner');
+const submitBtn = document.getElementById('submitBtn');
+
+adresInput.addEventListener('input', () => {
+  consentBlock.classList.toggle('open', adresInput.value.trim() !== '');
+});
+
+let loginCheckTimer = null;
+loginInput.addEventListener('input', () => {
+  clearTimeout(loginCheckTimer);
+  const val = loginInput.value.trim();
+  loginHint.textContent = '';
+  loginHint.className = 'hint';
+  if (!val) return;
+  if (!/^[a-zA-Z0-9_.-]{3,32}$/.test(val)) {
+    loginHint.textContent = 'Login: 3–32 znaki, litery/cyfry/. _ -';
+    loginHint.className = 'hint error';
+    return;
+  }
+  loginCheckTimer = setTimeout(() => checkLoginAvailability(val), 400);
+});
+
+function checkLoginAvailability(login){
+  if (APPS_SCRIPT_URL.indexOf('WKLEJ_TU') !== -1) return; // backend jeszcze nie skonfigurowany
+  loginHint.textContent = 'sprawdzanie…';
+  loginHint.className = 'hint';
+  fetch(APPS_SCRIPT_URL + '?checkLogin=' + encodeURIComponent(login))
+    .then(r => r.json())
+    .then(data => {
+      if (data.taken) {
+        loginHint.innerHTML = `Taki login już istnieje. Jeśli to nie Ty — wybierz inną nazwę.
+          Jeśli to Ty — napisz do nas na <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>, potwierdzimy tożsamość.`;
+        loginHint.className = 'hint error';
+      } else {
+        loginHint.textContent = 'Login dostępny.';
+        loginHint.className = 'hint ok';
+      }
+    })
+    .catch(() => { loginHint.textContent = ''; });
+}
+
+function validatePins(){
+  const p1 = pinInput.value, p2 = pinRepeatInput.value;
+  if (!/^\d{6}$/.test(p1)) {
+    pinHint.textContent = 'PIN musi mieć dokładnie 6 cyfr.';
+    pinHint.className = 'hint error';
+    return false;
+  }
+  if (p1 !== p2) {
+    pinHint.textContent = 'PIN-y się nie zgadzają.';
+    pinHint.className = 'hint error';
+    return false;
+  }
+  pinHint.textContent = '';
+  return true;
+}
+pinInput.addEventListener('input', validatePins);
+pinRepeatInput.addEventListener('input', validatePins);
+
+function showBanner(text, type){
+  banner.textContent = text;
+  banner.className = 'banner show ' + type;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  banner.className = 'banner';
+
+  if (APPS_SCRIPT_URL.indexOf('WKLEJ_TU') !== -1) {
+    showBanner('Formularz nie jest jeszcze podłączony do backendu (uzupełnij APPS_SCRIPT_URL w kodzie).', 'error');
+    return;
+  }
+  if (!validatePins()) return;
+
+  const hasAddress = adresInput.value.trim() !== '';
+  const payload = {
+    website: document.querySelector('.honeypot').value, // pole-pułapka, zawsze puste dla ludzi
+    formLoadedAt: formLoadedAt,
+    login: loginInput.value.trim(),
+    imie: document.getElementById('imie').value.trim(),
+    nazwisko: document.getElementById('nazwisko').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    adres: adresInput.value.trim(),
+    zgodaEmail: hasAddress && document.getElementById('zgodaEmail').checked,
+    zgodaPocztowy: hasAddress && document.getElementById('zgodaPocztowy').checked,
+    pin: pinInput.value
+  };
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Wysyłanie…';
+
+  try {
+    // Content-Type: text/plain celowo — omija preflight CORS, którego
+    // Apps Script Web App nie obsługuje. Treść i tak jest parsowana jako JSON po stronie skryptu.
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      showBanner('Rejestracja zakończona pomyślnie. Możesz się teraz zalogować.', 'ok');
+      form.reset();
+      consentBlock.classList.remove('open');
+    } else if (data.error === 'login_taken') {
+      showBanner(`Taki użytkownik już istnieje. Jeśli to nie Ty, wybierz inną nazwę. Jeśli to Ty, napisz do nas na ${CONTACT_EMAIL}, żebyśmy mogli potwierdzić tożsamość.`, 'error');
+    } else if (data.message) {
+      showBanner(data.message, 'error');
+    } else {
+      showBanner('Coś poszło nie tak. Spróbuj ponownie za chwilę.', 'error', data);
+    }
+  } catch (err) {
+    console.error(err);
+    showBanner('Nie udało się połączyć z serwerem. Sprawdź połączenie i spróbuj ponownie.', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Zarejestruj się';
+  }
+});
+</script>
+</body>
+</html>

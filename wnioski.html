@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wnioski</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #101c17; --bg-alt: #16241e; --line: #2a3a33;
+    --ink: #eae6d9; --ink-muted: #91a49a;
+    --gold: #c9a15a; --pos: #7fb08f; --pos-bg: rgba(127,176,143,0.12);
+    --neg: #c1666b; --neg-bg: rgba(193,102,107,0.14);
+    --paper: #f4efe1; --paper-ink: #241f16; --paper-line: #ddd2b3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background: radial-gradient(ellipse at top, #142720 0%, var(--bg) 55%);
+    color: var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width: 760px; margin:0 auto; padding: 56px 24px 120px; }
+  header{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px;
+    border-bottom:1px solid var(--line); padding-bottom:24px; margin-bottom:28px; flex-wrap:wrap; }
+  h1{ font-family:'Fraunces',serif; font-weight:500; font-size:36px; margin:0 0 6px; }
+  header p{ margin:0; color:var(--ink-muted); font-size:14px; }
+  .btn-primary{
+    background: var(--gold); color:#1c1710; border:none; border-radius:6px;
+    padding:12px 20px; font-size:14.5px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .sync{ color:var(--ink-muted); font-size:12px; font-family:'IBM Plex Mono',monospace; margin-bottom:18px; }
+
+  .section-title{ font-family:'IBM Plex Mono',monospace; font-size:12px; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--ink-muted); margin: 30px 0 14px; }
+
+  .card{
+    background: var(--bg-alt); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; margin-bottom:14px; cursor:pointer; transition: border-color .15s ease;
+  }
+  .card:hover{ border-color: var(--gold); }
+  .card.archived{ opacity: 0.55; }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .card-meta{ font-size:12.5px; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; margin-bottom:6px; }
+  .card-title{ font-family:'Fraunces',serif; font-weight:600; font-size:17px; margin:0 0 4px; }
+  .card-excerpt{ font-size:13.5px; color: #c9c3b0; margin:0; line-height:1.5; }
+  .badge{ font-size:11px; padding:3px 10px; border-radius:20px; white-space:nowrap; font-family:'IBM Plex Mono',monospace; }
+  .badge.active{ background: rgba(201,161,90,0.15); color: var(--gold); }
+  .badge.accepted{ background: var(--pos-bg); color: var(--pos); }
+  .badge.rejected{ background: var(--neg-bg); color: var(--neg); }
+
+  .vote-bar{ height:8px; border-radius:4px; overflow:hidden; display:flex; margin-top:14px; background:var(--line); }
+  .vote-bar .za{ background: var(--pos); }
+  .vote-bar .przeciw{ background: var(--neg); }
+  .vote-stats{ display:flex; justify-content:space-between; margin-top:6px; font-size:12px; font-family:'IBM Plex Mono',monospace; color:var(--ink-muted); }
+  .vote-stats .za-label{ color: var(--pos); }
+  .vote-stats .przeciw-label{ color: var(--neg); }
+  .turnout{ margin-top:4px; font-size:11.5px; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; }
+
+  .empty{ color:var(--ink-muted); padding:30px 0; text-align:center; font-size:14px; }
+
+  .scrim{ position:fixed; inset:0; background:rgba(6,10,8,0.6); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:30; }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+  .modal{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.96);
+    background:var(--paper); color:var(--paper-ink); width:min(480px,92vw);
+    max-height: 86vh; overflow-y:auto;
+    border-radius:12px; padding:26px 26px 24px; z-index:31; opacity:0; pointer-events:none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .modal.open{ opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+  .modal h2{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; margin:0 0 4px; padding-right: 24px; }
+  .modal .block-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase;
+    letter-spacing:0.05em; color:#9a8d63; margin:16px 0 6px; }
+  .modal .block-text{ font-size:14px; line-height:1.6; white-space:pre-wrap; margin:0; }
+  .modal label{ display:block; font-size:13px; font-weight:500; margin:12px 0 5px; }
+  .modal input[type=text], .modal input[type=password], .modal textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--paper-line); border-radius:6px;
+    background:#fffdf7; font-family:'Inter',sans-serif; font-size:14px; color:var(--paper-ink);
+  }
+  .modal textarea{ min-height:90px; resize:vertical; font-family:'Inter',sans-serif; }
+  .modal input:focus, .modal textarea:focus{ outline:none; border-color:var(--gold); }
+  .vote-choice{ display:flex; gap:10px; margin:16px 0; }
+  .vote-choice button{
+    flex:1; padding:12px; border-radius:6px; border:1px solid var(--paper-line); background:#fffdf7;
+    font-family:'Inter',sans-serif; font-size:14px; cursor:pointer; font-weight:500;
+  }
+  .vote-choice button.za.selected{ background: var(--pos-bg); border-color: var(--pos); color:#2f5a41; }
+  .vote-choice button.przeciw.selected{ background: var(--neg-bg); border-color: var(--neg); color:#7a333b; }
+  .modal-actions{ display:flex; gap:10px; margin-top:20px; }
+  .modal-actions button.confirm{
+    flex:1; background:#1b2e26; color:#f4efe1; border:none; border-radius:6px; padding:12px;
+    font-size:14.5px; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .modal-actions button.cancel{
+    background:transparent; border:1px solid var(--paper-line); color:var(--paper-ink);
+    border-radius:6px; padding:12px 16px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .modal-banner{ font-size:13px; margin-top:12px; padding:10px 12px; border-radius:6px; display:none; }
+  .modal-banner.show{ display:block; }
+  .modal-banner.error{ background:rgba(164,70,80,0.12); color:#a44650; }
+  .modal-banner.ok{ background:rgba(77,122,95,0.12); color:#4d7a5f; }
+  .close-x{ position:absolute; top:16px; right:18px; background:none; border:none; font-size:18px; cursor:pointer; color:#7a6f4d; }
+
+  .votes-toggle{
+    background:transparent; border:1px solid var(--paper-line); color:#7a6f4d;
+    border-radius:6px; padding:8px 12px; font-size:12.5px; cursor:pointer; font-family:'IBM Plex Mono',monospace;
+  }
+  .votes-table{ margin-top:10px; border:1px solid var(--paper-line); border-radius:8px; overflow:hidden; }
+  .votes-row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:8px 12px; font-size:13px; border-bottom:1px solid var(--paper-line);
+    background: rgba(255,255,255,0.3);
+  }
+  .votes-row:last-child{ border-bottom:none; }
+  .votes-row .v-login{ flex:1; }
+  .votes-row .v-glos{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:2px 8px; border-radius:20px; }
+  .votes-row .v-glos.za{ background: var(--pos-bg); color:#2f5a41; }
+  .votes-row .v-glos.przeciw{ background: var(--neg-bg); color:#7a333b; }
+  .votes-row .v-waga{ font-family:'IBM Plex Mono',monospace; color:#7a6f4d; min-width:70px; text-align:right; }
+  .votes-row .v-procent{ font-family:'IBM Plex Mono',monospace; min-width:55px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Wnioski</h1>
+      <p>Przeglądaj, głosuj i składaj wnioski społeczności.</p>
+    </div>
+    <button class="btn-primary" id="newProposalBtn">Złóż wniosek</button>
+  </header>
+  <div class="sync" id="syncLabel">wczytywanie…</div>
+
+  <div id="proposalsContainer">
+    <div class="section-title">Aktywne</div>
+    <div id="activeList"></div>
+    <div class="section-title">Archiwalne</div>
+    <div id="archivedList"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="modal" id="detailModal">
+  <button class="close-x" data-close>✕</button>
+  <div class="card-meta" id="detailAuthor"></div>
+  <h2 id="detailTitle"></h2>
+  <div id="detailBadge"></div>
+  <div class="block-label">Treść</div>
+  <p class="block-text" id="detailText"></p>
+  <div class="block-label">Uzasadnienie</div>
+  <p class="block-text" id="detailJustification"></p>
+  <div class="vote-bar" id="detailBar"><div class="za"></div><div class="przeciw"></div></div>
+  <div class="vote-stats" id="detailStats"></div>
+  <div class="turnout" id="detailTurnout"></div>
+  <div id="votesListSection" style="margin-top:14px;"></div>
+  <div id="voteSection" style="margin-top:18px;"></div>
+</div>
+
+<div class="modal" id="voteModal">
+  <button class="close-x" data-close>✕</button>
+  <h2>Potwierdź głos</h2>
+  <div class="vote-choice">
+    <button type="button" class="za" data-choice="za">Za</button>
+    <button type="button" class="przeciw" data-choice="przeciw">Przeciw</button>
+  </div>
+  <label>Login</label>
+  <input type="text" id="voteLogin" autocomplete="off">
+  <label>PIN</label>
+  <input type="password" id="votePin" maxlength="6" inputmode="numeric">
+  <div class="modal-banner" id="voteBanner"></div>
+  <div class="modal-actions">
+    <button class="cancel" data-close>Anuluj</button>
+    <button class="confirm" id="voteSubmitBtn">Wyślij głos</button>
+  </div>
+</div>
+
+<div class="modal" id="proposalModal">
+  <button class="close-x" data-close>✕</button>
+  <h2>Nowy wniosek</h2>
+  <label>Tytuł</label>
+  <input type="text" id="proposalTytul" placeholder="Krótki, zwięzły tytuł">
+  <label>Treść wniosku</label>
+  <textarea id="proposalText" placeholder="Co dokładnie proponujesz?"></textarea>
+  <label>Uzasadnienie</label>
+  <textarea id="proposalJustification" placeholder="Dlaczego to warto zrobić?"></textarea>
+  <label>Login</label>
+  <input type="text" id="proposalLogin" autocomplete="off">
+  <label>PIN</label>
+  <input type="password" id="proposalPin" maxlength="6" inputmode="numeric">
+  <div class="modal-banner" id="proposalBanner"></div>
+  <div class="modal-actions">
+    <button class="cancel" data-close>Anuluj</button>
+    <button class="confirm" id="proposalSubmitBtn">Złóż wniosek</button>
+  </div>
+</div>
+
+<script>
+// TODO: podmień na URL Web App wygenerowany po wdrożeniu Apps Script
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygwnBxwBD-TB9yjIbVAHy4YEPEmuOf4hotfSBEGJc_sUrgReTG-8kxgWKIKDtGuW-J/exec';
+const REFRESH_MS = 5 * 60 * 1000;
+
+let proposals = [];
+let currentDetailId = null;
+let currentVoteChoice = null;
+
+function fmtDate(iso){
+  if(!iso) return '—';
+  return new Date(iso).toLocaleDateString('pl-PL');
+}
+
+function badgeHtml(status){
+  if (status === 'Aktywny') return '<span class="badge active">aktywny</span>';
+  if (status === 'Przyjęty') return '<span class="badge accepted">przyjęty</span>';
+  if (status === 'Odrzucony') return '<span class="badge rejected">odrzucony</span>';
+  return '';
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function cardHtml(p, archived){
+  const excerpt = p.tresc.length > 140 ? p.tresc.slice(0, 140) + '…' : p.tresc;
+  return `
+  <div class="card ${archived ? 'archived' : ''}" data-id="${p.id}">
+    <div class="card-top">
+      <div>
+        <div class="card-meta">${escapeHtml(p.autor)} · ${fmtDate(p.dataZlozenia)}</div>
+        <h3 class="card-title">${escapeHtml(p.tytul)}</h3>
+        <p class="card-excerpt">${escapeHtml(excerpt)}</p>
+      </div>
+      ${badgeHtml(p.status)}
+    </div>
+    <div class="vote-bar"><div class="za" style="width:${p.procentZa}%"></div><div class="przeciw" style="width:${p.procentPrzeciw}%"></div></div>
+    <div class="vote-stats">
+      <span class="za-label">za ${p.procentZa.toFixed(1)}%</span>
+      <span class="przeciw-label">przeciw ${p.procentPrzeciw.toFixed(1)}%</span>
+    </div>
+    <div class="turnout">frekwencja: ${p.procentFrekwencji.toFixed(1)}% całkowitego RCR</div>
+  </div>`;
+}
+
+async function loadProposals(){
+  document.getElementById('syncLabel').textContent = 'wczytywanie…';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=listProposals');
+    const data = await res.json();
+    proposals = data.proposals || [];
+    render();
+    document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
+  }catch(err){
+    console.error(err);
+    document.getElementById('syncLabel').textContent = 'błąd wczytywania danych';
+  }
+}
+
+function render(){
+  const active = proposals.filter(p => p.status === 'Aktywny')
+    .sort((a,b) => new Date(a.dataWygasniecia) - new Date(b.dataWygasniecia));
+  const archived = proposals.filter(p => p.status === 'Przyjęty' || p.status === 'Odrzucony')
+    .sort((a,b) => new Date(b.dataZlozenia) - new Date(a.dataZlozenia));
+
+  document.getElementById('activeList').innerHTML = active.length
+    ? active.map(p => cardHtml(p, false)).join('')
+    : '<div class="empty">Brak aktywnych wniosków.</div>';
+
+  document.getElementById('archivedList').innerHTML = archived.length
+    ? archived.map(p => cardHtml(p, true)).join('')
+    : '<div class="empty">Brak archiwalnych wniosków.</div>';
+}
+
+// Delegacja zdarzeń: jeden nasłuchiwacz na stałym kontenerze zamiast
+// podpinania go do każdej karty osobno przy każdym odświeżeniu listy —
+// odporne na to, kiedy dokładnie karty zostały utworzone/zastąpione.
+document.getElementById('proposalsContainer').addEventListener('click', (e) => {
+  const card = e.target.closest('.card');
+  if (card) openDetail(card.dataset.id);
+});
+
+function openDetail(id){
+  const p = proposals.find(x => String(x.id) === String(id));
+  if (!p) return;
+  currentDetailId = id;
+  document.getElementById('detailAuthor').textContent = p.autor + ' · ' + fmtDate(p.dataZlozenia);
+  document.getElementById('detailTitle').textContent = p.tytul;
+  document.getElementById('detailBadge').innerHTML = badgeHtml(p.status);
+  document.getElementById('detailText').textContent = p.tresc;
+  document.getElementById('detailJustification').textContent = p.uzasadnienie;
+  document.getElementById('detailBar').innerHTML =
+    `<div class="za" style="width:${p.procentZa}%"></div><div class="przeciw" style="width:${p.procentPrzeciw}%"></div>`;
+  document.getElementById('detailStats').innerHTML =
+    `<span class="za-label">za ${p.procentZa.toFixed(1)}%</span><span class="przeciw-label">przeciw ${p.procentPrzeciw.toFixed(1)}%</span>`;
+  document.getElementById('detailTurnout').textContent =
+    `frekwencja: ${p.procentFrekwencji.toFixed(1)}% całkowitego RCR` + (p.dataWygasniecia ? ` · koniec: ${fmtDate(p.dataWygasniecia)}` : '');
+
+  const votesListSection = document.getElementById('votesListSection');
+  const hasVotes = (p.glosowZa + p.glosowPrzeciw) > 0;
+  votesListSection.innerHTML = hasVotes
+    ? '<button class="votes-toggle" id="showVotesBtn">Zobacz listę głosów</button><div id="votesTable"></div>'
+    : '';
+  if (hasVotes) {
+    document.getElementById('showVotesBtn').addEventListener('click', () => loadVotesList(id));
+  }
+
+  const voteSection = document.getElementById('voteSection');
+  if (p.status === 'Aktywny') {
+    voteSection.innerHTML = '<button class="btn-primary" id="openVoteBtn" style="width:100%;">Zagłosuj</button>';
+    document.getElementById('openVoteBtn').addEventListener('click', () => openVoteModal(id));
+  } else {
+    voteSection.innerHTML = '';
+  }
+
+  openModal('detailModal');
+}
+
+async function loadVotesList(wniosekId){
+  const btn = document.getElementById('showVotesBtn');
+  const table = document.getElementById('votesTable');
+  btn.textContent = 'Wczytywanie…';
+  btn.disabled = true;
+  try{
+    const res = await fetch(APPS_SCRIPT_URL + '?action=listVotes&wniosekId=' + encodeURIComponent(wniosekId));
+    const data = await res.json();
+    const votes = data.votes || [];
+    if (votes.length === 0) {
+      table.innerHTML = '<div style="font-size:13px;color:#7a6f4d;padding:8px 0;">Brak potwierdzonych głosów.</div>';
+    } else {
+      table.innerHTML = '<div class="votes-table">' + votes.map(v => `
+        <div class="votes-row">
+          <span class="v-login">${escapeHtml(v.login)}</span>
+          <span class="v-glos ${v.glos}">${v.glos}</span>
+          <span class="v-waga">${Math.round(v.waga).toLocaleString('pl-PL')} RCR</span>
+          <span class="v-procent">${v.procent.toFixed(1)}%</span>
+        </div>`).join('') + '</div>';
+    }
+    btn.remove();
+  }catch(err){
+    console.error(err);
+    table.innerHTML = '<div style="font-size:13px;color:#a44650;padding:8px 0;">Nie udało się wczytać listy głosów.</div>';
+    btn.textContent = 'Zobacz listę głosów';
+    btn.disabled = false;
+  }
+}
+
+function openVoteModal(id){
+  currentDetailId = id;
+  currentVoteChoice = null;
+  document.querySelectorAll('.vote-choice button').forEach(b => b.classList.remove('selected'));
+  document.getElementById('voteLogin').value = '';
+  document.getElementById('votePin').value = '';
+  document.getElementById('voteBanner').className = 'modal-banner';
+  openModal('voteModal');
+}
+
+document.querySelectorAll('.vote-choice button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentVoteChoice = btn.dataset.choice;
+    document.querySelectorAll('.vote-choice button').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+document.getElementById('voteSubmitBtn').addEventListener('click', async () => {
+  const banner = document.getElementById('voteBanner');
+  banner.className = 'modal-banner';
+  if (!currentVoteChoice) { banner.textContent = 'Wybierz "za" albo "przeciw".'; banner.className = 'modal-banner show error'; return; }
+  const login = document.getElementById('voteLogin').value.trim();
+  const pin = document.getElementById('votePin').value.trim();
+  if (!login || !/^\d{6}$/.test(pin)) { banner.textContent = 'Podaj login i 6-cyfrowy PIN.'; banner.className = 'modal-banner show error'; return; }
+
+  const btn = document.getElementById('voteSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Wysyłanie…';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'castVote', login, pin, wniosekId: currentDetailId, glos: currentVoteChoice })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      banner.textContent = 'Głos zapisany — sprawdź maila, żeby go potwierdzić.';
+      banner.className = 'modal-banner show ok';
+    } else {
+      banner.textContent = data.message || 'Nie udało się oddać głosu.';
+      banner.className = 'modal-banner show error';
+    }
+  }catch(err){
+    banner.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+    banner.className = 'modal-banner show error';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Wyślij głos';
+  }
+});
+
+document.getElementById('newProposalBtn').addEventListener('click', () => {
+  document.getElementById('proposalTytul').value = '';
+  document.getElementById('proposalText').value = '';
+  document.getElementById('proposalJustification').value = '';
+  document.getElementById('proposalLogin').value = '';
+  document.getElementById('proposalPin').value = '';
+  document.getElementById('proposalBanner').className = 'modal-banner';
+  openModal('proposalModal');
+});
+
+document.getElementById('proposalSubmitBtn').addEventListener('click', async () => {
+  const banner = document.getElementById('proposalBanner');
+  banner.className = 'modal-banner';
+  const tytul = document.getElementById('proposalTytul').value.trim();
+  const tresc = document.getElementById('proposalText').value.trim();
+  const uzasadnienie = document.getElementById('proposalJustification').value.trim();
+  const login = document.getElementById('proposalLogin').value.trim();
+  const pin = document.getElementById('proposalPin').value.trim();
+
+  if (tytul.length < 5) { banner.textContent = 'Tytuł jest za krótki.'; banner.className='modal-banner show error'; return; }
+  if (tresc.length < 10) { banner.textContent = 'Treść wniosku jest za krótka.'; banner.className='modal-banner show error'; return; }
+  if (uzasadnienie.length < 10) { banner.textContent = 'Uzasadnienie jest za krótkie.'; banner.className='modal-banner show error'; return; }
+  if (!login || !/^\d{6}$/.test(pin)) { banner.textContent = 'Podaj login i 6-cyfrowy PIN.'; banner.className='modal-banner show error'; return; }
+
+  const btn = document.getElementById('proposalSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Wysyłanie…';
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'submitProposal', login, pin, tytul, tresc, uzasadnienie })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      banner.textContent = 'Wniosek zapisany — sprawdź maila, żeby go aktywować.';
+      banner.className = 'modal-banner show ok';
+    } else {
+      banner.textContent = data.message || 'Nie udało się złożyć wniosku.';
+      banner.className = 'modal-banner show error';
+    }
+  }catch(err){
+    banner.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+    banner.className = 'modal-banner show error';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Złóż wniosek';
+  }
+});
+
+function openModal(id){
+  document.getElementById('scrim').classList.add('open');
+  document.getElementById(id).classList.add('open');
+}
+function closeModals(){
+  document.getElementById('scrim').classList.remove('open');
+  document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+}
+document.getElementById('scrim').addEventListener('click', closeModals);
+document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModals));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+
+loadProposals();
+setInterval(loadProposals, REFRESH_MS);
+</script>
+</body>
+</html>
