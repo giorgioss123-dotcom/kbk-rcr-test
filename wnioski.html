@@ -252,7 +252,7 @@ async function loadProposals(){
     document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
   }catch(err){
     console.error(err);
-    document.getElementById('syncLabel').textContent = 'błąd wczytywania danych';
+    document.getElementById('syncLabel').textContent = 'Błąd: ' + err.message;
   }
 }
 
