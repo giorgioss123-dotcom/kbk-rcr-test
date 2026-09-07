@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RCR — bilans społeczności</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #101c17;
+    --bg-alt: #16241e;
+    --line: #2a3a33;
+    --ink: #eae6d9;
+    --ink-muted: #91a49a;
+    --gold: #c9a15a;
+    --gold-soft: rgba(201,161,90,0.15);
+    --pos: #7fb08f;
+    --pos-bg: rgba(127,176,143,0.12);
+    --neg: #c1666b;
+    --neg-bg: rgba(193,102,107,0.14);
+    --paper: #f4efe1;
+    --paper-ink: #241f16;
+    --paper-line: #ddd2b3;
+    --radius-s: 4px;
+    --radius-m: 8px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(ellipse at top, #142720 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 56px 24px 120px;
+  }
+  header{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .title-block h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 40px;
+    line-height: 1.05;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .title-block p{
+    margin:0;
+    color: var(--ink-muted);
+    font-size: 14.5px;
+    max-width: 40ch;
+  }
+  .stat{
+    text-align: right;
+  }
+  .stat .num{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 30px;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat .lbl{
+    color: var(--ink-muted);
+    font-size: 12.5px;
+    margin-top: 6px;
+  }
+  .toolbar{
+    display:flex;
+    gap: 12px;
+    align-items:center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .search{
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg-alt);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-s);
+    padding: 10px 14px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+  .search::placeholder{ color: var(--ink-muted); }
+  .search:focus{ outline: none; border-color: var(--gold); }
+  .sync{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    color: var(--ink-muted);
+    font-size: 12.5px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .sync button{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: var(--radius-s);
+    padding: 8px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .sync button:hover{ border-color: var(--gold); color: var(--gold); }
+  .sync .dot{
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--pos);
+    box-shadow: 0 0 0 3px var(--pos-bg);
+  }
+  .list{ border-top: 1px solid var(--line); }
+  .row{
+    display:grid;
+    grid-template-columns: 34px 1fr 130px 90px;
+    align-items:center;
+    gap: 16px;
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--line);
+    cursor:pointer;
+    background: transparent;
+    transition: background .12s ease;
+  }
+  .row:hover{ background: var(--bg-alt); }
+  .row:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .rank{
+    font-family: 'Fraunces', serif;
+    color: var(--ink-muted);
+    font-size: 16px;
+  }
+  .row:nth-child(1) .rank, .rank.top{ color: var(--gold); }
+  .who .login{
+    font-size: 15.5px;
+    font-weight: 500;
+  }
+  .who .bar-track{
+    margin-top: 7px;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .who .bar-fill{
+    height: 100%;
+    background: linear-gradient(90deg, #6f8f7f, var(--gold));
+    border-radius: 2px;
+  }
+  .rcr{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14.5px;
+    text-align: right;
+  }
+  .pct{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-align: right;
+  }
+  .empty, .error{
+    padding: 40px 8px;
+    color: var(--ink-muted);
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .error{ color: var(--neg); }
+  .error button{
+    display:inline-block;
+    margin-top: 12px;
+    background: transparent;
+    border: 1px solid var(--neg);
+    color: var(--neg);
+    border-radius: var(--radius-s);
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .skeleton .row{ cursor:default; }
+  .skel-bar{
+    height: 12px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--bg-alt) 25%, #1d2f27 50%, var(--bg-alt) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+
+  /* drawer */
+  .scrim{
+    position: fixed; inset: 0;
+    background: rgba(6,10,8,0.55);
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 20;
+  }
+  .scrim.open{ opacity: 1; pointer-events: auto; }
+  .drawer{
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(1220px, 96vw);
+    background: var(--paper);
+    color: var(--paper-ink);
+    transform: translateX(100%);
+    transition: transform .28s cubic-bezier(.2,.8,.2,1);
+    z-index: 21;
+    display:flex;
+    flex-direction:column;
+    box-shadow: -20px 0 40px rgba(0,0,0,0.35);
+  }
+  .drawer.open{ transform: translateX(0); }
+  .drawer-head{
+    padding: 26px 28px 18px;
+    border-bottom: 1px solid var(--paper-line);
+  }
+  .drawer-head .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #7a6f4d;
+  }
+  .drawer-head h2{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 28px;
+    margin: 4px 0 12px;
+  }
+  .drawer-head .summary{
+    display:flex; gap: 22px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  .drawer-head .summary div span{ display:block; color:#7a6f4d; font-size:11px; margin-bottom:3px; }
+  .drawer-close{
+    position:absolute; top: 22px; right: 22px;
+    background: transparent; border: none;
+    font-size: 20px; color: #7a6f4d; cursor: pointer;
+    line-height: 1;
+  }
+  .tx-list{ overflow-y: auto; padding: 6px 28px 28px; flex:1; }
+  .drawer-body{
+    display:flex;
+    flex: 1;
+    min-height: 0;
+  }
+  .drawer-col-left{
+    flex: 1.15;
+    min-width: 0;
+    padding: 22px 26px 28px;
+    overflow-y: auto;
+    border-right: 1px solid var(--paper-line);
+  }
+  .drawer-col-right{
+    flex: 1;
+    min-width: 0;
+    padding: 22px 26px 28px;
+    overflow-y: auto;
+  }
+  @media (max-width: 760px){
+    .drawer-body{ flex-direction: column; overflow-y: auto; }
+    .drawer-col-left{ border-right: none; border-bottom: 1px solid var(--paper-line); overflow-y: visible; }
+    .drawer-col-right{ overflow-y: visible; }
+  }
+  .tx{
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--paper-line);
+  }
+  .tx:last-child{ border-bottom: none; }
+  .tx-top{
+    display:flex; justify-content: space-between; align-items:baseline; gap: 10px;
+  }
+  .tx-title{ font-size: 15px; font-weight: 500; }
+  .tx-amount{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14.5px;
+    white-space: nowrap;
+  }
+  .tx-amount.pos{ color: #4d7a5f; }
+  .tx-amount.neg{ color: #a44650; }
+  .tx-meta{
+    display:flex; gap: 10px; align-items:center;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: #7a6f4d;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .pill{
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    border: 1px solid var(--paper-line);
+    text-transform: lowercase;
+  }
+  .pill.pending{ color: #8a6a1f; border-color: #d8c48a; background: rgba(216,196,138,0.25); }
+  .pill.done{ color: #3f7a52; border-color: #a9d1b6; background: rgba(169,209,182,0.25); }
+  .tx-empty{ color:#7a6f4d; font-size:14px; padding: 24px 0; }
+  .section-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #7a6f4d;
+    margin: 22px 0 10px;
+  }
+  .section-label:first-child{ margin-top: 4px; }
+  .chart-title{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 24px;
+    margin: 0 0 4px;
+  }
+  .chart-subtitle{
+    font-size: 13px;
+    color: #8a6a3f;
+    margin: 0 0 14px;
+  }
+  .chart-wrap{
+    background: rgba(255,255,255,0.35);
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius-m);
+    padding: 14px 14px 4px;
+  }
+  .chart-wrap svg{ display:block; width:100%; height:auto; overflow: visible; }
+  .chart-empty{
+    color:#7a6f4d; font-size:13px; padding: 18px 4px;
+    background: rgba(255,255,255,0.35);
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius-m);
+  }
+  .cat-list{
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius-m);
+    overflow: hidden;
+  }
+  .cat-row{
+    display:flex; justify-content: space-between; align-items:center;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--paper-line);
+    background: rgba(255,255,255,0.25);
+  }
+  .cat-row:last-child{ border-bottom: none; }
+  .cat-title{ text-transform: capitalize; }
+  .cat-sum{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+  }
+  .cat-sum.pos{ color: #4d7a5f; }
+  .cat-sum.neg{ color: #a44650; }
+
+  @media (max-width: 560px){
+    .row{ grid-template-columns: 26px 1fr 88px; }
+    .pct{ display:none; }
+    header{ align-items: flex-start; }
+    .stat{ text-align: left; }
+  }
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <h1>RCR — bilans społeczności</h1>
+      <p>Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.</p>
+    </div>
+    <div class="stat">
+      <div class="num" id="totalRcr">—</div>
+      <div class="lbl" id="totalUsers">wczytywanie…</div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" id="searchInput" type="text" placeholder="Szukaj po loginie…" autocomplete="off">
+    <div class="sync">
+      <span class="dot" id="syncDot"></span>
+      <span id="syncLabel">łączenie z arkuszem…</span>
+    </div>
+  </div>
+
+  <div class="list" id="listContainer">
+    <div class="skeleton" id="skeleton"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <button class="drawer-close" id="drawerClose" aria-label="Zamknij">✕</button>
+    <div class="eyebrow" id="drawerEyebrow">transakcje</div>
+    <h2 id="drawerLogin">—</h2>
+    <div class="summary">
+      <div><span>saldo RCR</span><strong id="drawerBalance">—</strong></div>
+      <div><span>siła głosu</span><strong id="drawerPower">—</strong></div>
+      <div><span>liczba transakcji</span><strong id="drawerCount">—</strong></div>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-col-left" id="chartCatArea"></div>
+    <div class="drawer-col-right">
+      <div class="section-label">Wszystkie transakcje</div>
+      <div id="txListArea"></div>
+    </div>
+  </div>
+</aside>
+
+<script>
+const SHEET_ID = '1dDVJd-BbCpnvbTDa0gacVRYeGzQ7zGHE5iM3NRhLMSw';
+const ARCHIVE_SHEET_ID = '1SnhoLAv_X2lqlsVuhzghr2_2bDbLBIQS3ERxRS66xJg';
+const ARCHIVE_SHEET_NAME = 'RCR';
+const REFRESH_MS = 5 * 60 * 1000; // 5 minut
+const JSONP_TIMEOUT_MS = 15000;
+
+let saldaRows = [];
+let rcrRows = [];
+let archiveRows = [];
+let archiveLoaded = false;
+let refreshTimer = null;
+
+function parseNum(v){
+  if (v === undefined || v === null) return 0;
+  const cleaned = String(v).replace('%','').replace(/\s/g,'').replace(',', '.');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
+// Google's gviz endpoint doesn't send CORS headers, so plain fetch() is blocked
+// by the browser. The JSONP variant (out:json + responseHandler) loads the data
+// via a <script> tag instead, which sidesteps CORS entirely.
+function loadSheetJSONP(sheetId, sheetName){
+  return new Promise((resolve, reject) => {
+    const cbName = 'gvizCb_' + sheetName.replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
+    const script = document.createElement('script');
+    let settled = false;
+
+    const cleanup = () => {
+      try { delete window[cbName]; } catch(e){ window[cbName] = undefined; }
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error(`Przekroczono czas oczekiwania na arkusz "${sheetName}"`));
+    }, JSONP_TIMEOUT_MS);
+
+    window[cbName] = function(json){
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      if (!json || !json.table) {
+        reject(new Error(`Nieprawidłowa odpowiedź dla arkusza "${sheetName}"`));
+        return;
+      }
+      resolve(json.table);
+    };
+
+    script.onerror = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error(`Nie udało się załadować arkusza "${sheetName}" — sprawdź, czy nazwa zakładki jest poprawna i arkusz jest publiczny`));
+    };
+
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
+// Convert a gviz table into an array of {label: cell} objects, keyed by
+// column header rather than position, so column order in the sheet doesn't matter.
+function tableToObjects(table){
+  const labels = (table.cols || []).map(c => (c.label || '').trim());
+  return (table.rows || []).map(row => {
+    const obj = {};
+    (row.c || []).forEach((cell, i) => { obj[labels[i]] = cell; });
+    return obj;
+  });
+}
+
+function strFromCell(cell){
+  if (!cell) return '';
+  if (cell.f !== undefined && cell.f !== null) return String(cell.f);
+  if (cell.v !== undefined && cell.v !== null) return String(cell.v);
+  return '';
+}
+function numFromCell(cell){
+  if (!cell) return 0;
+  if (typeof cell.v === 'number') return cell.v;
+  if (typeof cell.v === 'string') return parseNum(cell.v);
+  if (typeof cell.f === 'string') return parseNum(cell.f);
+  return 0;
+}
+function pctFromCell(cell){
+  if (!cell) return 0;
+  if (typeof cell.f === 'string' && cell.f.includes('%')) return parseNum(cell.f);
+  if (typeof cell.v === 'number') return cell.v <= 1 ? cell.v * 100 : cell.v;
+  return 0;
+}
+
+// Parses dates like "12/1/2021" (M/D/Y, as exported by Google Sheets) into a
+// timestamp for sorting. Falls back to Date.parse for anything unexpected.
+function parseDateSort(str){
+  if (!str) return 0;
+  const parts = String(str).split('/');
+  if (parts.length === 3) {
+    const m = parseInt(parts[0], 10), d = parseInt(parts[1], 10), y = parseInt(parts[2], 10);
+    if (!isNaN(m) && !isNaN(d) && !isNaN(y)) return new Date(y, m - 1, d).getTime();
+  }
+  const t = Date.parse(str);
+  return isNaN(t) ? 0 : t;
+}
+
+// Archive is static — loaded once on first load, never re-fetched on the
+// 5-minute interval, since it doesn't change.
+async function loadArchiveOnce(){
+  try{
+    const table = await loadSheetJSONP(ARCHIVE_SHEET_ID, ARCHIVE_SHEET_NAME);
+    const objs = tableToObjects(table);
+    archiveRows = objs
+      .map(o => ({
+        login: strFromCell(o['Login']).trim(),
+        rcr: numFromCell(o['RCR']),
+        tytul: strFromCell(o['Tytuł']) || strFromCell(o['Opis']) || '(bez tytułu)',
+        data: strFromCell(o['Data']),
+        source: 'archiwum'
+      }))
+      .filter(r => r.login !== '');
+  }catch(err){
+    console.error('Nie udało się wczytać archiwum:', err);
+    archiveRows = [];
+  }
+  archiveLoaded = true;
+}
+
+async function loadAll(isManual){
+  setSyncState('loading', isManual ? 'odświeżanie…' : 'wczytywanie…');
+  try{
+    const [saldaTable, rcrTable] = await Promise.all([
+      loadSheetJSONP(SHEET_ID, 'SALDA'),
+      loadSheetJSONP(SHEET_ID, 'RCR')
+    ]);
+    const saldaObjs = tableToObjects(saldaTable);
+    const rcrObjs = tableToObjects(rcrTable);
+
+    saldaRows = saldaObjs
+      .map(o => ({
+        login: strFromCell(o['Login']).trim(),
+        rcr: numFromCell(o['RCR']),
+        rcrt: numFromCell(o['RCRT']),
+        pct: pctFromCell(o['PROCENT RCR'])
+      }))
+      .filter(r => r.login !== '')
+      .sort((a,b) => b.rcr - a.rcr);
+
+    rcrRows = rcrObjs
+      .map(o => ({
+        login: strFromCell(o['Login']).trim(),
+        rcr: numFromCell(o['RCR']),
+        tytul: strFromCell(o['Tytuł']) || '(bez tytułu)',
+        operacja: strFromCell(o['Operacja']),
+        data: strFromCell(o['Data']),
+        source: 'bieżące'
+      }))
+      .filter(r => r.login !== '');
+
+    if (saldaRows.length === 0) {
+      throw new Error('Arkusz SALDA nie zwrócił żadnych wierszy — sprawdź nazwę zakładki i nagłówki kolumn');
+    }
+    renderList();
+    setSyncState('ok', 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL'));
+  }catch(err){
+    console.error(err);
+    setSyncState('error', 'błąd połączenia');
+    renderError(err && err.message ? err.message : null);
+  }
+}
+
+function setSyncState(state, label){
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  lbl.textContent = label;
+  if(state === 'ok'){
+    dot.style.background = 'var(--pos)';
+    dot.style.boxShadow = '0 0 0 3px var(--pos-bg)';
+  } else if(state === 'error'){
+    dot.style.background = 'var(--neg)';
+    dot.style.boxShadow = '0 0 0 3px var(--neg-bg)';
+  } else {
+    dot.style.background = 'var(--gold)';
+    dot.style.boxShadow = '0 0 0 3px var(--gold-soft)';
+  }
+}
+
+function renderError(detail){
+  document.getElementById('listContainer').innerHTML = `
+    <div class="error">
+      Nie udało się pobrać danych z arkusza.<br>
+      Upewnij się, że arkusz jest udostępniony jako „każdy z linkiem może wyświetlać”.
+      ${detail ? `<div style="margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;opacity:0.8;">${escapeHtml(detail)}</div>` : ''}
+      <div><button id="retryBtn">Spróbuj ponownie</button></div>
+    </div>`;
+  document.getElementById('retryBtn').addEventListener('click', () => loadAll(true));
+}
+
+function renderList(filter){
+  const total = saldaRows.reduce((s,r) => s + r.rcr, 0);
+  document.getElementById('totalRcr').textContent = Math.round(total).toLocaleString('pl-PL');
+  document.getElementById('totalUsers').textContent = saldaRows.length + ' uczestników';
+
+  const q = (filter || document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const rows = saldaRows.filter(r => r.login.toLowerCase().includes(q));
+  const maxRcr = saldaRows.length ? saldaRows[0].rcr : 1;
+
+  const container = document.getElementById('listContainer');
+  if(rows.length === 0){
+    container.innerHTML = '<div class="empty">Brak wyników dla podanego loginu.</div>';
+    return;
+  }
+
+  container.innerHTML = rows.map((r, i) => {
+    const width = maxRcr > 0 ? Math.max(2, (r.rcr / maxRcr) * 100) : 0;
+    return `
+    <div class="row" tabindex="0" role="button" data-login="${escapeHtml(r.login)}" aria-label="Zobacz transakcje: ${escapeHtml(r.login)}">
+      <div class="rank ${i===0 ? 'top' : ''}">${i+1}</div>
+      <div class="who">
+        <div class="login">${escapeHtml(r.login)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+      </div>
+      <div class="rcr">${Math.round(r.rcr).toLocaleString('pl-PL')} RCR</div>
+      <div class="pct">${r.pct.toFixed(2)}%</div>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.row').forEach(el => {
+    el.addEventListener('click', () => openDrawer(el.dataset.login));
+    el.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDrawer(el.dataset.login); } });
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function formatThousands(v){
+  const abs = Math.abs(v);
+  if (abs >= 1000) {
+    const val = Math.round((v / 1000) * 10) / 10;
+    return String(val).replace('.', ',') + ' tys.';
+  }
+  return String(Math.round(v));
+}
+
+function formatDateShort(ts){
+  const d = new Date(ts);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  return mm + '/' + yy;
+}
+
+// Monotone cubic (Fritsch-Carlson) interpolation: unlike Catmull-Rom, this
+// never overshoots between points, so it can't produce the little loops/teeth
+// that appear when data points are unevenly spaced. This is the same
+// technique behind D3's curveMonotoneX and is the right tool for a running
+// balance series, which is mostly monotonic with occasional dips.
+function monotonePathD(pts){
+  const n = pts.length;
+  if (n < 2) return '';
+  if (n === 2){
+    return `M ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)} L ${pts[1].x.toFixed(2)},${pts[1].y.toFixed(2)}`;
+  }
+
+  const dx = new Array(n - 1), dy = new Array(n - 1), m = new Array(n - 1);
+  for (let i = 0; i < n - 1; i++){
+    dx[i] = pts[i + 1].x - pts[i].x;
+    dy[i] = pts[i + 1].y - pts[i].y;
+    m[i] = dx[i] === 0 ? 0 : dy[i] / dx[i];
+  }
+
+  const t = new Array(n);
+  t[0] = m[0];
+  t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++){
+    t[i] = (m[i - 1] * m[i] <= 0) ? 0 : (m[i - 1] + m[i]) / 2;
+  }
+
+  // Fritsch-Carlson limiter: clamps tangents so the curve can't overshoot
+  // past the actual data values between two points.
+  for (let i = 0; i < n - 1; i++){
+    if (m[i] === 0){ t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i];
+    const b = t[i + 1] / m[i];
+    if (a < 0) t[i] = 0;
+    if (b < 0) t[i + 1] = 0;
+    const a2 = t[i] / m[i], b2 = t[i + 1] / m[i];
+    const h = a2 * a2 + b2 * b2;
+    if (h > 9){
+      const scale = 3 / Math.sqrt(h);
+      t[i] = scale * a2 * m[i];
+      t[i + 1] = scale * b2 * m[i];
+    }
+  }
+
+  let d = `M ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++){
+    const p0 = pts[i], p1 = pts[i + 1];
+    const cp1x = p0.x + dx[i] / 3;
+    const cp1y = p0.y + t[i] * dx[i] / 3;
+    const cp2x = p1.x - dx[i] / 3;
+    const cp2y = p1.y - t[i + 1] * dx[i] / 3;
+    d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}`;
+  }
+  return d;
+}
+
+// Builds a smoothed SVG area/line chart of running balance over time, styled
+// to match the paper drawer. Y-axis labels sit in a reserved left margin so
+// they never overlap the plotted curve. Returns '' if there's too little data.
+function buildBalanceChartSvg(txsAsc){
+  if (txsAsc.length < 2) return '';
+
+  let running = 0;
+  const rawPoints = txsAsc.map(t => {
+    running += t.rcr;
+    return { x: parseDateSort(t.data), y: running };
+  });
+  // Collapse same-day transactions into a single point (keep the final
+  // running balance for that day) — duplicate x values give the
+  // interpolation zero-width segments to work with, which is what produced
+  // the jagged "teeth" artifacts.
+  const byX = new Map();
+  rawPoints.forEach(p => byX.set(p.x, p.y));
+  const points = Array.from(byX.entries())
+    .map(([x, y]) => ({ x: Number(x), y }))
+    .sort((a, b) => a.x - b.x);
+  if (points.length < 2) return '';
+
+  const W = 760, H = 260;
+  const padL = 54, padR = 14, padT = 14, padB = 26;
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const rawMinY = Math.min(...ys), rawMaxY = Math.max(...ys);
+  const minY = Math.min(0, rawMinY);
+  const maxY = Math.max(rawMaxY, minY + 1);
+  const spanX = Math.max(maxX - minX, 1);
+  const spanY = Math.max(maxY - minY, 1);
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+
+  const xScale = x => padL + ((x - minX) / spanX) * innerW;
+  const yScale = y => padT + innerH - ((y - minY) / spanY) * innerH;
+
+  const scaled = points.map(p => ({ x: xScale(p.x), y: yScale(p.y) }));
+  const lineD = monotonePathD(scaled);
+  const baseline = yScale(minY).toFixed(2);
+  const areaD = `${lineD} L ${scaled[scaled.length - 1].x.toFixed(2)},${baseline} L ${scaled[0].x.toFixed(2)},${baseline} Z`;
+
+  const gradId = 'chartGrad_' + Math.random().toString(36).slice(2, 9);
+
+  // Gridlines span only the plot area (from padL onward); value labels live
+  // in the reserved margin to the left of padL, so nothing overlaps the curve.
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(f => {
+    const val = minY + f * spanY;
+    const y = yScale(val);
+    return `
+      <line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="var(--paper-line)" stroke-width="1"/>
+      <text x="${padL - 8}" y="${y.toFixed(1)}" font-size="10.5" font-family="'IBM Plex Mono',monospace" fill="#9a8d63" text-anchor="end" dominant-baseline="middle">${formatThousands(val)}</text>`;
+  }).join('');
+
+  const xTicks = [0, 0.25, 0.5, 0.75, 1].map(f => minX + f * spanX);
+  const xLabels = xTicks.map((x, i) => {
+    const anchor = i === 0 ? 'start' : (i === xTicks.length - 1 ? 'end' : 'middle');
+    return `<text x="${xScale(x).toFixed(1)}" y="${H - 6}" font-size="10.5" font-family="'IBM Plex Mono',monospace" fill="#9a8d63" text-anchor="${anchor}">${formatDateShort(x)}</text>`;
+  }).join('');
+
+  return `
+  <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#a44650" stop-opacity="0.38"/>
+        <stop offset="100%" stop-color="#a44650" stop-opacity="0.02"/>
+      </linearGradient>
+    </defs>
+    ${gridLines}
+    <path d="${areaD}" fill="url(#${gradId})" stroke="none"/>
+    <path d="${lineD}" fill="none" stroke="#a44650" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
+    ${xLabels}
+  </svg>`;
+}
+
+// Groups a user's transactions by title and sums the RCR amounts, largest
+// absolute impact first.
+function buildCategorySummary(txs){
+  const map = new Map();
+  txs.forEach(t => {
+    const key = t.tytul || '(bez tytułu)';
+    map.set(key, (map.get(key) || 0) + t.rcr);
+  });
+  return Array.from(map.entries())
+    .map(([tytul, sum]) => ({ tytul, sum }))
+    .sort((a, b) => Math.abs(b.sum) - Math.abs(a.sum));
+}
+
+function openDrawer(login){
+  const user = saldaRows.find(r => r.login === login);
+  const txs = [...rcrRows, ...archiveRows]
+    .filter(r => r.login === login)
+    .sort((a, b) => parseDateSort(b.data) - parseDateSort(a.data));
+  const txsAsc = [...txs].reverse();
+
+  document.getElementById('drawerLogin').textContent = login;
+  document.getElementById('drawerBalance').textContent = user ? Math.round(user.rcr).toLocaleString('pl-PL') : '—';
+  document.getElementById('drawerPower').textContent = user ? user.pct.toFixed(2) + '%' : '—';
+  document.getElementById('drawerCount').textContent = txs.length;
+  document.getElementById('drawerEyebrow').textContent = 'transakcje';
+
+  const chartCatArea = document.getElementById('chartCatArea');
+  const txListArea = document.getElementById('txListArea');
+
+  if (txs.length === 0){
+    chartCatArea.innerHTML = '';
+    txListArea.innerHTML = archiveLoaded
+      ? '<div class="tx-empty">Brak zarejestrowanych transakcji dla tego loginu.</div>'
+      : '<div class="tx-empty">Wczytywanie transakcji archiwalnych…</div>';
+  } else {
+    const chartSvg = buildBalanceChartSvg(txsAsc);
+    const chartBlock = `
+      <div class="chart-title">Bilans</div>
+      <div class="chart-subtitle">Historia transakcji</div>
+      ${chartSvg
+        ? `<div class="chart-wrap">${chartSvg}</div>`
+        : `<div class="chart-empty">Za mało danych, by pokazać wykres.</div>`}`;
+
+    const categories = buildCategorySummary(txs);
+    const catBlock = `
+      <div class="section-label">Podsumowanie wg tytułu</div>
+      <div class="cat-list">
+        ${categories.map(c => {
+          const pos = c.sum >= 0;
+          return `
+          <div class="cat-row">
+            <span class="cat-title">${escapeHtml(c.tytul)}</span>
+            <span class="cat-sum ${pos ? 'pos' : 'neg'}">${pos ? '+' : ''}${Math.round(c.sum).toLocaleString('pl-PL')}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    chartCatArea.innerHTML = chartBlock + catBlock;
+
+    txListArea.innerHTML = txs.map(t => {
+      const pos = t.rcr >= 0;
+      return `
+      <div class="tx">
+        <div class="tx-top">
+          <div class="tx-title">${escapeHtml(t.tytul)}</div>
+          <div class="tx-amount ${pos ? 'pos' : 'neg'}">${pos ? '+' : ''}${Math.round(t.rcr).toLocaleString('pl-PL')}</div>
+        </div>
+        <div class="tx-meta">
+          <span>${escapeHtml(t.data)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer').setAttribute('aria-hidden', 'false');
+  document.getElementById('scrim').classList.add('open');
+  document.getElementById('drawerClose').focus();
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer').setAttribute('aria-hidden', 'true');
+  document.getElementById('scrim').classList.remove('open');
+}
+
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+document.getElementById('scrim').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDrawer(); });
+document.getElementById('searchInput').addEventListener('input', e => renderList(e.target.value));
+
+loadArchiveOnce();
+loadAll(false);
+refreshTimer = setInterval(() => loadAll(false), REFRESH_MS);
+</script>
+</body>
+</html>
