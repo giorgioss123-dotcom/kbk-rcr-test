@@ -86,6 +86,25 @@
   .checkbox-row input{ margin-top:3px; }
   .consent-block{ max-height:0; overflow:hidden; transition:max-height .25s ease; }
   .consent-block.open{ max-height:220px; }
+  .topbar{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:18px;
+  }
+  .home-link{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    border:1px solid var(--paper-line);
+    border-radius:8px;
+    padding:9px 14px;
+    background:transparent;
+    color:var(--paper-ink);
+    font-size:13px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
   button{
     width:100%;
     margin-top:26px;
@@ -120,6 +139,9 @@
 </head>
 <body>
   <div class="card">
+    <div class="topbar">
+      <a class="home-link" href="index.html">← strona główna</a>
+    </div>
     <h1>Rejestracja</h1>
     <p class="subtitle">Załóż konto, żeby dołączyć do systemu.</p>
 
