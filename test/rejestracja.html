@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rejestracja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #101c17;
+    --bg-alt: #16241e;
+    --line: #2a3a33;
+    --ink: #eae6d9;
+    --ink-muted: #91a49a;
+    --gold: #c9a15a;
+    --paper: #f4efe1;
+    --paper-ink: #241f16;
+    --paper-line: #ddd2b3;
+    --pos: #4d7a5f;
+    --neg: #a44650;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:48px 16px;
+    background:radial-gradient(ellipse at top, #142720 0%, var(--bg) 55%);
+    color:var(--paper-ink);
+    font-family:'Inter',sans-serif;
+  }
+  .card{
+    width:min(560px, 100%);
+    background:var(--paper);
+    border-radius:14px;
+    border:1px solid var(--paper-line);
+    box-shadow:0 28px 70px rgba(0,0,0,0.38);
+    padding:36px 32px 28px;
+  }
+  h1{
+    margin:0 0 6px;
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:32px;
+    letter-spacing:-0.02em;
+  }
+  .subtitle{
+    margin:0 0 26px;
+    color:#7a6f4d;
+    font-size:13.5px;
+  }
+  label{
+    display:block;
+    margin:16px 0 6px;
+    font-size:13px;
+    font-weight:600;
+  }
+  label .opt{ color:#9a8d63; font-weight:400; }
+  input[type="text"], input[type="email"], input[type="password"]{
+    width:100%;
+    border:1px solid var(--paper-line);
+    border-radius:8px;
+    padding:10px 12px;
+    background:#fffdf7;
+    color:var(--paper-ink);
+    font-size:14.5px;
+    font-family:'Inter',sans-serif;
+  }
+  input:focus{ outline:none; border-color:var(--gold); }
+  .hint{ margin-top:4px; font-size:12px; color:#9a8d63; }
+  .hint.error{ color:var(--neg); }
+  .hint.ok{ color:var(--pos); }
+  .pin-row{ display:flex; gap:12px; }
+  .pin-row > div{ flex:1; }
+  .honeypot{ position:absolute; left:-9999px; top:-9999px; }
+  .checkbox-row{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin-top:12px;
+    font-size:13px;
+  }
+  .checkbox-row input{ margin-top:3px; }
+  .consent-block{ max-height:0; overflow:hidden; transition:max-height .25s ease; }
+  .consent-block.open{ max-height:220px; }
+  button{
+    width:100%;
+    margin-top:26px;
+    border:none;
+    border-radius:8px;
+    padding:13px 16px;
+    background:#1b2e26;
+    color:#f4efe1;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  button:disabled{ opacity:0.6; cursor:default; }
+  .banner{
+    display:none;
+    margin-top:18px;
+    padding:12px 14px;
+    border-radius:8px;
+    font-size:13.5px;
+  }
+  .banner.show{ display:block; }
+  .banner.error{ background:rgba(164,70,80,0.12); border:1px solid rgba(164,70,80,0.3); color:var(--neg); }
+  .banner.ok{ background:rgba(77,122,95,0.12); border:1px solid rgba(77,122,95,0.3); color:var(--pos); }
+  .privacy-note{
+    margin-top:20px;
+    font-size:11.5px;
+    line-height:1.5;
+    color:#9a8d63;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Rejestracja</h1>
+    <p class="subtitle">Załóż konto, żeby dołączyć do systemu.</p>
+
+    <form id="regForm">
+      <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off">
+
+      <label for="login">Login</label>
+      <input type="text" id="login" required autocomplete="off">
+      <div class="hint" id="loginHint"></div>
+
+      <label for="imie">Imię <span class="opt">(opcjonalnie)</span></label>
+      <input type="text" id="imie">
+
+      <label for="nazwisko">Nazwisko <span class="opt">(opcjonalnie)</span></label>
+      <input type="text" id="nazwisko">
+
+      <label for="email">E-mail</label>
+      <input type="email" id="email" required>
+
+      <label for="adres">Adres <span class="opt">(opcjonalnie)</span></label>
+      <input type="text" id="adres" placeholder="ulica, miasto, kod pocztowy">
+
+      <div class="consent-block" id="consentBlock">
+        <div class="checkbox-row">
+          <input type="checkbox" id="zgodaEmail">
+          <label for="zgodaEmail" style="margin:0;font-weight:400;">Zgadzam się na kontakt mailowy</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="zgodaPocztowy">
+          <label for="zgodaPocztowy" style="margin:0;font-weight:400;">Zgadzam się na kontakt pocztowy <span class="opt">(wymagane przy podaniu adresu)</span></label>
+        </div>
+        <div class="hint error" id="consentHint" style="display:none;"></div>
+      </div>
+
+      <label>PIN (6 cyfr)</label>
+      <div class="pin-row">
+        <div><input type="password" id="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" required></div>
+        <div><input type="password" id="pinRepeat" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="powtórz PIN" required></div>
+      </div>
+      <div class="hint" id="pinHint"></div>
+
+      <button type="submit" id="submitBtn">Zarejestruj się</button>
+      <div class="banner" id="banner"></div>
+
+      <p class="privacy-note">
+        Podane dane (imię, nazwisko, e-mail, opcjonalnie adres) są przetwarzane wyłącznie
+        w celu założenia i obsługi konta w systemie. Zgody na kontakt e-mailowy/pocztowy są
+        dobrowolne i możesz je wycofać w dowolnym momencie, kontaktując się z nami.
+      </p>
+    </form>
+  </div>
+
+  <script>
+    const APP_CONFIG = {
+      webAppUrl: 'https://script.google.com/macros/s/AKfycbyIhwzMbLmeJ_Z86-z3ZQUv-mERrPYxOjldqWg5zIyarJZP2K_lmKW5XQi0QSxbMvEHYg/exec'
+    };
+    const CONTACT_EMAIL = 'kontakt@twojadomena.pl';
+    const formLoadedAt = Date.now();
+    const form = document.getElementById('regForm');
+
+    (function handleConfirmRedirect(){
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('confirmed') !== 'register') return;
+      const status = params.get('status');
+      const banner = document.getElementById('banner');
+      const map = {
+        ok: 'Rejestracja potwierdzona! Możesz się teraz zalogować w pozostałych częściach systemu.',
+        conflict: 'Ktoś zdążył zarejestrować ten login lub e-mail przed Tobą. Spróbuj ponownie z innymi danymi.',
+        invalid: 'Link jest nieprawidłowy albo wygasł. Zarejestruj się ponownie.',
+        error: 'Link jest nieprawidłowy albo wygasł. Zarejestruj się ponownie.'
+      };
+      const message = map[status] || map.invalid;
+      banner.textContent = message;
+      banner.className = 'banner show ' + (status === 'ok' ? 'ok' : 'error');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    })();
+
+    const loginInput = document.getElementById('login');
+    const loginHint = document.getElementById('loginHint');
+    const adresInput = document.getElementById('adres');
+    const consentBlock = document.getElementById('consentBlock');
+    const pinInput = document.getElementById('pin');
+    const pinRepeatInput = document.getElementById('pinRepeat');
+    const pinHint = document.getElementById('pinHint');
+    const banner = document.getElementById('banner');
+    const submitBtn = document.getElementById('submitBtn');
+
+    adresInput.addEventListener('input', function () {
+      consentBlock.classList.toggle('open', adresInput.value.trim() !== '');
+    });
+
+    let loginCheckTimer = null;
+    loginInput.addEventListener('input', function () {
+      const cursorPos = loginInput.selectionStart;
+      loginInput.value = loginInput.value.toLowerCase();
+      loginInput.setSelectionRange(cursorPos, cursorPos);
+
+      clearTimeout(loginCheckTimer);
+      const val = loginInput.value.trim();
+      loginHint.textContent = '';
+      loginHint.className = 'hint';
+      if (!val) return;
+      if (!/^[a-zA-Z0-9_.-]{3,32}$/.test(val)) {
+        loginHint.textContent = 'Login: 3–32 znaki, litery/cyfry/. _ -';
+        loginHint.className = 'hint error';
+        return;
+      }
+      loginCheckTimer = setTimeout(function () { checkLoginAvailability(val); }, 400);
+    });
+
+    function checkLoginAvailability(login){
+      loginHint.textContent = 'sprawdzanie…';
+      loginHint.className = 'hint';
+      fetch(APP_CONFIG.webAppUrl + '?checkLogin=' + encodeURIComponent(login))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.taken) {
+            loginHint.innerHTML = 'Taki login już istnieje. Jeśli to nie Ty — wybierz inną nazwę. Jeśli to Ty — napisz do nas na <a href="mailto:' + CONTACT_EMAIL + '">' + CONTACT_EMAIL + '</a>, potwierdzimy tożsamość.';
+            loginHint.className = 'hint error';
+          } else {
+            loginHint.textContent = 'Login dostępny.';
+            loginHint.className = 'hint ok';
+          }
+        })
+        .catch(function () {
+          loginHint.textContent = '';
+        });
+    }
+
+    function validatePins(){
+      var p1 = pinInput.value;
+      var p2 = pinRepeatInput.value;
+      if (!/^\d{6}$/.test(p1)) {
+        pinHint.textContent = 'PIN musi składać się z dokładnie 6 cyfr.';
+        pinHint.className = 'hint error';
+        return false;
+      }
+      if (p1 !== p2) {
+        pinHint.textContent = 'Piny nie są identyczne.';
+        pinHint.className = 'hint error';
+        return false;
+      }
+      pinHint.textContent = 'PIN poprawny.';
+      pinHint.className = 'hint ok';
+      return true;
+    }
+
+    pinInput.addEventListener('input', validatePins);
+    pinRepeatInput.addEventListener('input', validatePins);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      banner.className = 'banner';
+      banner.textContent = '';
+
+      var login = document.getElementById('login').value.trim().toLowerCase();
+      var imie = document.getElementById('imie').value.trim();
+      var nazwisko = document.getElementById('nazwisko').value.trim();
+      var email = document.getElementById('email').value.trim().toLowerCase();
+      var adres = document.getElementById('adres').value.trim();
+      var pin = pinInput.value.trim();
+
+      if (!login || !/^[a-zA-Z0-9_.-]{3,32}$/.test(login)) {
+        banner.textContent = 'Login ma niepoprawny format.';
+        banner.className = 'banner show error';
+        return;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        banner.textContent = 'Podaj poprawny adres e-mail.';
+        banner.className = 'banner show error';
+        return;
+      }
+      if (!validatePins()) return;
+      if (adres && !document.getElementById('zgodaPocztowy').checked) {
+        banner.textContent = 'Jeśli podajesz adres, musisz zaakceptować kontakt pocztowy.';
+        banner.className = 'banner show error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Wysyłanie…';
+
+      fetch(APP_CONFIG.webAppUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'register',
+          formLoadedAt: String(formLoadedAt),
+          login: login,
+          imie: imie,
+          nazwisko: nazwisko,
+          email: email,
+          adres: adres,
+          pin: pin,
+          zgodaEmail: document.getElementById('zgodaEmail').checked,
+          zgodaPocztowy: document.getElementById('zgodaPocztowy').checked
+        })
+      })
+        .then(function (response) { return response.json(); })
+        .then(function (result) {
+          if (result && result.ok) {
+            banner.textContent = 'Wysłano zapytanie o aktywację konta. Sprawdź skrzynkę mailową, by potwierdzić rejestrację.';
+            banner.className = 'banner show ok';
+            form.reset();
+            pinHint.textContent = '';
+            pinHint.className = 'hint';
+            consentBlock.classList.remove('open');
+          } else {
+            var message = result && result.message ? result.message : 'Nie udało się zarejestrować konta.';
+            banner.textContent = message;
+            banner.className = 'banner show error';
+          }
+        })
+        .catch(function () {
+          banner.textContent = 'Nie udało się połączyć z backendem. Spróbuj ponownie później.';
+          banner.className = 'banner show error';
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Zarejestruj się';
+        });
+    });
+  </script>
+</body>
+</html>
