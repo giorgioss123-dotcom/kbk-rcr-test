@@ -102,48 +102,7 @@
       }, 2000);
     }
 
-    function resolveTargetUrl(type, status) {
-      const target = targetMap[type] || { path: 'index.html', confirmed: 'index' };
-      const url = new URL(target.path, window.location.href);
-      if (target.confirmed) {
-        url.searchParams.set('confirmed', target.confirmed);
-      }
-      if (status) {
-        url.searchParams.set('status', status);
-      }
-      return url.toString();
-    }
-
-    function extractMetaRedirect(html) {
-      const match = html.match(/<meta[^>]*http-equiv=["']?refresh["']?[^>]*content=["'][^"']*url=([^"']+)["'][^>]*>/i);
-      if (!match) return null;
-      const rawUrl = match[1].trim();
-      if (!rawUrl) return null;
-      try {
-        return decodeURIComponent(rawUrl.replace(/\+/g, '%20'));
-      } catch (err) {
-        return rawUrl;
-      }
-    }
-
-    function extractScriptRedirect(html) {
-      const patterns = [
-        /window\.location\.(?:href|replace)\s*=\s*["']([^"']+)["']/i,
-        /window\.location\s*\.\s*href\s*=\s*(["'][^"']+["'])/i,
-        /location\.href\s*=\s*["']([^"']+)["']/i
-      ];
-
-      for (const pattern of patterns) {
-        const match = html.match(pattern);
-        if (match && match[1]) {
-          const rawUrl = match[1].replace(/^['"]|['"]$/g, '').trim();
-          if (rawUrl) return rawUrl;
-        }
-      }
-      return null;
-    }
-
-    async function confirmAction() {
+    function confirmAction() {
       const params = new URLSearchParams(window.location.search);
       const type = (params.get('type') || '').toLowerCase();
       const token = params.get('token') || '';
@@ -153,30 +112,10 @@
         return;
       }
 
-      const url = APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(actionMap[type]) + '&token=' + encodeURIComponent(token);
-
-      try {
-        const response = await fetch(url, { method: 'GET', redirect: 'follow' });
-        const html = await response.text();
-        const metaRedirect = extractMetaRedirect(html);
-        const scriptRedirect = extractScriptRedirect(html);
-        const redirectUrl = metaRedirect || scriptRedirect || (response.redirected && response.url && response.url !== url ? response.url : null);
-
-        if (redirectUrl) {
-          window.location.replace(redirectUrl);
-          return;
-        }
-
-        if (/confirmed=register|confirmed=proposal|confirmed=vote/i.test(html)) {
-          const finalType = type === 'register' ? 'register' : (type === 'proposal' ? 'proposal' : 'vote');
-          window.location.replace(resolveTargetUrl(finalType, 'ok'));
-          return;
-        }
-
-        window.location.replace(resolveTargetUrl(type, 'error'));
-      } catch (err) {
-        failRedirect('Nie udało się potwierdzić konta. Spróbuj ponownie później.', true);
-      }
+      const backendUrl = APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(actionMap[type]) + '&token=' + encodeURIComponent(token);
+      document.getElementById('message').textContent = 'Przekierowujemy do potwierdzenia…';
+      document.getElementById('state').textContent = 'Przekierowanie';
+      window.location.replace(backendUrl);
     }
 
     confirmAction();
