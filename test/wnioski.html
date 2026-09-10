@@ -53,6 +53,7 @@
   .card.archived{ opacity: 0.55; }
   .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
   .card-meta{ font-size:12.5px; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; margin-bottom:6px; }
+  .card-meta.secondary{ margin-top:6px; margin-bottom:0; }
   .card-title{ font-family:'Fraunces',serif; font-weight:600; font-size:17px; margin:0 0 4px; }
   .card-excerpt{ font-size:13.5px; color: #c9c3b0; margin:0; line-height:1.5; }
   .badge{ font-size:11px; padding:3px 10px; border-radius:20px; white-space:nowrap; font-family:'IBM Plex Mono',monospace; }
@@ -168,6 +169,7 @@
 <div class="modal" id="detailModal">
   <button class="close-x" data-close>✕</button>
   <div class="card-meta" id="detailAuthor"></div>
+  <div class="card-meta secondary" id="detailRemaining"></div>
   <h2 id="detailTitle"></h2>
   <div id="detailBadge"></div>
   <div class="block-label">Treść</div>
@@ -183,7 +185,7 @@
 
 <div class="modal" id="voteModal">
   <button class="close-x" data-close>✕</button>
-  <h2>Potwierdź głos</h2>
+  <h2 id="voteModalTitle">Głosujesz nad wnioskiem</h2>
   <div class="vote-choice">
     <button type="button" class="za" data-choice="za">Za</button>
     <button type="button" class="przeciw" data-choice="przeciw">Przeciw</button>
@@ -261,6 +263,21 @@ function fmtDate(iso){
   return new Date(iso).toLocaleDateString('pl-PL');
 }
 
+function formatRemainingTime(endIso){
+  if (!endIso) return '—';
+  const diffMs = new Date(endIso).getTime() - Date.now();
+  if (diffMs <= 0) return 'zakończone';
+
+  const totalMinutes = Math.max(0, Math.floor(diffMs / 60000));
+  const days = Math.floor(totalMinutes / (24 * 60));
+  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
 function badgeHtml(status){
   if (status === 'Aktywny') return '<span class="badge active">aktywny</span>';
   if (status === 'Przyjęty') return '<span class="badge accepted">przyjęty</span>';
@@ -277,11 +294,16 @@ function cardHtml(p, archived){
   const voteButton = p.status === 'Aktywny'
     ? `<div class="card-actions"><button class="inline-vote" type="button" data-vote-id="${p.id}">Zagłosuj</button></div>`
     : '';
+  const remainingText = p.status === 'Aktywny'
+    ? `Pozostało: ${formatRemainingTime(p.dataWygasniecia)}`
+    : `Zakończono: ${fmtDate(p.dataWygasniecia)}`;
+
   return `
   <div class="card ${archived ? 'archived' : ''}" data-id="${p.id}">
     <div class="card-top">
       <div>
-        <div class="card-meta">${escapeHtml(p.autor)} · ${fmtDate(p.dataZlozenia)}</div>
+        <div class="card-meta">Zgłosił: ${escapeHtml(p.autor)} · ${fmtDate(p.dataZlozenia)}</div>
+        <div class="card-meta secondary">${remainingText}</div>
         <h3 class="card-title">${escapeHtml(p.tytul)}</h3>
         <p class="card-excerpt">${escapeHtml(excerpt)}</p>
       </div>
@@ -292,7 +314,7 @@ function cardHtml(p, archived){
       <span class="za-label">za ${p.procentZa.toFixed(1)}%</span>
       <span class="przeciw-label">przeciw ${p.procentPrzeciw.toFixed(1)}%</span>
     </div>
-    <div class="turnout">frekwencja: ${p.procentFrekwencji.toFixed(1)}% całkowitego RCR</div>
+    <div class="turnout">frekwencja: ${p.procentFrekwencji.toFixed(1)}% aktywnych RCR</div>
     ${voteButton}
   </div>`;
 }
@@ -355,7 +377,10 @@ function openDetail(id){
   const p = proposals.find(x => String(x.id) === String(id));
   if (!p) return;
   currentDetailId = id;
-  document.getElementById('detailAuthor').textContent = p.autor + ' · ' + fmtDate(p.dataZlozenia);
+  document.getElementById('detailAuthor').textContent = 'Zgłosił: ' + p.autor + ' · ' + fmtDate(p.dataZlozenia);
+  document.getElementById('detailRemaining').textContent = p.status === 'Aktywny'
+    ? 'Pozostało do zakończenia: ' + formatRemainingTime(p.dataWygasniecia)
+    : 'Zakończono: ' + fmtDate(p.dataWygasniecia);
   document.getElementById('detailTitle').textContent = p.tytul;
   document.getElementById('detailBadge').innerHTML = badgeHtml(p.status);
   document.getElementById('detailText').textContent = p.tresc;
@@ -365,7 +390,7 @@ function openDetail(id){
   document.getElementById('detailStats').innerHTML =
     `<span class="za-label">za ${p.procentZa.toFixed(1)}%</span><span class="przeciw-label">przeciw ${p.procentPrzeciw.toFixed(1)}%</span>`;
   document.getElementById('detailTurnout').textContent =
-    `frekwencja: ${p.procentFrekwencji.toFixed(1)}% całkowitego RCR` + (p.dataWygasniecia ? ` · koniec: ${fmtDate(p.dataWygasniecia)}` : '');
+    `frekwencja: ${p.procentFrekwencji.toFixed(1)}% aktywnych RCR` + (p.dataWygasniecia ? ` · koniec: ${fmtDate(p.dataWygasniecia)}` : '');
 
   const votesListSection = document.getElementById('votesListSection');
   const hasVotes = (p.glosowZa + p.glosowPrzeciw) > 0;
@@ -419,6 +444,9 @@ async function loadVotesList(wniosekId){
 function openVoteModal(id){
   currentDetailId = id;
   currentVoteChoice = null;
+  const proposal = proposals.find(x => String(x.id) === String(id));
+  const title = proposal ? proposal.tytul : 'wnioskiem';
+  document.getElementById('voteModalTitle').textContent = "Głosujesz nad wnioskiem: '" + title + "'";
   document.querySelectorAll('.vote-choice button').forEach(b => b.classList.remove('selected'));
   document.getElementById('voteLogin').value = '';
   document.getElementById('votePin').value = '';

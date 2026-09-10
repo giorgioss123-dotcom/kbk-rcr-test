@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potwierdzanie konta</title>
+  <style>
+    :root {
+      --bg: #101c17;
+      --paper: #f4efe1;
+      --paper-ink: #241f16;
+      --paper-line: #ddd2b3;
+      --ink: #eae6d9;
+      --gold: #c9a15a;
+      --muted: #91a49a;
+      --ok: #4d7a5f;
+      --err: #a44650;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(ellipse at top, #142720 0%, var(--bg) 55%);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(560px, 100%);
+      background: var(--paper);
+      border: 1px solid var(--paper-line);
+      border-radius: 16px;
+      color: var(--paper-ink);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      padding: 32px 28px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      letter-spacing: -0.03em;
+    }
+
+    p {
+      margin: 0;
+      color: #645a43;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .state {
+      margin-top: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.74rem;
+    }
+
+    .error {
+      color: var(--err);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Potwierdzanie</h1>
+    <p id="message">Trwa weryfikacja Twojego linku potwierdzającego…</p>
+    <div class="state" id="state">Przetwarzanie</div>
+  </div>
+
+  <script>
+    const APP_CONFIG = {
+      webAppUrl: 'https://script.google.com/macros/s/AKfycbyzidePQKFtnth6XiuLILluMjSYVRNZh5_9qVFhmic8b5wnM_4egc_dZKbgSvRSGMP4oA/exec'
+    };
+
+    const actionMap = {
+      register: 'confirmRegister',
+      proposal: 'confirmProposal',
+      vote: 'confirmVote'
+    };
+
+    const targetMap = {
+      register: { path: 'rejestracja.html', confirmed: 'register' },
+      proposal: { path: 'wnioski.html', confirmed: 'proposal' },
+      vote: { path: 'wnioski.html', confirmed: 'vote' }
+    };
+
+    function failRedirect(message, isError) {
+      const box = document.getElementById('message');
+      const state = document.getElementById('state');
+      box.textContent = message;
+      state.textContent = isError ? 'Błąd' : 'Nieprawidłowy link';
+      state.classList.toggle('error', Boolean(isError));
+      setTimeout(function () {
+        window.location.replace('index.html');
+      }, 2000);
+    }
+
+    function resolveTargetUrl(type, status) {
+      const target = targetMap[type] || { path: 'index.html', confirmed: 'index' };
+      const url = new URL(target.path, window.location.href);
+      if (target.confirmed) {
+        url.searchParams.set('confirmed', target.confirmed);
+      }
+      if (status) {
+        url.searchParams.set('status', status);
+      }
+      return url.toString();
+    }
+
+    function extractMetaRedirect(html) {
+      const match = html.match(/<meta[^>]*http-equiv=["']?refresh["']?[^>]*content=["'][^"']*url=([^"']+)["'][^>]*>/i);
+      if (!match) return null;
+      const rawUrl = match[1].trim();
+      if (!rawUrl) return null;
+      try {
+        return decodeURIComponent(rawUrl.replace(/\+/g, '%20'));
+      } catch (err) {
+        return rawUrl;
+      }
+    }
+
+    async function confirmAction() {
+      const params = new URLSearchParams(window.location.search);
+      const type = (params.get('type') || '').toLowerCase();
+      const token = params.get('token') || '';
+
+      if (!actionMap[type] || !token) {
+        failRedirect('Link aktywacyjny jest nieprawidłowy.', true);
+        return;
+      }
+
+      const url = APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(actionMap[type]) + '&token=' + encodeURIComponent(token);
+
+      try {
+        const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+        const html = await response.text();
+        const redirectUrl = extractMetaRedirect(html) || response.url;
+
+        if (redirectUrl && redirectUrl !== url) {
+          window.location.replace(redirectUrl);
+          return;
+        }
+
+        window.location.replace(resolveTargetUrl(type, 'error'));
+      } catch (err) {
+        failRedirect('Nie udało się potwierdzić konta. Spróbuj ponownie później.', true);
+      }
+    }
+
+    confirmAction();
+  </script>
+</body>
+</html>
