@@ -574,6 +574,8 @@
   };
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
+  const SHEET_CACHE_MS = 600000;
+  const sheetCache = {};
 
   let proposals = [];
   let proposalsCache = null;
@@ -641,6 +643,55 @@
   }
   function escapeHtml(s){
     return String(safeText(s, '')).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function loadSheetJSONP(sheetId, sheetName) {
+    const cacheKey = String(sheetId) + '|' + String(sheetName);
+    const cached = sheetCache[cacheKey];
+    if (cached && cached.expiresAt && Date.now() < cached.expiresAt && cached.table) {
+      return Promise.resolve(cached.table);
+    }
+    if (cached && cached.promise) {
+      return cached.promise;
+    }
+
+    const promise = new Promise(function (resolve, reject) {
+      const cbName = 'gvizCb_' + sheetName.replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+      const url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json;responseHandler:' + cbName + '&sheet=' + encodeURIComponent(sheetName) + '&t=' + Date.now();
+      const script = document.createElement('script');
+      let settled = false;
+      const cleanup = function () {
+        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+      const timer = setTimeout(function () {
+        if (settled) return;
+        settled = true; cleanup();
+        delete sheetCache[cacheKey];
+        reject(new Error('Przekroczono czas oczekiwania na arkusz "' + sheetName + '"'));
+      }, 15000);
+      window[cbName] = function (json) {
+        if (settled) return;
+        settled = true; clearTimeout(timer); cleanup();
+        if (!json || !json.table) {
+          delete sheetCache[cacheKey];
+          reject(new Error('Nieprawidłowa odpowiedź dla arkusza "' + sheetName + '"'));
+          return;
+        }
+        sheetCache[cacheKey] = { table: json.table, expiresAt: Date.now() + SHEET_CACHE_MS };
+        resolve(json.table);
+      };
+      script.onerror = function () {
+        if (settled) return;
+        settled = true; clearTimeout(timer); cleanup();
+        delete sheetCache[cacheKey];
+        reject(new Error('Nie udało się załadować arkusza "' + sheetName + '"'));
+      };
+      script.src = url;
+      document.head.appendChild(script);
+    });
+
+    sheetCache[cacheKey] = { promise: promise };
+    return promise;
   }
   function cardHtml(p, archived){
     const safeTitle = safeText(p.tytul, '');
