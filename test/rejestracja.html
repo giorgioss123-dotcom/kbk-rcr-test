@@ -164,14 +164,14 @@
       <label for="adres">Adres <span class="opt">(opcjonalnie)</span></label>
       <input type="text" id="adres" placeholder="ulica, miasto, kod pocztowy">
 
-      <div class="consent-block" id="consentBlock">
+      <div class="consent-block open" id="consentBlock">
         <div class="checkbox-row">
           <input type="checkbox" id="zgodaEmail">
           <label for="zgodaEmail" style="margin:0;font-weight:400;">Zgadzam się na kontakt mailowy</label>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="zgodaPocztowy">
-          <label for="zgodaPocztowy" style="margin:0;font-weight:400;">Zgadzam się na kontakt pocztowy <span class="opt">(wymagane przy podaniu adresu)</span></label>
+          <label for="zgodaPocztowy" style="margin:0;font-weight:400;">Zgadzam się na kontakt pocztowy</label>
         </div>
         <div class="hint error" id="consentHint" style="display:none;"></div>
       </div>
@@ -196,8 +196,9 @@
 
   <script>
     const APP_CONFIG = {
-      webAppUrl: 'https://script.google.com/macros/s/AKfycbyIhwzMbLmeJ_Z86-z3ZQUv-mERrPYxOjldqWg5zIyarJZP2K_lmKW5XQi0QSxbMvEHYg/exec'
+      webAppUrl: 'https://script.google.com/macros/s/AKfycbz10rl_YMpBfJEK1vFZVdGE2cR3SyNF8u4WUTZXexZJQAl7vAve8H2AJNehqIHIENo0DA/exec'
     };
+    const USERNAME_RE = /^[A-Za-z0-9._-]{3,32}$/;
     const CONTACT_EMAIL = 'kontakt@twojadomena.pl';
     const formLoadedAt = Date.now();
     const form = document.getElementById('regForm');
@@ -229,10 +230,6 @@
     const banner = document.getElementById('banner');
     const submitBtn = document.getElementById('submitBtn');
 
-    adresInput.addEventListener('input', function () {
-      consentBlock.classList.toggle('open', adresInput.value.trim() !== '');
-    });
-
     let loginCheckTimer = null;
     loginInput.addEventListener('input', function () {
       const cursorPos = loginInput.selectionStart;
@@ -244,8 +241,8 @@
       loginHint.textContent = '';
       loginHint.className = 'hint';
       if (!val) return;
-      if (!/^[a-zA-Z0-9_.-]{3,32}$/.test(val)) {
-        loginHint.textContent = 'Login: 3–32 znaki, litery/cyfry/. _ -';
+      if (!USERNAME_RE.test(val)) {
+        loginHint.textContent = 'Login: 3–32 znaki; dozwolone: litery, cyfry, _, -, .';
         loginHint.className = 'hint error';
         return;
       }
@@ -304,8 +301,8 @@
       var adres = document.getElementById('adres').value.trim();
       var pin = pinInput.value.trim();
 
-      if (!login || !/^[a-zA-Z0-9_.-]{3,32}$/.test(login)) {
-        banner.textContent = 'Login ma niepoprawny format.';
+      if (!login || !USERNAME_RE.test(login)) {
+        banner.textContent = 'Login ma niepoprawny format. Dozwolone: litery, cyfry, _, -, .';
         banner.className = 'banner show error';
         return;
       }

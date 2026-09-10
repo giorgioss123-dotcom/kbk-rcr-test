@@ -97,6 +97,12 @@
   }
   .search::placeholder{ color: var(--ink-muted); }
   .search:focus{ outline: none; border-color: var(--gold); }
+  .toggle-row{
+    display:flex; align-items:center; gap:10px;
+    color: var(--ink-muted); font-size: 12.5px;
+    white-space: nowrap;
+  }
+  .toggle-row input{ accent-color: var(--gold); }
   .sync{
     display:flex;
     align-items:center;
@@ -147,10 +153,16 @@
     font-size: 16px;
   }
   .row:nth-child(1) .rank, .rank.top{ color: var(--gold); }
+  .who .login-line{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .who .login{
     font-size: 15.5px;
     font-weight: 500;
   }
+  .state-tag{
+    display:inline-flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace;
+    font-size: 10px; padding: 3px 7px; border-radius: 999px; border:1px solid transparent; white-space:nowrap;
+  }
+  .state-tag.inactive{ background: rgba(193,102,107,0.14); color: var(--neg); border-color: rgba(193,102,107,0.35); }
   .who .bar-track{
     margin-top: 7px;
     height: 4px;
@@ -383,14 +395,21 @@
       <h1>RCR — bilans społeczności</h1>
       <p>Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.</p>
     </div>
-    <div class="stat">
-      <div class="num" id="totalRcr">—</div>
-      <div class="lbl" id="totalUsers">wczytywanie…</div>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <a class="home-link" href="index.html">← strona główna</a>
+      <div class="stat">
+        <div class="num" id="totalRcr">—</div>
+        <div class="lbl" id="totalUsers">wczytywanie…</div>
+      </div>
     </div>
   </header>
 
   <div class="toolbar">
     <input class="search" id="searchInput" type="text" placeholder="Szukaj po loginie…" autocomplete="off">
+    <label class="toggle-row" for="showInactiveToggle">
+      <input id="showInactiveToggle" type="checkbox">
+      <span>pokaż również nieaktywne konta</span>
+    </label>
     <div class="sync">
       <span class="dot" id="syncDot"></span>
       <span id="syncLabel">łączenie z arkuszem…</span>
@@ -435,6 +454,7 @@ let rcrRows = [];
 let archiveRows = [];
 let archiveLoaded = false;
 let refreshTimer = null;
+let showInactive = false;
 
 function parseNum(v){
   if (v === undefined || v === null) return 0;
@@ -567,12 +587,19 @@ async function loadAll(isManual){
     const rcrObjs = tableToObjects(rcrTable);
 
     saldaRows = saldaObjs
-      .map(o => ({
-        login: strFromCell(o['Login']).trim(),
-        rcr: numFromCell(o['RCR']),
-        rcrt: numFromCell(o['RCRT']),
-        pct: pctFromCell(o['PROCENT RCR'])
-      }))
+      .map(o => {
+        const active = String(strFromCell(o['AKTYWNY'])).trim().toLowerCase() === 'tak';
+        const pct = active
+          ? pctFromCell(o['PROCENT AKTYWNYCH RCR'])
+          : pctFromCell(o['PROCENT RCR']);
+        return {
+          login: strFromCell(o['Login']).trim(),
+          rcr: numFromCell(o['RCR']),
+          rcrt: numFromCell(o['RCRT']),
+          pct: pct,
+          aktywny: active
+        };
+      })
       .filter(r => r.login !== '')
       .sort((a,b) => b.rcr - a.rcr);
 
@@ -627,13 +654,15 @@ function renderError(detail){
 }
 
 function renderList(filter){
-  const total = saldaRows.reduce((s,r) => s + r.rcr, 0);
-  document.getElementById('totalRcr').textContent = Math.round(total).toLocaleString('pl-PL');
-  document.getElementById('totalUsers').textContent = saldaRows.length + ' uczestników';
-
   const q = (filter || document.getElementById('searchInput').value || '').toLowerCase().trim();
-  const rows = saldaRows.filter(r => r.login.toLowerCase().includes(q));
-  const maxRcr = saldaRows.length ? saldaRows[0].rcr : 1;
+  const rows = saldaRows.filter(r => (showInactive || r.aktywny) && r.login.toLowerCase().includes(q));
+  const total = rows.reduce((s, r) => s + r.rcr, 0);
+  const label = showInactive ? 'uczestników' : 'aktywnych uczestników';
+
+  document.getElementById('totalRcr').textContent = Math.round(total).toLocaleString('pl-PL');
+  document.getElementById('totalUsers').textContent = rows.length + ' ' + label;
+
+  const maxRcr = rows.length ? Math.max(...rows.map(r => r.rcr), 1) : 1;
 
   const container = document.getElementById('listContainer');
   if(rows.length === 0){
@@ -643,15 +672,19 @@ function renderList(filter){
 
   container.innerHTML = rows.map((r, i) => {
     const width = maxRcr > 0 ? Math.max(2, (r.rcr / maxRcr) * 100) : 0;
+    const stateTag = r.aktywny ? '' : '<span class="state-tag inactive">nieaktywny</span>';
     return `
     <div class="row" tabindex="0" role="button" data-login="${escapeHtml(r.login)}" aria-label="Zobacz transakcje: ${escapeHtml(r.login)}">
       <div class="rank ${i===0 ? 'top' : ''}">${i+1}</div>
       <div class="who">
-        <div class="login">${escapeHtml(r.login)}</div>
+        <div class="login-line">
+          <span class="login">${escapeHtml(r.login)}</span>
+          ${stateTag}
+        </div>
         <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
       </div>
       <div class="rcr">${Math.round(r.rcr).toLocaleString('pl-PL')} RCR</div>
-      <div class="pct">${r.pct.toFixed(2)}%</div>
+      <div class="pct">${(r.pct || 0).toFixed(2)}%</div>
     </div>`;
   }).join('');
 
@@ -900,6 +933,10 @@ document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 document.getElementById('scrim').addEventListener('click', closeDrawer);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeDrawer(); });
 document.getElementById('searchInput').addEventListener('input', e => renderList(e.target.value));
+document.getElementById('showInactiveToggle').addEventListener('change', function () {
+  showInactive = this.checked;
+  renderList();
+});
 
 loadArchiveOnce();
 loadAll(false);

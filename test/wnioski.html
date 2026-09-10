@@ -67,6 +67,11 @@
   .vote-stats .za-label{ color: var(--pos); }
   .vote-stats .przeciw-label{ color: var(--neg); }
   .turnout{ margin-top:4px; font-size:11.5px; color:var(--ink-muted); font-family:'IBM Plex Mono',monospace; }
+  .card-actions{ display:flex; justify-content:flex-end; margin-top:14px; }
+  .inline-vote{
+    background: transparent; border: 1px solid var(--gold); color: var(--gold); border-radius:6px;
+    padding: 8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+  }
 
   .empty{ color:var(--ink-muted); padding:30px 0; text-align:center; font-size:14px; }
 
@@ -216,9 +221,9 @@
 
 <script>
 const APP_CONFIG = {
-  webAppUrl: 'https://script.google.com/macros/s/AKfycbyIhwzMbLmeJ_Z86-z3ZQUv-mERrPYxOjldqWg5zIyarJZP2K_lmKW5XQi0QSxbMvEHYg/exec'
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbz10rl_YMpBfJEK1vFZVdGE2cR3SyNF8u4WUTZXexZJQAl7vAve8H2AJNehqIHIENo0DA/exec'
 };
-const REFRESH_MS = 5 * 60 * 1000;
+const REFRESH_MS = 2 * 60 * 1000;
 
 let proposals = [];
 
@@ -266,6 +271,9 @@ function escapeHtml(s){
 
 function cardHtml(p, archived){
   const excerpt = p.tresc.length > 140 ? p.tresc.slice(0, 140) + '…' : p.tresc;
+  const voteButton = p.status === 'Aktywny'
+    ? `<div class="card-actions"><button class="inline-vote" type="button" data-vote-id="${p.id}">Zagłosuj</button></div>`
+    : '';
   return `
   <div class="card ${archived ? 'archived' : ''}" data-id="${p.id}">
     <div class="card-top">
@@ -282,6 +290,7 @@ function cardHtml(p, archived){
       <span class="przeciw-label">przeciw ${p.procentPrzeciw.toFixed(1)}%</span>
     </div>
     <div class="turnout">frekwencja: ${p.procentFrekwencji.toFixed(1)}% całkowitego RCR</div>
+    ${voteButton}
   </div>`;
 }
 
@@ -318,6 +327,13 @@ function render(){
 // podpinania go do każdej karty osobno przy każdym odświeżeniu listy —
 // odporne na to, kiedy dokładnie karty zostały utworzone/zastąpione.
 document.getElementById('proposalsContainer').addEventListener('click', (e) => {
+  const voteBtn = e.target.closest('.inline-vote');
+  if (voteBtn) {
+    e.stopPropagation();
+    openVoteModal(voteBtn.dataset.voteId);
+    return;
+  }
+
   const card = e.target.closest('.card');
   if (card) openDetail(card.dataset.id);
 });
