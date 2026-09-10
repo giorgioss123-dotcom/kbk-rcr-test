@@ -352,10 +352,9 @@
   </div>
 </div>
 
+<script src="public-config.js"></script>
 <script>
-  const APP_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbwZ1Q8B3gcG5hoqJjAqsNG8WX85m0WpICv5h47H8YIqhmQvMVAlwXwsAgqn3tEHDYo6gw/exec'
-  };
+  const APP_CONFIG = window.KBK_APP_CONFIG;
   const USERNAME_RE = /^[A-Za-z0-9._-]{3,32}$/;
   const CONTACT_EMAIL = 'kontakt@twojadomena.pl';
   const formLoadedAt = Date.now();

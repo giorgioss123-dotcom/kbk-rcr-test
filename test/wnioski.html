@@ -568,14 +568,16 @@
   </div>
 </div>
 
+<script src="public-config.js"></script>
 <script>
-  const APP_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbwZ1Q8B3gcG5hoqJjAqsNG8WX85m0WpICv5h47H8YIqhmQvMVAlwXwsAgqn3tEHDYo6gw/exec'
-  };
+  const APP_CONFIG = window.KBK_APP_CONFIG;
+  const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
   const SHEET_CACHE_MS = 600000;
+  const VOTES_CACHE_MS = 30000;
   const sheetCache = {};
+  const voteListCache = {};
 
   let proposals = [];
   let proposalsCache = null;
@@ -606,6 +608,60 @@
 
   let currentDetailId = null;
   let currentVoteChoice = null;
+
+  function normalizeKey(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  function lookupCell(row, candidates) {
+    const map = {};
+    Object.keys(row).forEach(function (key) {
+      map[normalizeKey(key)] = key;
+    });
+    for (let i = 0; i < candidates.length; i++) {
+      const match = map[normalizeKey(candidates[i])];
+      if (match !== undefined) return row[match];
+    }
+    return undefined;
+  }
+  function tableToObjects(table) {
+    const labels = (table.cols || []).map(function (col) { return String(col.label || '').trim(); });
+    return (table.rows || []).map(function (row) {
+      const obj = {};
+      (row.c || []).forEach(function (cell, index) {
+        const key = labels[index] || ('col' + index);
+        obj[key] = cell === undefined || cell === null ? '' : cell;
+        obj[normalizeKey(key)] = cell === undefined || cell === null ? '' : cell;
+      });
+      return obj;
+    });
+  }
+  function strFromCell(cell) {
+    if (cell === null || cell === undefined) return '';
+    if (cell.f !== undefined && cell.f !== null) return safeText(cell.f, '');
+    if (cell.v !== undefined && cell.v !== null) return safeText(cell.v, '');
+    return '';
+  }
+  function numFromCell(cell) {
+    if (cell === null || cell === undefined) return 0;
+    if (typeof cell === 'number' && Number.isFinite(cell)) return cell;
+    if (cell.v !== undefined && cell.v !== null) {
+      if (typeof cell.v === 'number' && Number.isFinite(cell.v)) return cell.v;
+      if (typeof cell.v === 'string') {
+        const cleaned = cell.v.replace(/\s/g, '').replace(',', '.');
+        const n = Number(cleaned);
+        return Number.isFinite(n) ? n : 0;
+      }
+    }
+    if (typeof cell === 'string') {
+      const cleaned = cell.replace(/\s/g, '').replace(',', '.');
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  }
+  function getWnioskiSheetId() {
+    return Promise.resolve(PUBLIC_SHEET_IDS.wnioskiFileId);
+  }
 
   function fmtDate(iso){
     if (!iso) return '—';
@@ -734,8 +790,8 @@
     }
     document.getElementById('syncLabel').textContent = 'wczytywanie…';
     try{
-      const config = await getPublicSheetConfig();
-      const table = await loadSheetJSONP(config.wnioskiFileId, 'WNIOSKI');
+      const sheetId = await getWnioskiSheetId();
+      const table = await loadSheetJSONP(sheetId, 'WNIOSKI');
       const rows = tableToObjects(table).map(function (row) {
         const id = strFromCell(lookupCell(row, ['ID', 'id'])) || '';
         const status = strFromCell(lookupCell(row, ['STATUS', 'status', 'Status'])) || '';
@@ -837,13 +893,37 @@
     openModal('detailModal');
   }
 
+  function renderVotesTable(tableEl, votes) {
+    if (votes.length === 0) {
+      tableEl.innerHTML = '<div style="font-size:0.85rem;color:#7a6f4d;padding:10px 0;font-family:\'IBM Plex Mono\',monospace;">Brak potwierdzonych głosów.</div>';
+      return;
+    }
+    tableEl.innerHTML = '<div class="votes-table">' + votes.map(v => `
+      <div class="votes-row">
+        <span class="v-login">${escapeHtml(v.login)}</span>
+        <span class="v-glos ${v.glos}">${v.glos}</span>
+        <span class="v-waga">${Math.round(v.waga).toLocaleString('pl-PL')} RCR</span>
+        <span class="v-procent">${v.procent.toFixed(1)}%</span>
+      </div>`).join('') + '</div>';
+  }
+
   async function loadVotesList(wniosekId){
+    const cacheKey = String(wniosekId);
+    const cached = voteListCache[cacheKey];
+    if (cached && cached.expiresAt && Date.now() < cached.expiresAt) {
+      const btn = document.getElementById('showVotesBtn');
+      const table = document.getElementById('votesTable');
+      if (btn) { btn.remove(); }
+      renderVotesTable(table, cached.votes);
+      return;
+    }
+
     const btn = document.getElementById('showVotesBtn');
     const table = document.getElementById('votesTable');
     btn.textContent = 'Wczytywanie…'; btn.disabled = true;
     try{
-      const config = await getPublicSheetConfig();
-      const sheet = await loadSheetJSONP(config.wnioskiFileId, 'GŁOSY');
+      const sheetId = await getWnioskiSheetId();
+      const sheet = await loadSheetJSONP(sheetId, 'GŁOSY');
       const rows = tableToObjects(sheet).filter(function (row) {
         const rowId = strFromCell(lookupCell(row, ['WNIOSEK_ID', 'WNIOSEKID', 'wniosekid', 'wniosekId']));
         return String(rowId).trim() === String(wniosekId).trim();
@@ -857,17 +937,8 @@
       const votes = rows.map(function (vote) {
         return Object.assign({}, vote, { procent: total > 0 ? (vote.waga / total) * 100 : 0 });
       }).sort(function (a, b) { return b.waga - a.waga; });
-      if (votes.length === 0) {
-        table.innerHTML = '<div style="font-size:0.85rem;color:#7a6f4d;padding:10px 0;font-family:\'IBM Plex Mono\',monospace;">Brak potwierdzonych głosów.</div>';
-      } else {
-        table.innerHTML = '<div class="votes-table">' + votes.map(v => `
-          <div class="votes-row">
-            <span class="v-login">${escapeHtml(v.login)}</span>
-            <span class="v-glos ${v.glos}">${v.glos}</span>
-            <span class="v-waga">${Math.round(v.waga).toLocaleString('pl-PL')} RCR</span>
-            <span class="v-procent">${v.procent.toFixed(1)}%</span>
-          </div>`).join('') + '</div>';
-      }
+      voteListCache[cacheKey] = { votes: votes, expiresAt: Date.now() + VOTES_CACHE_MS };
+      renderVotesTable(table, votes);
       btn.remove();
     }catch(err){
       console.error(err);

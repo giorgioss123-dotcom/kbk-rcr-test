@@ -308,19 +308,21 @@
   </main>
 </div>
 
+<script src="public-config.js"></script>
 <script>
-  const APP_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbwZ1Q8B3gcG5hoqJjAqsNG8WX85m0WpICv5h47H8YIqhmQvMVAlwXwsAgqn3tEHDYo6gw/exec'
-  };
+  const APP_CONFIG = window.KBK_APP_CONFIG;
+  const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const MESSAGE_TTL_MS = 4000;
   const SHEET_CACHE_MS = 300000;
+  const PRODUCT_CACHE_MS = 300000;
   const sheetCache = {};
   const productsEl = document.getElementById('products');
   const messageEl = document.getElementById('message');
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
   let messageTimer = null;
-  let publicSheetConfig = null;
+  let productCache = null;
+  let productCacheTs = 0;
 
   function normalizeKey(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -432,15 +434,8 @@
     sheetCache[cacheKey] = { promise: promise };
     return promise;
   }
-  function getPublicSheetConfig() {
-    if (publicSheetConfig) return Promise.resolve(publicSheetConfig);
-    return fetch(APP_CONFIG.webAppUrl + '?action=publicConfig')
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (!data || !data.ok || !data.cennikFileId) throw new Error('Brak danych konfiguracyjnych publicznego arkusza.');
-        publicSheetConfig = data;
-        return data;
-      });
+  function getCennikSheetId() {
+    return Promise.resolve(PUBLIC_SHEET_IDS.cennikFileId);
   }
 
   function showMessage(text, type) {
@@ -470,10 +465,15 @@
       return '<div class="product"><span class="product-name">' + escapeHtml(product.name) + ' · ' + product.cost + ' RCR</span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="0" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
     }).join('');
   }
-  function loadProducts() {
-    return getPublicSheetConfig()
-      .then(function (config) {
-        return loadSheetJSONP(config.cennikFileId, 'CENNIK');
+  function loadProducts(forceReload) {
+    const now = Date.now();
+    if (!forceReload && productCache && (now - productCacheTs) < PRODUCT_CACHE_MS) {
+      renderProducts(productCache);
+      return Promise.resolve(productCache);
+    }
+    return getCennikSheetId()
+      .then(function (sheetId) {
+        return loadSheetJSONP(sheetId, 'CENNIK');
       })
       .then(function (table) {
         const rows = tableToObjects(table);
@@ -487,7 +487,10 @@
             return { name: cleanName, cost: cost };
           })
           .filter(Boolean);
+        productCache = products;
+        productCacheTs = Date.now();
         renderProducts(products);
+        return products;
       });
   }
   function clampQuantity(value) {
@@ -533,7 +536,7 @@
       .catch(function () { pinInput.value = ''; showMessage('Nie udało się połączyć z backendem.', 'error'); })
       .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });
   });
-  loadProducts().catch(function () {
+  loadProducts(true).catch(function () {
     productsEl.innerHTML = '<div class="product"><span class="product-name">Nie udało się wczytać produktów.</span></div>';
   });
 </script>

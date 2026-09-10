@@ -577,9 +577,11 @@
   </div>
 </aside>
 
+<script src="public-config.js"></script>
 <script>
-  const SHEET_ID = '1dDVJd-BbCpnvbTDa0gacVRYeGzQ7zGHE5iM3NRhLMSw';
-  const ARCHIVE_SHEET_ID = '1SnhoLAv_X2lqlsVuhzghr2_2bDbLBIQS3ERxRS66xJg';
+  const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
+  const SHEET_ID = PUBLIC_SHEET_IDS.transakcjeFileId;
+  const ARCHIVE_SHEET_ID = PUBLIC_SHEET_IDS.transakcjeArchiveFileId;
   const ARCHIVE_SHEET_NAME = 'RCR';
   const REFRESH_MS = 5 * 60 * 1000;
   const JSONP_TIMEOUT_MS = 15000;
