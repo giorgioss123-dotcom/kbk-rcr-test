@@ -569,14 +569,14 @@
 </div>
 
 <script src="public-config.js"></script>
+<script src="js/shared.js"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
+  const shared = window.KBKShared;
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
-  const SHEET_CACHE_MS = 600000;
   const VOTES_CACHE_MS = 30000;
-  const sheetCache = {};
   const voteListCache = {};
 
   let proposals = [];
@@ -609,56 +609,6 @@
   let currentDetailId = null;
   let currentVoteChoice = null;
 
-  function normalizeKey(value) {
-    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  }
-  function lookupCell(row, candidates) {
-    const map = {};
-    Object.keys(row).forEach(function (key) {
-      map[normalizeKey(key)] = key;
-    });
-    for (let i = 0; i < candidates.length; i++) {
-      const match = map[normalizeKey(candidates[i])];
-      if (match !== undefined) return row[match];
-    }
-    return undefined;
-  }
-  function tableToObjects(table) {
-    const labels = (table.cols || []).map(function (col) { return String(col.label || '').trim(); });
-    return (table.rows || []).map(function (row) {
-      const obj = {};
-      (row.c || []).forEach(function (cell, index) {
-        const key = labels[index] || ('col' + index);
-        obj[key] = cell === undefined || cell === null ? '' : cell;
-        obj[normalizeKey(key)] = cell === undefined || cell === null ? '' : cell;
-      });
-      return obj;
-    });
-  }
-  function strFromCell(cell) {
-    if (cell === null || cell === undefined) return '';
-    if (cell.f !== undefined && cell.f !== null) return safeText(cell.f, '');
-    if (cell.v !== undefined && cell.v !== null) return safeText(cell.v, '');
-    return '';
-  }
-  function numFromCell(cell) {
-    if (cell === null || cell === undefined) return 0;
-    if (typeof cell === 'number' && Number.isFinite(cell)) return cell;
-    if (cell.v !== undefined && cell.v !== null) {
-      if (typeof cell.v === 'number' && Number.isFinite(cell.v)) return cell.v;
-      if (typeof cell.v === 'string') {
-        const cleaned = cell.v.replace(/\s/g, '').replace(',', '.');
-        const n = Number(cleaned);
-        return Number.isFinite(n) ? n : 0;
-      }
-    }
-    if (typeof cell === 'string') {
-      const cleaned = cell.replace(/\s/g, '').replace(',', '.');
-      const n = Number(cleaned);
-      return Number.isFinite(n) ? n : 0;
-    }
-    return 0;
-  }
   function getWnioskiSheetId() {
     return Promise.resolve(PUBLIC_SHEET_IDS.wnioskiFileId);
   }
@@ -791,13 +741,13 @@
     document.getElementById('syncLabel').textContent = 'wczytywanie…';
     try{
       const sheetId = await getWnioskiSheetId();
-      const table = await loadSheetJSONP(sheetId, 'WNIOSKI');
-      const rows = tableToObjects(table).map(function (row) {
-        const id = strFromCell(lookupCell(row, ['ID', 'id'])) || '';
-        const status = strFromCell(lookupCell(row, ['STATUS', 'status', 'Status'])) || '';
-        const za = numFromCell(lookupCell(row, ['GŁOSÓW_ZA', 'GLOSOW_ZA', 'ZA', 'za']));
-        const przeciw = numFromCell(lookupCell(row, ['GŁOSÓW_PRZECIW', 'GLOSOW_PRZECIW', 'PRZECIW', 'przeciw']));
-        const activeRcr = numFromCell(lookupCell(row, ['SUMA_RCR_W_DNIU_WYGAŚNIĘCIA', 'SUMA_RCR', 'suma_rcr', 'RCR']));
+      const table = await shared.loadSheetJSONP(sheetId, 'WNIOSKI', { cacheMs: 600000, timeoutMs: 15000 });
+      const rows = shared.tableToObjects(table).map(function (row) {
+        const id = shared.strFromCell(shared.lookupCell(row, ['ID', 'id'])) || '';
+        const status = shared.strFromCell(shared.lookupCell(row, ['STATUS', 'status', 'Status'])) || '';
+        const za = shared.numFromCell(shared.lookupCell(row, ['GŁOSÓW_ZA', 'GLOSOW_ZA', 'ZA', 'za']));
+        const przeciw = shared.numFromCell(shared.lookupCell(row, ['GŁOSÓW_PRZECIW', 'GLOSOW_PRZECIW', 'PRZECIW', 'przeciw']));
+        const activeRcr = shared.numFromCell(shared.lookupCell(row, ['SUMA_RCR_W_DNIU_WYGAŚNIĘCIA', 'SUMA_RCR', 'suma_rcr', 'RCR']));
         const totalForTurnout = status === 'Aktywny' ? activeRcr : activeRcr;
         const tytul = strFromCell(lookupCell(row, ['TYTUŁ', 'TYTUL', 'tytul', 'Tytuł']));
         const tresc = strFromCell(lookupCell(row, ['TREŚĆ', 'TRESC', 'tresc', 'Treść']));
@@ -923,14 +873,14 @@
     btn.textContent = 'Wczytywanie…'; btn.disabled = true;
     try{
       const sheetId = await getWnioskiSheetId();
-      const sheet = await loadSheetJSONP(sheetId, 'GŁOSY');
-      const rows = tableToObjects(sheet).filter(function (row) {
-        const rowId = strFromCell(lookupCell(row, ['WNIOSEK_ID', 'WNIOSEKID', 'wniosekid', 'wniosekId']));
+      const sheet = await shared.loadSheetJSONP(sheetId, 'GŁOSY', { cacheMs: 600000, timeoutMs: 15000 });
+      const rows = shared.tableToObjects(sheet).filter(function (row) {
+        const rowId = shared.strFromCell(shared.lookupCell(row, ['WNIOSEK_ID', 'WNIOSEKID', 'wniosekid', 'wniosekId']));
         return String(rowId).trim() === String(wniosekId).trim();
       }).map(function (row) {
-        const login = strFromCell(lookupCell(row, ['LOGIN', 'login', 'Login']));
-        const glos = strFromCell(lookupCell(row, ['GŁOS', 'GLOS', 'glos', 'Głos']));
-        const waga = numFromCell(lookupCell(row, ['WAGA_RCR', 'WAGA', 'waga', 'waga_rcr']));
+        const login = shared.strFromCell(shared.lookupCell(row, ['LOGIN', 'login', 'Login']));
+        const glos = shared.strFromCell(shared.lookupCell(row, ['GŁOS', 'GLOS', 'glos', 'Głos']));
+        const waga = shared.numFromCell(shared.lookupCell(row, ['WAGA_RCR', 'WAGA', 'waga', 'waga_rcr']));
         return { login: login, glos: glos, waga: waga };
       });
       const total = rows.reduce(function (sum, vote) { return sum + vote.waga; }, 0);

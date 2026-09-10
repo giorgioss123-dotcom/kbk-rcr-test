@@ -578,7 +578,9 @@
 </aside>
 
 <script src="public-config.js"></script>
+<script src="js/shared.js"></script>
 <script>
+  const shared = window.KBKShared;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const SHEET_ID = PUBLIC_SHEET_IDS.transakcjeFileId;
   const ARCHIVE_SHEET_ID = PUBLIC_SHEET_IDS.transakcjeArchiveFileId;
@@ -601,59 +603,17 @@
   }
 
   function loadSheetJSONP(sheetId, sheetName){
-    return new Promise((resolve, reject) => {
-      const cbName = 'gvizCb_' + sheetName.replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
-      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
-      const script = document.createElement('script');
-      let settled = false;
-      const cleanup = () => {
-        try { delete window[cbName]; } catch(e){ window[cbName] = undefined; }
-        if (script.parentNode) script.parentNode.removeChild(script);
-      };
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true; cleanup();
-        reject(new Error(`Przekroczono czas oczekiwania na arkusz "${sheetName}"`));
-      }, JSONP_TIMEOUT_MS);
-      window[cbName] = function(json){
-        if (settled) return;
-        settled = true; clearTimeout(timer); cleanup();
-        if (!json || !json.table) {
-          reject(new Error(`Nieprawidłowa odpowiedź dla arkusza "${sheetName}"`));
-          return;
-        }
-        resolve(json.table);
-      };
-      script.onerror = () => {
-        if (settled) return;
-        settled = true; clearTimeout(timer); cleanup();
-        reject(new Error(`Nie udało się załadować arkusza "${sheetName}" — sprawdź nazwę zakładki i czy arkusz jest publiczny`));
-      };
-      script.src = url;
-      document.head.appendChild(script);
-    });
+    return shared.loadSheetJSONP(sheetId, sheetName, { cacheMs: 5 * 60 * 1000, timeoutMs: JSONP_TIMEOUT_MS });
   }
 
   function tableToObjects(table){
-    const labels = (table.cols || []).map(c => (c.label || '').trim());
-    return (table.rows || []).map(row => {
-      const obj = {};
-      (row.c || []).forEach((cell, i) => { obj[labels[i]] = cell; });
-      return obj;
-    });
+    return shared.tableToObjects(table);
   }
   function strFromCell(cell){
-    if (!cell) return '';
-    if (cell.f !== undefined && cell.f !== null) return String(cell.f);
-    if (cell.v !== undefined && cell.v !== null) return String(cell.v);
-    return '';
+    return shared.strFromCell(cell);
   }
   function numFromCell(cell){
-    if (!cell) return 0;
-    if (typeof cell.v === 'number') return cell.v;
-    if (typeof cell.v === 'string') return parseNum(cell.v);
-    if (typeof cell.f === 'string') return parseNum(cell.f);
-    return 0;
+    return shared.numFromCell(cell);
   }
   function pctFromCell(cell){
     if (!cell) return 0;
