@@ -310,7 +310,7 @@
 
 <script>
   const APP_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbxTK2EwxVJ9rtnDEU2a7hmSC4Mzxyr2Dz60KYVqmeeBU1pudAEcOIZqSxOE8VICZZhvXg/exec'
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbwZ1Q8B3gcG5hoqJjAqsNG8WX85m0WpICv5h47H8YIqhmQvMVAlwXwsAgqn3tEHDYo6gw/exec'
   };
   const MESSAGE_TTL_MS = 4000;
   const SHEET_CACHE_MS = 300000;
@@ -461,9 +461,6 @@
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
     });
   }
-  function apiGet(action) {
-    return fetch(APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(action)).then(function (r) { return r.json(); });
-  }
   function renderProducts(products) {
     if (!products || products.length === 0) {
       productsEl.innerHTML = '<div class="product"><span class="product-name">Brak aktywnych produktów w cenniku.</span></div>';
@@ -491,12 +488,6 @@
           })
           .filter(Boolean);
         renderProducts(products);
-      })
-      .catch(function () {
-        return apiGet('listProducts').then(function (data) {
-          if (!data || !data.ok) throw new Error('Nie udało się pobrać cennika.');
-          renderProducts(data.products || []);
-        });
       });
   }
   function clampQuantity(value) {

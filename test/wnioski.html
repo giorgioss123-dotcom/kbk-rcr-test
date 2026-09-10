@@ -570,7 +570,7 @@
 
 <script>
   const APP_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbxTK2EwxVJ9rtnDEU2a7hmSC4Mzxyr2Dz60KYVqmeeBU1pudAEcOIZqSxOE8VICZZhvXg/exec'
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbwZ1Q8B3gcG5hoqJjAqsNG8WX85m0WpICv5h47H8YIqhmQvMVAlwXwsAgqn3tEHDYo6gw/exec'
   };
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
@@ -774,17 +774,10 @@
       document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
     }catch(err){
       console.error(err);
-      try {
-        const res = await fetch(APP_CONFIG.webAppUrl + '?action=listProposals');
-        const data = await res.json();
-        proposals = data.proposals || [];
-        proposalsCache = proposals; proposalsCacheTs = Date.now();
-        render();
-        document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
-      } catch (fallbackErr) {
-        console.error(fallbackErr);
-        document.getElementById('syncLabel').textContent = 'błąd wczytywania danych';
-      }
+      proposals = [];
+      proposalsCache = proposals; proposalsCacheTs = Date.now();
+      render();
+      document.getElementById('syncLabel').textContent = 'błąd wczytywania danych';
     }
   }
   function render(){
@@ -878,27 +871,8 @@
       btn.remove();
     }catch(err){
       console.error(err);
-      try {
-        const res = await fetch(APP_CONFIG.webAppUrl + '?action=listVotes&wniosekId=' + encodeURIComponent(wniosekId));
-        const data = await res.json();
-        const votes = data.votes || [];
-        if (votes.length === 0) {
-          table.innerHTML = '<div style="font-size:0.85rem;color:#7a6f4d;padding:10px 0;font-family:\'IBM Plex Mono\',monospace;">Brak potwierdzonych głosów.</div>';
-        } else {
-          table.innerHTML = '<div class="votes-table">' + votes.map(v => `
-            <div class="votes-row">
-              <span class="v-login">${escapeHtml(v.login)}</span>
-              <span class="v-glos ${v.glos}">${v.glos}</span>
-              <span class="v-waga">${Math.round(v.waga).toLocaleString('pl-PL')} RCR</span>
-              <span class="v-procent">${v.procent.toFixed(1)}%</span>
-            </div>`).join('') + '</div>';
-        }
-        btn.remove();
-      } catch (fallbackErr) {
-        console.error(fallbackErr);
-        table.innerHTML = '<div style="font-size:0.85rem;color:#a44650;padding:10px 0;">Nie udało się wczytać listy głosów.</div>';
-        btn.textContent = 'Zobacz listę głosów'; btn.disabled = false;
-      }
+      table.innerHTML = '<div style="font-size:0.85rem;color:#a44650;padding:10px 0;">Nie udało się wczytać listy głosów.</div>';
+      btn.textContent = 'Zobacz listę głosów'; btn.disabled = false;
     }
   }
 
