@@ -574,6 +574,9 @@
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
+  const safeText = shared.safeText;
+  const lookupCell = shared.lookupCell;
+  const strFromCell = shared.strFromCell;
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
   const VOTES_CACHE_MS = 30000;
@@ -629,17 +632,6 @@
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   }
-  function safeText(value, fallback = '') {
-    if (value === null || value === undefined) return fallback;
-    if (typeof value === 'string') return value.trim();
-    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-    try {
-      const text = String(value).trim();
-      return text === 'undefined' || text === 'null' ? fallback : text;
-    } catch (e) {
-      return fallback;
-    }
-  }
   function badgeHtml(status){
     const normalized = safeText(status);
     if (normalized === 'Aktywny')   return '<span class="badge active">aktywny</span>';
@@ -651,53 +643,7 @@
     return String(safeText(s, '')).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
   function loadSheetJSONP(sheetId, sheetName) {
-    const cacheKey = String(sheetId) + '|' + String(sheetName);
-    const cached = sheetCache[cacheKey];
-    if (cached && cached.expiresAt && Date.now() < cached.expiresAt && cached.table) {
-      return Promise.resolve(cached.table);
-    }
-    if (cached && cached.promise) {
-      return cached.promise;
-    }
-
-    const promise = new Promise(function (resolve, reject) {
-      const cbName = 'gvizCb_' + sheetName.replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-      const url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json;responseHandler:' + cbName + '&sheet=' + encodeURIComponent(sheetName) + '&t=' + Date.now();
-      const script = document.createElement('script');
-      let settled = false;
-      const cleanup = function () {
-        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
-        if (script.parentNode) script.parentNode.removeChild(script);
-      };
-      const timer = setTimeout(function () {
-        if (settled) return;
-        settled = true; cleanup();
-        delete sheetCache[cacheKey];
-        reject(new Error('Przekroczono czas oczekiwania na arkusz "' + sheetName + '"'));
-      }, 15000);
-      window[cbName] = function (json) {
-        if (settled) return;
-        settled = true; clearTimeout(timer); cleanup();
-        if (!json || !json.table) {
-          delete sheetCache[cacheKey];
-          reject(new Error('Nieprawidłowa odpowiedź dla arkusza "' + sheetName + '"'));
-          return;
-        }
-        sheetCache[cacheKey] = { table: json.table, expiresAt: Date.now() + SHEET_CACHE_MS };
-        resolve(json.table);
-      };
-      script.onerror = function () {
-        if (settled) return;
-        settled = true; clearTimeout(timer); cleanup();
-        delete sheetCache[cacheKey];
-        reject(new Error('Nie udało się załadować arkusza "' + sheetName + '"'));
-      };
-      script.src = url;
-      document.head.appendChild(script);
-    });
-
-    sheetCache[cacheKey] = { promise: promise };
-    return promise;
+    return shared.loadSheetJSONP(sheetId, sheetName, { cacheMs: 600000, timeoutMs: 15000 });
   }
   function cardHtml(p, archived){
     const safeTitle = safeText(p.tytul, '');
