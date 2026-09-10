@@ -310,7 +310,7 @@
 
 <script>
   const APP_CONFIG = {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbzV1txpMeQcyGcEbF5NNywsnqxCk59JA8yJrEhbM7CA80MEElOaui9XYGyHddNkhAfTmg/exec'
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbxTK2EwxVJ9rtnDEU2a7hmSC4Mzxyr2Dz60KYVqmeeBU1pudAEcOIZqSxOE8VICZZhvXg/exec'
   };
   const MESSAGE_TTL_MS = 4000;
   const productsEl = document.getElementById('products');
@@ -318,6 +318,112 @@
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
   let messageTimer = null;
+  let publicSheetConfig = null;
+
+  function normalizeKey(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+  function safeText(value, fallback) {
+    if (value === null || value === undefined) return fallback !== undefined ? fallback : '';
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    try {
+      const text = String(value).trim();
+      return text === 'undefined' || text === 'null' ? (fallback !== undefined ? fallback : '') : text;
+    } catch (e) {
+      return fallback !== undefined ? fallback : '';
+    }
+  }
+  function lookupCell(row, candidates) {
+    const map = {};
+    Object.keys(row).forEach(function (key) {
+      map[normalizeKey(key)] = key;
+    });
+    for (let i = 0; i < candidates.length; i++) {
+      const match = map[normalizeKey(candidates[i])];
+      if (match !== undefined) return row[match];
+    }
+    return undefined;
+  }
+  function tableToObjects(table) {
+    const labels = (table.cols || []).map(function (col) { return String(col.label || '').trim(); });
+    return (table.rows || []).map(function (row) {
+      const obj = {};
+      (row.c || []).forEach(function (cell, index) {
+        const key = labels[index] || ('col' + index);
+        obj[key] = cell === undefined || cell === null ? '' : cell;
+        obj[normalizeKey(key)] = cell === undefined || cell === null ? '' : cell;
+      });
+      return obj;
+    });
+  }
+  function strFromCell(cell) {
+    if (cell === null || cell === undefined) return '';
+    if (cell.f !== undefined && cell.f !== null) return safeText(cell.f, '');
+    if (cell.v !== undefined && cell.v !== null) return safeText(cell.v, '');
+    return '';
+  }
+  function numFromCell(cell) {
+    if (cell === null || cell === undefined) return 0;
+    if (typeof cell === 'number' && Number.isFinite(cell)) return cell;
+    if (cell.v !== undefined && cell.v !== null) {
+      if (typeof cell.v === 'number' && Number.isFinite(cell.v)) return cell.v;
+      if (typeof cell.v === 'string') {
+        const cleaned = cell.v.replace(/\s/g, '').replace(',', '.');
+        const n = Number(cleaned);
+        return Number.isFinite(n) ? n : 0;
+      }
+    }
+    if (typeof cell === 'string') {
+      const cleaned = cell.replace(/\s/g, '').replace(',', '.');
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  }
+  function loadSheetJSONP(sheetId, sheetName) {
+    return new Promise(function (resolve, reject) {
+      const cbName = 'gvizCb_' + sheetName.replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+      const url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json;responseHandler:' + cbName + '&sheet=' + encodeURIComponent(sheetName) + '&t=' + Date.now();
+      const script = document.createElement('script');
+      let settled = false;
+      const cleanup = function () {
+        try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+        if (script.parentNode) script.parentNode.removeChild(script);
+      };
+      const timer = setTimeout(function () {
+        if (settled) return;
+        settled = true; cleanup();
+        reject(new Error('Przekroczono czas oczekiwania na arkusz "' + sheetName + '"'));
+      }, 15000);
+      window[cbName] = function (json) {
+        if (settled) return;
+        settled = true; clearTimeout(timer); cleanup();
+        if (!json || !json.table) {
+          reject(new Error('Nieprawidłowa odpowiedź dla arkusza "' + sheetName + '"'));
+          return;
+        }
+        resolve(json.table);
+      };
+      script.onerror = function () {
+        if (settled) return;
+        settled = true; clearTimeout(timer); cleanup();
+        reject(new Error('Nie udało się załadować arkusza "' + sheetName + '"'));
+      };
+      script.src = url;
+      document.head.appendChild(script);
+    });
+  }
+  function getPublicSheetConfig() {
+    if (publicSheetConfig) return Promise.resolve(publicSheetConfig);
+    return fetch(APP_CONFIG.webAppUrl + '?action=publicConfig')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.ok || !data.cennikFileId) throw new Error('Brak danych konfiguracyjnych publicznego arkusza.');
+        publicSheetConfig = data;
+        return data;
+      });
+  }
 
   function showMessage(text, type) {
     if (!text) { messageEl.textContent = ''; messageEl.className = 'status-box hidden'; return; }
@@ -332,7 +438,8 @@
     productsEl.querySelectorAll('.qty-value').forEach(function (f) { f.value = '0'; });
   }
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, function (c) {
+    const text = safeText(value, '');
+    return String(text).replace(/[&<>"']/g, function (c) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
     });
   }
@@ -349,10 +456,30 @@
     }).join('');
   }
   function loadProducts() {
-    return apiGet('listProducts').then(function (data) {
-      if (!data || !data.ok) throw new Error('Nie udało się pobrać cennika.');
-      renderProducts(data.products || []);
-    });
+    return getPublicSheetConfig()
+      .then(function (config) {
+        return loadSheetJSONP(config.cennikFileId, 'CENNIK');
+      })
+      .then(function (table) {
+        const rows = tableToObjects(table);
+        const products = rows
+          .map(function (row) {
+            const name = strFromCell(lookupCell(row, ['Element', 'ELEMENT', 'element']));
+            const costCell = lookupCell(row, ['Cena_RCR', 'CENA_RCR', 'Cena', 'cena', 'cena_rcr']);
+            const cost = numFromCell(costCell);
+            const cleanName = String(name || '').trim();
+            if (!cleanName || !Number.isFinite(cost) || cost < 0) return null;
+            return { name: cleanName, cost: cost };
+          })
+          .filter(Boolean);
+        renderProducts(products);
+      })
+      .catch(function () {
+        return apiGet('listProducts').then(function (data) {
+          if (!data || !data.ok) throw new Error('Nie udało się pobrać cennika.');
+          renderProducts(data.products || []);
+        });
+      });
   }
   function clampQuantity(value) {
     var numeric = Number(value);
