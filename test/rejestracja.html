@@ -185,9 +185,16 @@
     margin-top: 12px;
     font-size: 0.9rem;
   }
+  .checkbox-row.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
   .checkbox-row input {
     margin-top: 4px;
     accent-color: var(--teal-deep);
+  }
+  .checkbox-row input:disabled {
+    cursor: not-allowed;
   }
   .checkbox-row label {
     margin: 0; font-family: 'Archivo', sans-serif;
@@ -386,6 +393,21 @@
   const banner = document.getElementById('banner');
   const submitBtn = document.getElementById('submitBtn');
   const consentBlock = document.getElementById('consentBlock');
+  const addressInput = document.getElementById('adres');
+  const postalConsentInput = document.getElementById('zgodaPocztowy');
+
+  function updatePostalConsentState() {
+    const hasAddress = addressInput.value.trim().length > 0;
+    const row = postalConsentInput.closest('.checkbox-row');
+    postalConsentInput.disabled = !hasAddress;
+    postalConsentInput.checked = hasAddress ? postalConsentInput.checked : false;
+    if (row) {
+      row.classList.toggle('disabled', !hasAddress);
+    }
+  }
+
+  addressInput.addEventListener('input', updatePostalConsentState);
+  updatePostalConsentState();
 
   let loginCheckTimer = null;
   loginInput.addEventListener('input', function () {
@@ -473,7 +495,9 @@
         if (result && result.ok) {
           banner.textContent = 'Wysłano zapytanie o aktywację konta. Sprawdź skrzynkę mailową, by potwierdzić rejestrację.';
           banner.className = 'banner show ok';
-          form.reset(); pinHint.textContent = ''; pinHint.className = 'hint';
+          form.reset();
+          updatePostalConsentState();
+          pinHint.textContent = ''; pinHint.className = 'hint';
           consentBlock.classList.remove('open');
         } else {
           var message = result && result.message ? result.message : 'Nie udało się zarejestrować konta.';

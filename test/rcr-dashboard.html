@@ -665,9 +665,9 @@
       saldaRows = saldaObjs
         .map(o => {
           const active = String(strFromCell(o['AKTYWNY'])).trim().toLowerCase() === 'tak';
-          const pct = active
-            ? pctFromCell(o['PROCENT AKTYWNYCH RCR'])
-            : pctFromCell(o['PROCENT RCR']);
+          const pct = showInactive
+            ? pctFromCell(o['PROCENT RCR'])
+            : (active ? pctFromCell(o['PROCENT AKTYWNYCH RCR']) : pctFromCell(o['PROCENT RCR']));
           return {
             login: strFromCell(o['Login']).trim(),
             rcr: numFromCell(o['RCR']),
