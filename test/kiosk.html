@@ -1,210 +1,296 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ryneczek</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg: #101c17;
-      --bg-alt: #16241e;
-      --line: #2a3a33;
-      --ink: #eae6d9;
-      --ink-muted: #91a49a;
-      --gold: #c9a15a;
-      --paper: #f4efe1;
-      --paper-ink: #241f16;
-      --paper-line: #ddd2b3;
-      --pos: #4d7a5f;
-      --neg: #a44650;
-    }
-    *{box-sizing:border-box;}
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:48px 16px;
-      background:radial-gradient(ellipse at top, #142720 0%, var(--bg) 55%);
-      color:var(--paper-ink);
-      font-family:'Inter',sans-serif;
-    }
-    main{
-      width:min(720px,100%);
-      background:var(--paper);
-      border:1px solid var(--paper-line);
-      border-radius:14px;
-      box-shadow:0 28px 70px rgba(0,0,0,0.35);
-      padding:28px 26px 32px;
-    }
-    h1{
-      margin:0 0 8px;
-      font-family:'Fraunces',serif;
-      font-size:32px;
-      letter-spacing:-0.02em;
-    }
-    .subtitle{
-      margin:0 0 24px;
-      color:#7a6f4d;
-      font-size:14px;
-    }
-    #products{display:grid;gap:12px;}
-    .product{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      border:1px solid var(--paper-line);
-      border-radius:8px;
-      padding:12px 14px;
-      background:#fffdf7;
-    }
-    .product-name{font-weight:600;}
-    .qty-control{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      flex-shrink:0;
-      margin-left:auto;
-    }
-    .qty-button{
-      width:40px;
-      height:40px;
-      border:2px solid var(--paper-line);
-      border-radius:8px;
-      background:#f7f1d9;
-      color:var(--paper-ink);
-      font-size:24px;
-      line-height:1;
-      cursor:pointer;
-      padding:0;
-      font-weight:700;
-      box-shadow:0 1px 0 rgba(36,31,22,0.06);
-    }
-    .qty-value{
-      width:42px;
-      min-width:42px;
-      max-width:42px;
-      height:40px;
-      text-align:center;
-      border:1px solid var(--paper-line);
-      border-radius:6px;
-      background:#fffdf7;
-      padding:6px 2px;
-      font-size:15px;
-      line-height:1;
-      color:var(--paper-ink);
-      font-family:'Inter',sans-serif;
-      user-select:none;
-      cursor:default;
-    }
-    .row{display:grid;gap:8px;margin-top:18px}
-    label{display:block;margin:0 0 6px;font-size:13px;font-weight:600;}
-    input,button{font:inherit;}
-    .auth-input,
-    input[type="text"],
-    input[type="password"],
-    input[type="number"]{
-      width:100%;
-      border:1px solid var(--paper-line);
-      border-radius:8px;
-      background:#fffdf7;
-      padding:10px 12px;
-      color:var(--paper-ink);
-      appearance:none;
-      -webkit-appearance:none;
-      box-shadow:none;
-    }
-    .auth-input,
-    input[type="text"],
-    input[type="password"]{
-      min-height:44px;
-    }
-    input:focus{outline:none;border-color:var(--gold);}
-    .topbar{
-      display:flex;
-      justify-content:flex-end;
-      margin-bottom:18px;
-    }
-    .home-link{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      text-decoration:none;
-      border:1px solid var(--paper-line);
-      border-radius:8px;
-      padding:9px 14px;
-      background:transparent;
-      color:var(--paper-ink);
-      font-size:13px;
-      font-weight:600;
-    }
-    button{
-      width:100%;
-      border:none;
-      border-radius:8px;
-      background:#1b2e26;
-      color:#f4efe1;
-      padding:12px 16px;
-      font-weight:600;
-      cursor:pointer;
-    }
-    .status-box{
-      margin-top:16px;
-      border:1px solid var(--paper-line);
-      border-radius:10px;
-      background:#fffdf7;
-      padding:12px 14px;
-      min-height:58px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      font-size:13.5px;
-      line-height:1.4;
-      transition:opacity .2s ease, border-color .2s ease, background .2s ease;
-    }
-    .status-box.hidden{ opacity:0; visibility:hidden; }
-    .status-box.error{ border-color:rgba(164,70,80,0.4); background:rgba(164,70,80,0.08); color:var(--neg); }
-    .status-box.ok{ border-color:rgba(77,122,95,0.4); background:rgba(77,122,95,0.08); color:var(--pos); }
-    .status-box.info{ border-color:rgba(201,161,90,0.4); background:rgba(201,161,90,0.08); color:var(--paper-ink); }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ryneczek — KBK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #1a5a6b; --teal-dark: #13454f; --teal-deep: #0c3038;
+    --white: #ffffff; --paper: #f4eee0; --paper-ink: #1a252a; --paper-muted: #7a6f4d;
+    --paper-line: rgba(12, 48, 56, 0.18);
+    --line: rgba(255, 255, 255, 0.18); --line-2: rgba(255, 255, 255, 0.32);
+    --muted: rgba(255, 255, 255, 0.82); --muted-dim: rgba(255, 255, 255, 0.58);
+    --gold: #d4a95f; --pos: #4d7a5f; --neg: #a44650;
+    --maxw: 1140px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; overflow-x: hidden; }
+  body {
+    min-height: 100vh;
+    background: var(--teal);
+    background-image:
+      radial-gradient(ellipse at 15% -10%, rgba(43, 132, 153, 0.38) 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 100%, rgba(12, 48, 56, 0.75) 0%, transparent 60%),
+      linear-gradient(180deg, #17505f 0%, #13454f 100%);
+    background-attachment: fixed;
+    color: var(--white);
+    font-family: 'Archivo', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    pointer-events: none; opacity: 0.04; z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay;
+  }
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13, 55, 65, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    max-width: 100vw;
+  }
+  .nav-inner {
+    position: relative;
+    max-width: var(--maxw); margin: 0 auto;
+    padding: 11px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--white);
+    font-family: 'Anton', sans-serif;
+    font-size: 1.02rem; letter-spacing: 0.16em; text-transform: uppercase;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .nav-brand svg {
+  width: 18px;
+  height: 30px;
+  aspect-ratio: 240 / 400;
+  color: var(--white);
+  display: block;
+  flex-shrink: 0;
+}
+  .nav-back {
+    color: var(--muted); text-decoration: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 8px 14px; border: 1px solid var(--line-2);
+    transition: background 0.18s, color 0.18s;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .nav-back:hover { background: var(--white); color: var(--teal-deep); }
 
-    @media (max-width: 420px) {
-      .product {
-        align-items:flex-start;
-        gap:8px;
-      }
-      .product-name {
-        flex: 1 1 auto;
-        min-width: 0;
-      }
-      .qty-button {
-        width:38px;
-        height:38px;
-        font-size:22px;
-      }
-      .qty-value {
-        width:40px;
-        min-width:40px;
-        max-width:40px;
-        height:38px;
-        font-size:14px;
-      }
+  .wrap { position: relative; z-index: 2; max-width: 780px; margin: 0 auto; padding: 56px 20px 80px; }
+
+  main {
+    background: var(--paper);
+    color: var(--paper-ink);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.35);
+    padding: 44px 40px 38px;
+    position: relative;
+  }
+  main::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--teal-deep);
+  }
+
+  .doc-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--paper-muted); margin-bottom: 22px;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-family: 'Anton', sans-serif; font-weight: 400;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    line-height: 1; letter-spacing: 0.015em;
+    text-transform: uppercase; color: var(--teal-deep);
+  }
+  .subtitle {
+    margin: 0 0 30px; padding-bottom: 22px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.76rem; letter-spacing: 0.1em;
+    color: var(--paper-muted);
+    border-bottom: 1px solid var(--paper-line);
+  }
+
+  #products { display: grid; gap: 0; border-top: 1px solid var(--paper-line); }
+  .product {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--paper-line);
+    padding: 16px 4px;
+    background: transparent;
+  }
+  .product-name {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--paper-ink);
+    flex: 1 1 auto;
+    min-width: 0;
+    word-break: break-word;
+  }
+  .qty-control {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+  .qty-button {
+    width: 38px; height: 38px;
+    border: 1px solid var(--teal-deep);
+    border-radius: 0;
+    background: transparent;
+    color: var(--teal-deep);
+    font-family: 'Anton', sans-serif;
+    font-size: 22px; line-height: 1;
+    cursor: pointer; padding: 0;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .qty-button:hover { background: var(--teal-deep); color: var(--paper); }
+
+  /* ── KLUCZOWA POPRAWKA: użyj input.qty-value, żeby wygrać specyficznością ── */
+  input.qty-value {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 38px;
+    text-align: center;
+    border: 1px solid var(--paper-line);
+    border-radius: 0;
+    background: #fffdf7;
+    padding: 6px 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    color: var(--paper-ink);
+    user-select: none; cursor: default;
+    flex-shrink: 0;
+  }
+
+  .row { display: grid; gap: 14px; margin-top: 26px; }
+  label {
+    display: block; margin: 0 0 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--teal-deep);
+  }
+  input, button { font: inherit; }
+  .auth-input,
+  input[type="text"]:not(.qty-value),
+  input[type="password"],
+  input[type="number"] {
+    width: 100%;
+    border: 1px solid var(--paper-line);
+    border-radius: 0;
+    background: #fffdf7;
+    padding: 12px 13px;
+    min-height: 46px;
+    color: var(--paper-ink);
+    font-family: 'Archivo', sans-serif;
+    font-size: 15px;
+    appearance: none; -webkit-appearance: none;
+  }
+  input:focus { outline: none; border-color: var(--teal); }
+
+  button#submit {
+    width: 100%;
+    border: 1px solid var(--teal-deep);
+    border-radius: 0;
+    background: var(--teal-deep);
+    color: var(--paper);
+    padding: 14px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+  }
+  button#submit:hover:not(:disabled) { background: transparent; color: var(--teal-deep); }
+  button#submit:disabled { opacity: 0.55; cursor: default; }
+
+  .status-box {
+    margin-top: 20px;
+    border: 1px solid var(--paper-line);
+    border-radius: 0;
+    background: #fffdf7;
+    padding: 14px 16px;
+    min-height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-size: 0.9rem; line-height: 1.5;
+    transition: opacity 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+  .status-box.hidden { opacity: 0; visibility: hidden; }
+  .status-box.error { border-color: rgba(164,70,80,0.4); background: rgba(164,70,80,0.08); color: var(--neg); }
+  .status-box.ok    { border-color: rgba(77,122,95,0.4); background: rgba(77,122,95,0.08); color: var(--pos); }
+  .status-box.info  { border-color: rgba(212,169,95,0.4); background: rgba(212,169,95,0.08); color: var(--paper-ink); }
+
+  @media (max-width: 560px) {
+    main { padding: 32px 24px 28px; }
+    .wrap { padding: 40px 16px 60px; }
+    .product { align-items: center; gap: 8px; }
+    .qty-button { width: 36px; height: 36px; font-size: 20px; }
+    input.qty-value {
+      width: 40px; min-width: 40px; max-width: 40px;
+      height: 36px; font-size: 14px;
     }
-  </style>
+  }
+
+  @media (max-width: 480px) {
+    .nav-inner { padding: 10px 16px; gap: 10px; }
+    .nav-brand { font-size: 0.94rem; letter-spacing: 0.12em; gap: 8px; }
+    .nav-brand svg { width: 15px; height: 26px; }
+    .nav-back {
+      padding: 7px 11px;
+      font-size: 0.64rem;
+      letter-spacing: 0.12em;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .nav-inner { padding: 10px 12px; gap: 8px; }
+    .nav-back { padding: 6px 9px; font-size: 0.6rem; }
+    .nav-brand { font-size: 0.88rem; letter-spacing: 0.1em; }
+    main { padding: 28px 18px 24px; }
+  }
+</style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="kbk-logo" viewBox="0 0 240 400">
+      <rect x="111" y="0" width="18" height="400" fill="currentColor"/>
+      <circle cx="72" cy="105" r="58" fill="none" stroke="currentColor" stroke-width="14"/>
+      <circle cx="168" cy="105" r="58" fill="none" stroke="currentColor" stroke-width="14"/>
+      <path d="M 129 248 L 192 248 L 158 272 L 192 296 L 158 320 L 192 344 L 158 368 L 192 392 L 192 400 L 129 400 Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <svg viewBox="0 0 240 400"><use href="#kbk-logo"/></svg>
+      KBK
+    </a>
+    <a href="index.html" class="nav-back">← strona główna</a>
+  </div>
+</nav>
+
+<div class="wrap">
   <main>
-    <div class="topbar">
-      <a class="home-link" href="index.html">← strona główna</a>
+    <div class="doc-meta">
+      <span>Moduł / 02</span>
+      <span>Ryneczek</span>
     </div>
     <h1>Ryneczek</h1>
-    <p class="subtitle">Wybierz produkty, a zamówienie trafi do zatwierdzenia przez dyżurnego.</p>
+    <p class="subtitle">Wybierz produkty — zamówienie trafi do zatwierdzenia przez dyżurnego.</p>
 
-    <section id="products">Ładowanie produktów...</section>
+    <section id="products">Ładowanie produktów…</section>
 
     <div class="row">
       <div>
@@ -220,136 +306,100 @@
 
     <div id="message" class="status-box hidden" role="status" aria-live="polite"></div>
   </main>
+</div>
 
-  <script>
-    const APP_CONFIG = {
-      webAppUrl: 'https://script.google.com/macros/s/AKfycbzV1txpMeQcyGcEbF5NNywsnqxCk59JA8yJrEhbM7CA80MEElOaui9XYGyHddNkhAfTmg/exec'
-    };
-    const PRODUCTS_CACHE_MS = 600 * 1000;
-    const MESSAGE_TTL_MS = 4000;
-    const productsEl = document.getElementById('products');
-    const messageEl = document.getElementById('message');
-    const loginInput = document.getElementById('login');
-    const pinInput = document.getElementById('pin');
+<script>
+  const APP_CONFIG = {
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbzV1txpMeQcyGcEbF5NNywsnqxCk59JA8yJrEhbM7CA80MEElOaui9XYGyHddNkhAfTmg/exec'
+  };
+  const MESSAGE_TTL_MS = 4000;
+  const productsEl = document.getElementById('products');
+  const messageEl = document.getElementById('message');
+  const loginInput = document.getElementById('login');
+  const pinInput = document.getElementById('pin');
+  let messageTimer = null;
 
-    let messageTimer = null;
+  function showMessage(text, type) {
+    if (!text) { messageEl.textContent = ''; messageEl.className = 'status-box hidden'; return; }
+    messageEl.textContent = text;
+    messageEl.className = 'status-box ' + (type || 'info');
+    clearTimeout(messageTimer);
+    messageTimer = setTimeout(function () { showMessage('', 'info'); }, MESSAGE_TTL_MS);
+  }
 
-    function showMessage(text, type) {
-      if (!text) {
-        messageEl.textContent = '';
-        messageEl.className = 'status-box hidden';
-        return;
-      }
-
-      messageEl.textContent = text;
-      messageEl.className = 'status-box ' + (type || 'info');
-      clearTimeout(messageTimer);
-      messageTimer = setTimeout(function () {
-        showMessage('', 'info');
-      }, MESSAGE_TTL_MS);
+  function resetOrderForm() {
+    loginInput.value = ''; pinInput.value = '';
+    productsEl.querySelectorAll('.qty-value').forEach(function (f) { f.value = '0'; });
+  }
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  function apiGet(action) {
+    return fetch(APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(action)).then(function (r) { return r.json(); });
+  }
+  function renderProducts(products) {
+    if (!products || products.length === 0) {
+      productsEl.innerHTML = '<div class="product"><span class="product-name">Brak aktywnych produktów w cenniku.</span></div>';
+      return;
     }
-
-    function resetOrderForm() {
-      loginInput.value = '';
+    productsEl.innerHTML = products.map(function (product, index) {
+      return '<div class="product"><span class="product-name">' + escapeHtml(product.name) + ' · ' + product.cost + ' RCR</span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="0" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
+    }).join('');
+  }
+  function loadProducts() {
+    return apiGet('listProducts').then(function (data) {
+      if (!data || !data.ok) throw new Error('Nie udało się pobrać cennika.');
+      renderProducts(data.products || []);
+    });
+  }
+  function clampQuantity(value) {
+    var numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    return Math.min(9, Math.max(0, Math.round(numeric)));
+  }
+  productsEl.addEventListener('click', function (event) {
+    var button = event.target.closest('.qty-button');
+    if (!button) return;
+    var index = Number(button.dataset.index);
+    var input = productsEl.querySelector('.qty-value[data-index="' + index + '"]');
+    if (!input) return;
+    var current = clampQuantity(input.value);
+    var nextValue = button.dataset.action === 'increment' ? current + 1 : current - 1;
+    input.value = String(clampQuantity(nextValue));
+  });
+  document.getElementById('submit').addEventListener('click', function () {
+    var items = Array.from(productsEl.querySelectorAll('.qty-value'))
+      .map(function (input) { return { name: input.dataset.name, quantity: Number(input.value) }; })
+      .filter(function (item) { return item.quantity > 0; });
+    var login = loginInput.value.trim().toLowerCase();
+    var pin = pinInput.value.trim();
+    if (!login || !/^\d{6}$/.test(pin) || items.length === 0) {
       pinInput.value = '';
-      productsEl.querySelectorAll('.qty-value').forEach(function (field) {
-        field.value = '0';
-      });
+      showMessage('Podaj login, 6-cyfrowy PIN i wybierz produkt.', 'error');
+      return;
     }
-
-    function escapeHtml(value) {
-      return String(value).replace(/[&<>"']/g, function (c) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-      });
-    }
-
-    function apiGet(action) {
-      return fetch(APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(action)).then(function (response) {
-        return response.json();
-      });
-    }
-
-    function renderProducts(products) {
-      if (!products || products.length === 0) {
-        productsEl.innerHTML = '<div class="product"><span class="product-name">Brak aktywnych produktów w cenniku.</span></div>';
-        return;
-      }
-
-      productsEl.innerHTML = products.map(function (product, index) {
-        return '<div class="product"><span class="product-name">' + escapeHtml(product.name) + ' · ' + product.cost + ' RCR</span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz ilość produktu ' + escapeHtml(product.name) + '">−</button><input class="qty-value" type="text" value="0" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '" aria-label="Ilość dla produktu ' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ ilość produktu ' + escapeHtml(product.name) + '">+</button></div></div>';
-      }).join('');
-    }
-
-    function loadProducts() {
-      return apiGet('listProducts').then(function (data) {
-        if (!data || !data.ok) throw new Error('Nie udało się pobrać cennika.');
-        renderProducts(data.products || []);
-      });
-    }
-
-    function clampQuantity(value) {
-      var numeric = Number(value);
-      if (!Number.isFinite(numeric)) return 0;
-      return Math.min(9, Math.max(0, Math.round(numeric)));
-    }
-
-    productsEl.addEventListener('click', function (event) {
-      var button = event.target.closest('.qty-button');
-      if (!button) return;
-      var index = Number(button.dataset.index);
-      var input = productsEl.querySelector('.qty-value[data-index="' + index + '"]');
-      if (!input) return;
-      var current = clampQuantity(input.value);
-      var nextValue = button.dataset.action === 'increment' ? current + 1 : current - 1;
-      input.value = String(clampQuantity(nextValue));
-    });
-
-    document.getElementById('submit').addEventListener('click', function () {
-      var items = Array.from(productsEl.querySelectorAll('.qty-value'))
-        .map(function (input) {
-          return { name: input.dataset.name, quantity: Number(input.value) };
-        })
-        .filter(function (item) { return item.quantity > 0; });
-      var login = loginInput.value.trim().toLowerCase();
-      var pin = pinInput.value.trim();
-
-      if (!login || !/^\d{6}$/.test(pin) || items.length === 0) {
+    var submitBtn = document.getElementById('submit');
+    submitBtn.disabled = true; submitBtn.textContent = 'Przetwarzanie…';
+    showMessage('Wysyłanie zamówienia…', 'info');
+    fetch(APP_CONFIG.webAppUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'claimRewards', login: login, pin: pin, items: items })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
         pinInput.value = '';
-        showMessage('Podaj login, 6-cyfrowy PIN i wybierz produkt.', 'error');
-        return;
-      }
-
-      var submitBtn = document.getElementById('submit');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Przetwarzanie…';
-      showMessage('Wysyłanie zamówienia…', 'info');
-
-      fetch(APP_CONFIG.webAppUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'claimRewards', login: login, pin: pin, items: items })
+        if (data && data.ok) resetOrderForm();
+        showMessage(data && data.message ? data.message : (data && data.ok ? 'Zamówienie wysłane.' : 'Nie udało się wysłać zamówienia.'), data && data.ok ? 'ok' : 'error');
       })
-        .then(function (response) { return response.json(); })
-        .then(function (data) {
-          pinInput.value = '';
-          if (data && data.ok) {
-            resetOrderForm();
-          }
-          showMessage(data && data.message ? data.message : (data && data.ok ? 'Zamówienie wysłane.' : 'Nie udało się wysłać zamówienia.'), data && data.ok ? 'ok' : 'error');
-        })
-        .catch(function () {
-          pinInput.value = '';
-          showMessage('Nie udało się połączyć z backendem.', 'error');
-        })
-        .finally(function () {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Wyślij zamówienie';
-        });
-    });
-
-    loadProducts().catch(function () {
-      productsEl.innerHTML = '<div class="product"><span class="product-name">Nie udało się wczytać produktów.</span></div>';
-    });
-  </script>
+      .catch(function () { pinInput.value = ''; showMessage('Nie udało się połączyć z backendem.', 'error'); })
+      .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });
+  });
+  loadProducts().catch(function () {
+    productsEl.innerHTML = '<div class="product"><span class="product-name">Nie udało się wczytać produktów.</span></div>';
+  });
+</script>
 </body>
 </html>
