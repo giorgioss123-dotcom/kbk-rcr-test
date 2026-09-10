@@ -196,7 +196,7 @@
 
   <script>
     const APP_CONFIG = {
-      webAppUrl: 'https://script.google.com/macros/s/AKfycbz10rl_YMpBfJEK1vFZVdGE2cR3SyNF8u4WUTZXexZJQAl7vAve8H2AJNehqIHIENo0DA/exec'
+      webAppUrl: 'https://script.google.com/macros/s/AKfycbyzidePQKFtnth6XiuLILluMjSYVRNZh5_9qVFhmic8b5wnM_4egc_dZKbgSvRSGMP4oA/exec'
     };
     const USERNAME_RE = /^[A-Za-z0-9._-]{3,32}$/;
     const CONTACT_EMAIL = 'kontakt@twojadomena.pl';
@@ -348,6 +348,12 @@
             consentBlock.classList.remove('open');
           } else {
             var message = result && result.message ? result.message : 'Nie udało się zarejestrować konta.';
+            if (result && result.error === 'email_taken') {
+              message = 'Ten adres e-mail jest już zarejestrowany.';
+            }
+            if (result && result.error === 'login_taken') {
+              message = 'Ten login jest już zajęty. Wybierz inny.';
+            }
             banner.textContent = message;
             banner.className = 'banner show error';
           }

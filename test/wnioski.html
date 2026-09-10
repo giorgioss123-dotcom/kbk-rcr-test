@@ -221,11 +221,14 @@
 
 <script>
 const APP_CONFIG = {
-  webAppUrl: 'https://script.google.com/macros/s/AKfycbz10rl_YMpBfJEK1vFZVdGE2cR3SyNF8u4WUTZXexZJQAl7vAve8H2AJNehqIHIENo0DA/exec'
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbyzidePQKFtnth6XiuLILluMjSYVRNZh5_9qVFhmic8b5wnM_4egc_dZKbgSvRSGMP4oA/exec'
 };
-const REFRESH_MS = 2 * 60 * 1000;
+const REFRESH_MS = 5 * 60 * 1000;
+const PROPOSALS_CACHE_MS = 15000;
 
 let proposals = [];
+let proposalsCache = null;
+let proposalsCacheTs = 0;
 
 // Obsługa powrotu z linku potwierdzającego z maila (?confirmed=proposal|vote&status=...)
 (function handleConfirmRedirect(){
@@ -294,12 +297,22 @@ function cardHtml(p, archived){
   </div>`;
 }
 
-async function loadProposals(){
+async function loadProposals(forceReload){
+  const now = Date.now();
+  if (!forceReload && proposalsCache && (now - proposalsCacheTs) < PROPOSALS_CACHE_MS) {
+    proposals = proposalsCache;
+    render();
+    document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
+    return;
+  }
+
   document.getElementById('syncLabel').textContent = 'wczytywanie…';
   try{
     const res = await fetch(APP_CONFIG.webAppUrl + '?action=listProposals');
     const data = await res.json();
     proposals = data.proposals || [];
+    proposalsCache = proposals;
+    proposalsCacheTs = Date.now();
     render();
     document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
   }catch(err){
@@ -514,8 +527,8 @@ document.getElementById('scrim').addEventListener('click', closeModals);
 document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModals));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
 
-loadProposals();
-setInterval(loadProposals, REFRESH_MS);
+loadProposals(true);
+setInterval(() => loadProposals(false), REFRESH_MS);
 </script>
 </body>
 </html>
