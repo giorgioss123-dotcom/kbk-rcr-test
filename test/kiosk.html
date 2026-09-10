@@ -147,13 +147,25 @@
       font-weight:600;
       cursor:pointer;
     }
-    .message{
+    .status-box{
       margin-top:16px;
-      min-height:24px;
+      border:1px solid var(--paper-line);
+      border-radius:10px;
+      background:#fffdf7;
+      padding:12px 14px;
+      min-height:58px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
       font-size:13.5px;
+      line-height:1.4;
+      transition:opacity .2s ease, border-color .2s ease, background .2s ease;
     }
-    .error{color:var(--neg);}
-    .ok{color:var(--pos);}
+    .status-box.hidden{ opacity:0; visibility:hidden; }
+    .status-box.error{ border-color:rgba(164,70,80,0.4); background:rgba(164,70,80,0.08); color:var(--neg); }
+    .status-box.ok{ border-color:rgba(77,122,95,0.4); background:rgba(77,122,95,0.08); color:var(--pos); }
+    .status-box.info{ border-color:rgba(201,161,90,0.4); background:rgba(201,161,90,0.08); color:var(--paper-ink); }
   </style>
 </head>
 <body>
@@ -178,7 +190,7 @@
       <button id="submit">Wyślij zamówienie</button>
     </div>
 
-    <div id="message" class="message" role="status"></div>
+    <div id="message" class="status-box hidden" role="status" aria-live="polite"></div>
   </main>
 
   <script>
@@ -186,14 +198,27 @@
       webAppUrl: 'https://script.google.com/macros/s/AKfycbyzidePQKFtnth6XiuLILluMjSYVRNZh5_9qVFhmic8b5wnM_4egc_dZKbgSvRSGMP4oA/exec'
     };
     const PRODUCTS_CACHE_MS = 60 * 1000;
+    const MESSAGE_TTL_MS = 4000;
     const productsEl = document.getElementById('products');
     const messageEl = document.getElementById('message');
     const loginInput = document.getElementById('login');
     const pinInput = document.getElementById('pin');
 
+    let messageTimer = null;
+
     function showMessage(text, type) {
+      if (!text) {
+        messageEl.textContent = '';
+        messageEl.className = 'status-box hidden';
+        return;
+      }
+
       messageEl.textContent = text;
-      messageEl.className = 'message ' + (type || '');
+      messageEl.className = 'status-box ' + (type || 'info');
+      clearTimeout(messageTimer);
+      messageTimer = setTimeout(function () {
+        showMessage('', 'info');
+      }, MESSAGE_TTL_MS);
     }
 
     function resetOrderForm() {
@@ -266,6 +291,11 @@
         return;
       }
 
+      var submitBtn = document.getElementById('submit');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Przetwarzanie…';
+      showMessage('Wysyłanie zamówienia…', 'info');
+
       fetch(APP_CONFIG.webAppUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -282,6 +312,10 @@
         .catch(function () {
           pinInput.value = '';
           showMessage('Nie udało się połączyć z backendem.', 'error');
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Wyślij zamówienie';
         });
     });
 
