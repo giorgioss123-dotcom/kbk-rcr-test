@@ -65,18 +65,54 @@
     .error {
       color: var(--err);
     }
+
+    .success {
+      color: var(--ok);
+    }
+
+    .icon {
+      font-size: 2.3rem;
+      line-height: 1;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .return-btn {
+      display: none;
+      margin-top: 22px;
+      background: #1a2c26;
+      color: #f4efe1;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .return-btn:hover {
+      opacity: 0.92;
+    }
+
+    .return-btn.visible {
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
   <div class="card">
+    <div class="icon" id="icon">…</div>
     <h1>Potwierdzanie</h1>
     <p id="message">Trwa weryfikacja Twojego linku potwierdzającego…</p>
     <div class="state" id="state">Przetwarzanie</div>
+    <a class="return-btn" id="returnButton" href="index.html">Powrót na stronę główną</a>
   </div>
 
   <script>
     const APP_CONFIG = {
-      webAppUrl: 'https://script.google.com/macros/s/AKfycbyu8Az8eNlpcePhx1kSTVS6R1jjhfSs_oepx5Mb1hu2x4tWCAFtBwFj_WHEZPGRcba5Ng/exec'
+      webAppUrl: 'https://script.google.com/macros/s/AKfycbzV1txpMeQcyGcEbF5NNywsnqxCk59JA8yJrEhbM7CA80MEElOaui9XYGyHddNkhAfTmg/exec'
     };
 
     const actionMap = {
@@ -85,37 +121,54 @@
       vote: 'confirmVote'
     };
 
-    const targetMap = {
-      register: { path: 'rejestracja.html', confirmed: 'register' },
-      proposal: { path: 'wnioski.html', confirmed: 'proposal' },
-      vote: { path: 'wnioski.html', confirmed: 'vote' }
-    };
-
-    function failRedirect(message, isError) {
+    function setResult(ok, message) {
       const box = document.getElementById('message');
       const state = document.getElementById('state');
+      const icon = document.getElementById('icon');
+      const returnButton = document.getElementById('returnButton');
       box.textContent = message;
-      state.textContent = isError ? 'Błąd' : 'Nieprawidłowy link';
-      state.classList.toggle('error', Boolean(isError));
-      setTimeout(function () {
-        window.location.replace('index.html');
-      }, 2000);
+      state.textContent = ok ? 'Potwierdzono' : 'Błąd';
+      state.classList.toggle('success', ok);
+      state.classList.toggle('error', !ok);
+      icon.textContent = ok ? '✓' : '✕';
+      icon.style.color = ok ? '#4d7a5f' : '#a44650';
+      returnButton.classList.add('visible');
     }
 
     function confirmAction() {
       const params = new URLSearchParams(window.location.search);
       const type = (params.get('type') || '').toLowerCase();
       const token = params.get('token') || '';
+      const returnButton = document.getElementById('returnButton');
+      returnButton.classList.remove('visible');
 
       if (!actionMap[type] || !token) {
-        failRedirect('Link aktywacyjny jest nieprawidłowy.', true);
+        setResult(false, 'Link aktywacyjny jest nieprawidłowy.');
         return;
       }
 
-      const backendUrl = APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(actionMap[type]) + '&token=' + encodeURIComponent(token);
-      document.getElementById('message').textContent = 'Przekierowujemy do potwierdzenia…';
-      document.getElementById('state').textContent = 'Przekierowanie';
-      window.location.replace(backendUrl);
+      const backendUrl = APP_CONFIG.webAppUrl + '?action=' + encodeURIComponent(actionMap[type]) + '&token=' + encodeURIComponent(token) + '&format=json';
+      document.getElementById('message').textContent = 'Trwa weryfikacja Twojego linku potwierdzającego…';
+      document.getElementById('state').textContent = 'Przetwarzanie';
+      document.getElementById('icon').textContent = '…';
+
+      fetch(backendUrl, { method: 'GET', cache: 'no-store' })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (data && data.ok) {
+            setResult(true, data.message || 'Potwierdzenie zakończyło się powodzeniem.');
+            return;
+          }
+          setResult(false, (data && data.message) || 'Nie udało się potwierdzić konta.');
+        })
+        .catch(function () {
+          setResult(false, 'Nie udało się potwierdzić konta. Spróbuj ponownie później.');
+        });
     }
 
     confirmAction();
