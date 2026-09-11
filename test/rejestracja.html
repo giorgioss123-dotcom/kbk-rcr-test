@@ -207,6 +207,26 @@
   }
   .consent-block.open { max-height: 260px; }
 
+  .hidden { display: none !important; }
+  .choice-grid { display: grid; gap: 12px; margin: 26px 0 8px; }
+  .choice-btn, .secondary-btn {
+    width: 100%; border: 1px solid var(--teal-deep); border-radius: 0;
+    padding: 14px 16px; background: transparent; color: var(--teal-deep);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; font-weight: 500;
+    letter-spacing: 0.06em; cursor: pointer; text-align: left;
+    transition: background 0.18s, color 0.18s;
+  }
+  .choice-btn:hover, .secondary-btn:hover { background: var(--teal-deep); color: var(--paper); }
+  .secondary-btn { margin-top: 18px; text-align: center; }
+  .availability-btn { margin-top: 10px; width: auto; padding: 9px 12px; font-size: 0.68rem; }
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 20px; background: rgba(12, 48, 56, 0.72);
+  }
+  .modal { max-width: 480px; width: 100%; background: var(--paper); color: var(--paper-ink); padding: 28px; border-top: 3px solid var(--teal-deep); box-shadow: 12px 12px 0 rgba(0,0,0,.3); }
+  .modal p { margin: 0; line-height: 1.6; white-space: pre-line; }
+  .modal button { width: 100%; margin-top: 22px; padding: 12px; border: 1px solid var(--teal-deep); background: var(--teal-deep); color: var(--paper); cursor: pointer; font-family: 'IBM Plex Mono', monospace; }
+
   button[type="submit"] {
     width: 100%;
     margin-top: 30px;
@@ -307,15 +327,31 @@
       <span>Moduł / 01</span>
       <span>Rejestracja</span>
     </div>
-    <h1>Załóż konto</h1>
-    <p class="subtitle">Dołącz do systemu KBK — po weryfikacji mailowej konto zostanie aktywowane.</p>
+    <h1 id="pageTitle">Rejestracja</h1>
+    <p class="subtitle" id="pageSubtitle">Wybierz sposób dołączenia do nowego systemu rycarowego.</p>
 
-    <form id="regForm">
+    <div id="choicePanel" class="choice-grid">
+      <button type="button" class="choice-btn" id="migrationChoice">Mam już konto rycarowe i chcę zarejestrować się w nowym systemie</button>
+      <button type="button" class="choice-btn" id="newAccountChoice">Chcę utworzyć nowe konto rycarowe</button>
+    </div>
+
+    <form id="migrationForm" class="hidden">
+      <label for="migrationLogin">Nazwa użytkownika</label>
+      <input type="text" id="migrationLogin" required autocomplete="off">
+      <label for="migrationEmail">E-mail</label>
+      <input type="email" id="migrationEmail" required>
+      <p class="hint">Podaj nam swoją nazwę użytkownika i email, żebyśmy mogli zweryfikować Twoją tożsamość</p>
+      <button type="submit">Zatwierdź</button>
+      <button type="button" class="secondary-btn" id="migrationBack">Wróć</button>
+    </form>
+
+    <form id="regForm" class="hidden">
       <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off">
 
       <label for="login">Login</label>
       <input type="text" id="login" required autocomplete="off">
       <div class="hint" id="loginHint"></div>
+      <button type="button" class="secondary-btn availability-btn" id="checkLoginBtn">Sprawdź dostępność</button>
 
       <label for="imie">Imię <span class="opt">(opcjonalnie)</span></label>
       <input type="text" id="imie">
@@ -357,6 +393,12 @@
         dobrowolne i możesz je wycofać w dowolnym momencie, kontaktując się z nami.
       </p>
     </form>
+    <div id="messageModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalMessage">
+      <div class="modal">
+        <p id="modalMessage"></p>
+        <button type="button" id="modalOk">OK</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -364,15 +406,26 @@
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const USERNAME_RE = /^[A-Za-z0-9._-]{3,32}$/;
-  const CONTACT_EMAIL = 'kontakt@twojadomena.pl';
   const formLoadedAt = Date.now();
   const form = document.getElementById('regForm');
+  const migrationForm = document.getElementById('migrationForm');
+  const choicePanel = document.getElementById('choicePanel');
+  const pageTitle = document.getElementById('pageTitle');
+  const pageSubtitle = document.getElementById('pageSubtitle');
+
+  function showModal(message) {
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('messageModal').classList.remove('hidden');
+  }
+
+  document.getElementById('modalOk').addEventListener('click', function () {
+    document.getElementById('messageModal').classList.add('hidden');
+  });
 
   (function handleConfirmRedirect(){
     const params = new URLSearchParams(window.location.search);
     if (params.get('confirmed') !== 'register') return;
     const status = params.get('status');
-    const banner = document.getElementById('banner');
     const map = {
       ok: 'Rejestracja potwierdzona! Możesz się teraz zalogować w pozostałych częściach systemu.',
       conflict: 'Ktoś zdążył zarejestrować ten login lub e-mail przed Tobą. Spróbuj ponownie z innymi danymi.',
@@ -380,8 +433,7 @@
       error: 'Link jest nieprawidłowy albo wygasł. Zarejestruj się ponownie.'
     };
     const message = map[status] || map.invalid;
-    banner.textContent = message;
-    banner.className = 'banner show ' + (status === 'ok' ? 'ok' : 'error');
+    showModal(message);
     window.history.replaceState({}, document.title, window.location.pathname);
   })();
 
@@ -390,11 +442,55 @@
   const pinInput = document.getElementById('pin');
   const pinRepeatInput = document.getElementById('pinRepeat');
   const pinHint = document.getElementById('pinHint');
-  const banner = document.getElementById('banner');
   const submitBtn = document.getElementById('submitBtn');
   const consentBlock = document.getElementById('consentBlock');
   const addressInput = document.getElementById('adres');
   const postalConsentInput = document.getElementById('zgodaPocztowy');
+
+  function showNewAccountForm() {
+    choicePanel.classList.add('hidden');
+    migrationForm.classList.add('hidden');
+    form.classList.remove('hidden');
+    pageTitle.textContent = 'Załóż konto';
+    pageSubtitle.textContent = 'Dołącz do systemu KBK — po weryfikacji mailowej konto zostanie aktywowane.';
+  }
+
+  document.getElementById('newAccountChoice').addEventListener('click', showNewAccountForm);
+  document.getElementById('migrationChoice').addEventListener('click', function () {
+    choicePanel.classList.add('hidden');
+    form.classList.add('hidden');
+    migrationForm.classList.remove('hidden');
+    pageTitle.textContent = 'Weryfikacja konta';
+    pageSubtitle.textContent = 'Podaj nam swoją nazwę użytkownika i email, żebyśmy mogli zweryfikować Twoją tożsamość.';
+  });
+  document.getElementById('migrationBack').addEventListener('click', function () {
+    migrationForm.classList.add('hidden');
+    choicePanel.classList.remove('hidden');
+    pageTitle.textContent = 'Rejestracja';
+    pageSubtitle.textContent = 'Wybierz sposób dołączenia do nowego systemu rycarowego.';
+  });
+
+  migrationForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var login = document.getElementById('migrationLogin').value.trim().toLowerCase();
+    var email = document.getElementById('migrationEmail').value.trim().toLowerCase();
+    if (!USERNAME_RE.test(login)) return showModal('Podaj poprawną nazwę użytkownika.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showModal('Podaj poprawny adres e-mail.');
+    fetch(APP_CONFIG.webAppUrl, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'verifyMigration', login: login, email: email })
+    }).then(function (r) { return r.json(); }).then(function (result) {
+      var messages = {
+        submitted: 'Zweryfikujemy Twoje dane, a następnie skontaktujemy się z Tobą mailowo. W razie wątpliwości napisz do nas lub przyjdź zapytać do Królestwa.',
+        pending: 'To konto jest już w trakcie weryfikacji. Skontaktujemy się z Tobą, kiedy będzie ona zakończona. W razie wątpliwości napisz do nas lub przyjdź zapytać do Królestwa.',
+        verified: 'Twoja nazwa użytkownika i email zostały już pomyślnie zweryfikowane. Wybierz teraz opcję "Chcę utworzyć nowe konto rycarowe", załóż konto podając obecną nazwę użytkownika i email, a uzyskasz dostęp do swoich rycarów',
+        missing: 'Podany użytkownik nie istnieje. Stwórz nowe konto wybierając opcję "Chcę utworzyć nowe konto rycarowe".',
+        mismatch: 'Podany adres e-mail nie zgadza się z adresem zapisanym dla tego użytkownika.'
+      };
+      if (!result.ok) return showModal(result.message || 'Nie udało się wysłać zgłoszenia.');
+      showModal(messages[result.status] || 'Nie udało się wysłać zgłoszenia.');
+    }).catch(function () { showModal('Nie udało się połączyć z backendem. Spróbuj ponownie później.'); });
+  });
 
   function updatePostalConsentState() {
     const hasAddress = addressInput.value.trim().length > 0;
@@ -409,45 +505,34 @@
   addressInput.addEventListener('input', updatePostalConsentState);
   updatePostalConsentState();
 
-  let loginCheckTimer = null;
   loginInput.addEventListener('input', function () {
     const cursorPos = loginInput.selectionStart;
     loginInput.value = loginInput.value.toLowerCase();
     loginInput.setSelectionRange(cursorPos, cursorPos);
-    clearTimeout(loginCheckTimer);
-    const val = loginInput.value.trim();
     loginHint.textContent = '';
     loginHint.className = 'hint';
-    if (!val) return;
-    if (!USERNAME_RE.test(val)) {
-      loginHint.textContent = 'Login: 3–32 znaki; dozwolone: litery, cyfry, _, -, .';
-      loginHint.className = 'hint error';
-      return;
-    }
-    loginCheckTimer = setTimeout(function () { checkLoginAvailability(val); }, 400);
   });
 
   function checkLoginAvailability(login){
-    loginHint.textContent = 'sprawdzanie…';
-    loginHint.className = 'hint';
     fetch(APP_CONFIG.webAppUrl + '?checkLogin=' + encodeURIComponent(login))
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (data.taken) {
-          loginHint.innerHTML = 'Taki login już istnieje. Jeśli to nie Ty — wybierz inną nazwę. Jeśli to Ty — napisz do nas na <a href="mailto:' + CONTACT_EMAIL + '">' + CONTACT_EMAIL + '</a>.';
-          loginHint.className = 'hint error';
-        } else {
-          loginHint.textContent = 'Login dostępny.';
-          loginHint.className = 'hint ok';
-        }
+        if (data.taken && !data.migrationApproved) return showModal('Podana nazwa użytkownika jest już zajęta');
+        showModal('Nazwa użytkownika jest dostępna');
       })
-      .catch(function () { loginHint.textContent = ''; });
+      .catch(function () { showModal('Nie udało się sprawdzić dostępności loginu. Spróbuj ponownie później.'); });
   }
 
-  function validatePins(){
+  document.getElementById('checkLoginBtn').addEventListener('click', function () {
+    var login = loginInput.value.trim().toLowerCase();
+    if (!USERNAME_RE.test(login)) return showModal('Login: 3–32 znaki; dozwolone: litery, cyfry, _, -, .');
+    checkLoginAvailability(login);
+  });
+
+  function validatePins(showModalOnError){
     var p1 = pinInput.value, p2 = pinRepeatInput.value;
-    if (!/^\d{6}$/.test(p1)) { pinHint.textContent = 'PIN musi składać się z dokładnie 6 cyfr.'; pinHint.className = 'hint error'; return false; }
-    if (p1 !== p2) { pinHint.textContent = 'Piny nie są identyczne.'; pinHint.className = 'hint error'; return false; }
+    if (!/^\d{6}$/.test(p1)) { if (showModalOnError) showModal('PIN musi składać się z dokładnie 6 cyfr.'); else { pinHint.textContent = 'PIN musi składać się z dokładnie 6 cyfr.'; pinHint.className = 'hint error'; } return false; }
+    if (p1 !== p2) { if (showModalOnError) showModal('Piny nie są identyczne.'); else { pinHint.textContent = 'Piny nie są identyczne.'; pinHint.className = 'hint error'; } return false; }
     pinHint.textContent = 'PIN poprawny.'; pinHint.className = 'hint ok'; return true;
   }
   pinInput.addEventListener('input', validatePins);
@@ -455,7 +540,6 @@
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    banner.className = 'banner'; banner.textContent = '';
     var login = document.getElementById('login').value.trim().toLowerCase();
     var imie = document.getElementById('imie').value.trim();
     var nazwisko = document.getElementById('nazwisko').value.trim();
@@ -464,17 +548,14 @@
     var pin = pinInput.value.trim();
 
     if (!login || !USERNAME_RE.test(login)) {
-      banner.textContent = 'Login ma niepoprawny format. Dozwolone: litery, cyfry, _, -, .';
-      banner.className = 'banner show error'; return;
+      showModal('Login ma niepoprawny format. Dozwolone: litery, cyfry, _, -, .'); return;
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      banner.textContent = 'Podaj poprawny adres e-mail.';
-      banner.className = 'banner show error'; return;
+      showModal('Podaj poprawny adres e-mail.'); return;
     }
-    if (!validatePins()) return;
+    if (!validatePins(true)) return;
     if (adres && !document.getElementById('zgodaPocztowy').checked) {
-      banner.textContent = 'Jeśli podajesz adres, musisz zaakceptować kontakt pocztowy.';
-      banner.className = 'banner show error'; return;
+      showModal('Jeśli podajesz adres, musisz zaakceptować kontakt pocztowy.'); return;
     }
 
     submitBtn.disabled = true;
@@ -493,8 +574,7 @@
       .then(function (r) { return r.json(); })
       .then(function (result) {
         if (result && result.ok) {
-          banner.textContent = 'Wysłano zapytanie o aktywację konta. Sprawdź skrzynkę mailową, by potwierdzić rejestrację.';
-          banner.className = 'banner show ok';
+          showModal('Wysłano zapytanie o aktywację konta. Sprawdź skrzynkę mailową, by potwierdzić rejestrację.');
           form.reset();
           updatePostalConsentState();
           pinHint.textContent = ''; pinHint.className = 'hint';
@@ -503,13 +583,11 @@
           var message = result && result.message ? result.message : 'Nie udało się zarejestrować konta.';
           if (result && result.error === 'email_taken') message = 'Ten adres e-mail jest już zarejestrowany.';
           if (result && result.error === 'login_taken') message = 'Ten login jest już zajęty. Wybierz inny.';
-          banner.textContent = message;
-          banner.className = 'banner show error';
+          showModal(message);
         }
       })
       .catch(function () {
-        banner.textContent = 'Nie udało się połączyć z backendem. Spróbuj ponownie później.';
-        banner.className = 'banner show error';
+        showModal('Nie udało się połączyć z backendem. Spróbuj ponownie później.');
       })
       .finally(function () {
         submitBtn.disabled = false;
