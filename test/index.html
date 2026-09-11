@@ -147,6 +147,10 @@
     text-transform: uppercase;
     flex-shrink: 0;
     white-space: nowrap;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    z-index: 2;
   }
 
   /* ═══ HERO ═══ */
@@ -1550,9 +1554,34 @@
 
   loadHivePosts();
 
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.querySelector('.nav-links');
+
+  function toggleNavMenu(event) {
+    if (event) event.preventDefault();
+    if (!navToggle || !navLinks) return;
+    const isOpen = navLinks.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', toggleNavMenu);
+    navToggle.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleNavMenu(event);
+      }
+    });
+  }
+
+  window.toggleNavMenu = toggleNavMenu;
+
   document.querySelectorAll('.nav-links a').forEach(link => {
     link.addEventListener('click', () => {
-      document.querySelector('.nav-links').classList.remove('open');
+      navLinks.classList.remove('open');
+      if (navToggle) {
+        navToggle.setAttribute('aria-expanded', 'false');
+      }
     });
   });
 </script>
