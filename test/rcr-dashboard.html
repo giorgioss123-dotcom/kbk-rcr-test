@@ -689,7 +689,8 @@
         .filter(r => r.login !== '');
 
       if (saldaRows.length === 0) {
-        throw new Error('Arkusz SALDA nie zwrócił żadnych wierszy — sprawdź nazwę zakładki i nagłówki kolumn');
+        console.error('Arkusz SALDA nie zwrócił żadnych wierszy.');
+        throw new Error('Nie udało się pobrać danych.');
       }
       renderList();
       setSyncState('ok', 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL'));
@@ -723,9 +724,7 @@
   function renderError(detail){
     document.getElementById('listContainer').innerHTML = `
       <div class="error">
-        Nie udało się pobrać danych z arkusza.<br>
-        Upewnij się, że arkusz jest udostępniony jako „każdy z linkiem może wyświetlać”.
-        ${detail ? `<div style="margin-top:10px;font-size:11px;opacity:0.8;">${escapeHtml(detail)}</div>` : ''}
+        Nie udało się pobrać danych. Spróbuj ponownie później.
         <div><button id="retryBtn">Spróbuj ponownie</button></div>
       </div>`;
     document.getElementById('retryBtn').addEventListener('click', () => loadAll(true));

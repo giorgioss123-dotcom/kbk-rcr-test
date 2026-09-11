@@ -349,7 +349,7 @@
       <label for="migrationEmail">E-mail</label>
       <input type="email" id="migrationEmail" required>
       <p class="hint">Podaj nam swoją nazwę użytkownika i email, żebyśmy mogli zweryfikować Twoją tożsamość</p>
-      <button type="submit">Zatwierdź</button>
+      <button type="submit" id="migrationSubmitBtn">Zatwierdź</button>
       <button type="button" class="secondary-btn" id="migrationBack">Wróć</button>
     </form>
 
@@ -420,6 +420,7 @@
   const choicePanel = document.getElementById('choicePanel');
   const pageTitle = document.getElementById('pageTitle');
   const pageSubtitle = document.getElementById('pageSubtitle');
+  const migrationSubmitBtn = document.getElementById('migrationSubmitBtn');
 
   function showModal(message) {
     document.getElementById('modalMessage').textContent = message;
@@ -485,6 +486,8 @@
     var email = document.getElementById('migrationEmail').value.trim().toLowerCase();
     if (!USERNAME_RE.test(login)) return showModal('Podaj poprawną nazwę użytkownika.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showModal('Podaj poprawny adres e-mail.');
+    migrationSubmitBtn.disabled = true;
+    migrationSubmitBtn.textContent = 'Wysyłanie…';
     fetch(APP_CONFIG.webAppUrl, {
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'verifyMigration', login: login, email: email })
@@ -498,7 +501,11 @@
       };
       if (!result.ok) return showModal(result.message || 'Nie udało się wysłać zgłoszenia.');
       showModal(messages[result.status] || 'Nie udało się wysłać zgłoszenia.');
-    }).catch(function () { showModal('Nie udało się połączyć z backendem. Spróbuj ponownie później.'); });
+    }).catch(function () { showModal('Nie udało się połączyć z backendem. Spróbuj ponownie później.'); })
+      .finally(function () {
+        migrationSubmitBtn.disabled = false;
+        migrationSubmitBtn.textContent = 'Zatwierdź';
+      });
   });
 
   function updatePostalConsentState() {

@@ -100,7 +100,8 @@
         settled = true;
         cleanup();
         delete sheetCache[cacheKey];
-        reject(new Error('Przekroczono czas oczekiwania na arkusz "' + sheetName + '"'));
+        console.error('Przekroczono czas oczekiwania na dane arkusza:', sheetName);
+        reject(new Error('Przekroczono czas oczekiwania na dane.'));
       }, (options && options.timeoutMs) || 15000);
 
       window[cbName] = function (json) {
@@ -110,7 +111,8 @@
         cleanup();
         if (!json || !json.table) {
           delete sheetCache[cacheKey];
-          reject(new Error('Nieprawidłowa odpowiedź dla arkusza "' + sheetName + '"'));
+          console.error('Nieprawidłowa odpowiedź dla arkusza:', sheetName);
+          reject(new Error('Otrzymano nieprawidłowe dane.'));
           return;
         }
         sheetCache[cacheKey] = { table: json.table, expiresAt: Date.now() + cacheMs };
@@ -123,7 +125,8 @@
         clearTimeout(timer);
         cleanup();
         delete sheetCache[cacheKey];
-        reject(new Error('Nie udało się załadować arkusza "' + sheetName + '"'));
+        console.error('Nie udało się załadować arkusza:', sheetName);
+        reject(new Error('Nie udało się załadować danych.'));
       };
 
       script.src = url;

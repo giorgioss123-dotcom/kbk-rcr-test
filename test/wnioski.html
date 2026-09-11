@@ -361,6 +361,8 @@
     transition: background 0.18s, color 0.18s;
   }
   .modal-actions button.confirm:hover { background: transparent; color: var(--teal-deep); }
+  .modal-actions button.confirm:disabled { opacity: 0.55; cursor: default; }
+  .modal-actions button.confirm:disabled:hover { background: var(--teal-deep); color: var(--paper); }
   .modal-actions button.cancel {
     background: transparent;
     border: 1px solid var(--paper-line);
