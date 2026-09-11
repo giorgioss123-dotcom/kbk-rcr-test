@@ -219,6 +219,14 @@
   .choice-btn:hover, .secondary-btn:hover { background: var(--teal-deep); color: var(--paper); }
   .secondary-btn { margin-top: 18px; text-align: center; }
   .availability-btn { margin-top: 10px; width: auto; padding: 9px 12px; font-size: 0.68rem; }
+  .availability-btn:disabled { opacity: 0.65; cursor: default; }
+  .button-spinner {
+    display: inline-block; width: 0.9em; height: 0.9em; margin-right: 8px;
+    border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; vertical-align: -0.12em;
+    animation: button-spin 0.7s linear infinite;
+  }
+  @keyframes button-spin { to { transform: rotate(360deg); } }
   .modal-backdrop {
     position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
     padding: 20px; background: rgba(12, 48, 56, 0.72);
@@ -442,6 +450,7 @@
   const pinInput = document.getElementById('pin');
   const pinRepeatInput = document.getElementById('pinRepeat');
   const pinHint = document.getElementById('pinHint');
+  const checkLoginBtn = document.getElementById('checkLoginBtn');
   const submitBtn = document.getElementById('submitBtn');
   const consentBlock = document.getElementById('consentBlock');
   const addressInput = document.getElementById('adres');
@@ -514,13 +523,19 @@
   });
 
   function checkLoginAvailability(login){
+    checkLoginBtn.disabled = true;
+    checkLoginBtn.innerHTML = '<span class="button-spinner" aria-hidden="true"></span>Sprawdzanie...';
     fetch(APP_CONFIG.webAppUrl + '?checkLogin=' + encodeURIComponent(login))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (data.taken && !data.migrationApproved) return showModal('Podana nazwa użytkownika jest już zajęta');
         showModal('Nazwa użytkownika jest dostępna');
       })
-      .catch(function () { showModal('Nie udało się sprawdzić dostępności loginu. Spróbuj ponownie później.'); });
+      .catch(function () { showModal('Nie udało się sprawdzić dostępności loginu. Spróbuj ponownie później.'); })
+      .finally(function () {
+        checkLoginBtn.disabled = false;
+        checkLoginBtn.textContent = 'Sprawdź dostępność';
+      });
   }
 
   document.getElementById('checkLoginBtn').addEventListener('click', function () {
@@ -535,8 +550,8 @@
     if (p1 !== p2) { if (showModalOnError) showModal('Piny nie są identyczne.'); else { pinHint.textContent = 'Piny nie są identyczne.'; pinHint.className = 'hint error'; } return false; }
     pinHint.textContent = 'PIN poprawny.'; pinHint.className = 'hint ok'; return true;
   }
-  pinInput.addEventListener('input', validatePins);
-  pinRepeatInput.addEventListener('input', validatePins);
+  pinInput.addEventListener('input', function () { validatePins(false); });
+  pinRepeatInput.addEventListener('input', function () { validatePins(false); });
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
