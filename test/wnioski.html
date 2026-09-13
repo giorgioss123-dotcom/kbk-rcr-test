@@ -234,6 +234,7 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
+  #detailModal .turnout { color: var(--paper-muted); }
   .card-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
   .inline-vote {
     background: transparent;
@@ -660,7 +661,7 @@
       ? `Pozostało: ${formatRemainingTime(safeText(p.dataWygasniecia, ''))}`
       : `Zakończono: ${fmtDate(safeText(p.dataWygasniecia, ''))}`;
     return `
-    <div class="card ${archived ? 'archived' : ''}" data-id="${safeText(p.id, '')}">
+    <div class="card ${archived ? 'archived' : ''}" data-id="${safeText(p.id, '')}" data-proposal-index="${proposals.indexOf(p)}">
       <div class="card-top">
         <div>
           <div class="card-meta">Zgłosił: ${escapeHtml(safeAutor)} · ${fmtDate(safeText(p.dataZlozenia, ''))}</div>
@@ -672,10 +673,10 @@
       </div>
       <div class="vote-bar"><div class="za" style="width:${Number(p.procentZa) || 0}%"></div><div class="przeciw" style="width:${Number(p.procentPrzeciw) || 0}%"></div></div>
       <div class="vote-stats">
-        <span class="za-label">za ${(Number(p.procentZa) || 0).toFixed(1)}%</span>
-        <span class="przeciw-label">przeciw ${(Number(p.procentPrzeciw) || 0).toFixed(1)}%</span>
+        <span class="za-label">za ${Math.round(Number(p.glosowZa) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentZa) || 0).toFixed(1)}%)</span>
+        <span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span>
       </div>
-      <div class="turnout">frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% aktywnych RCR</div>
+      <div class="turnout">frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów)</div>
       ${voteButton}
     </div>`;
   }
@@ -689,14 +690,20 @@
     document.getElementById('syncLabel').textContent = 'wczytywanie…';
     try{
       const sheetId = await getWnioskiSheetId();
-      const table = await shared.loadSheetJSONP(sheetId, 'WNIOSKI', { cacheMs: 600000, timeoutMs: 15000 });
+      const [table, statsResponse] = await Promise.all([
+        shared.loadSheetJSONP(sheetId, 'WNIOSKI', { cacheMs: 600000, timeoutMs: 15000 }),
+        fetch(APP_CONFIG.webAppUrl + '?action=proposalStats')
+          .then(function (response) { return response.json(); })
+          .catch(function () { return { ok: false, activeTotalRcr: 0 }; })
+      ]);
+      const currentTotalRcr = statsResponse && statsResponse.ok ? Number(statsResponse.activeTotalRcr) || 0 : 0;
       const rows = shared.tableToObjects(table).map(function (row) {
         const id = shared.strFromCell(shared.lookupCell(row, ['ID', 'id'])) || '';
         const status = shared.strFromCell(shared.lookupCell(row, ['STATUS', 'status', 'Status'])) || '';
         const za = shared.numFromCell(shared.lookupCell(row, ['GŁOSÓW_ZA', 'GLOSOW_ZA', 'ZA', 'za']));
         const przeciw = shared.numFromCell(shared.lookupCell(row, ['GŁOSÓW_PRZECIW', 'GLOSOW_PRZECIW', 'PRZECIW', 'przeciw']));
         const activeRcr = shared.numFromCell(shared.lookupCell(row, ['SUMA_RCR_W_DNIU_WYGAŚNIĘCIA', 'SUMA_RCR', 'suma_rcr', 'RCR']));
-        const totalForTurnout = status === 'Aktywny' ? activeRcr : activeRcr;
+        const totalForTurnout = status === 'Aktywny' ? currentTotalRcr : activeRcr;
         const tytul = strFromCell(lookupCell(row, ['TYTUŁ', 'TYTUL', 'tytul', 'Tytuł']));
         const tresc = strFromCell(lookupCell(row, ['TREŚĆ', 'TRESC', 'tresc', 'Treść']));
         const uzasadnienie = strFromCell(lookupCell(row, ['UZASADNIENIE', 'uzasadnienie', 'Uzasadnienie']));
@@ -715,6 +722,8 @@
           status: status,
           glosowZa: za,
           glosowPrzeciw: przeciw,
+          sumaGlosow: suma,
+          mianownikFrekwencji: totalForTurnout,
           procentZa: suma > 0 ? (za / suma) * 100 : 0,
           procentPrzeciw: suma > 0 ? (przeciw / suma) * 100 : 0,
           procentFrekwencji: totalForTurnout > 0 ? (suma / totalForTurnout) * 100 : 0
@@ -749,15 +758,18 @@
 
   document.getElementById('proposalsContainer').addEventListener('click', (e) => {
     const voteBtn = e.target.closest('.inline-vote');
-    if (voteBtn) { e.stopPropagation(); openVoteModal(voteBtn.dataset.voteId); return; }
+    if (voteBtn) {
+      e.stopPropagation();
+      openVoteModal(proposals[Number(voteBtn.closest('.card').dataset.proposalIndex)]);
+      return;
+    }
     const card = e.target.closest('.card');
-    if (card) openDetail(card.dataset.id);
+    if (card) openDetail(proposals[Number(card.dataset.proposalIndex)]);
   });
 
-  function openDetail(id){
-    const p = proposals.find(x => String(x.id) === String(id));
+  function openDetail(p){
     if (!p) return;
-    currentDetailId = id;
+    currentDetailId = p.id;
     document.getElementById('detailAuthor').textContent = 'Zgłosił: ' + safeText(p.autor, '') + ' · ' + fmtDate(safeText(p.dataZlozenia, ''));
     document.getElementById('detailRemaining').textContent = safeText(p.status, '') === 'Aktywny'
       ? 'Pozostało do zakończenia: ' + formatRemainingTime(safeText(p.dataWygasniecia, ''))
@@ -769,9 +781,9 @@
     document.getElementById('detailBar').innerHTML =
       `<div class="za" style="width:${Number(p.procentZa) || 0}%"></div><div class="przeciw" style="width:${Number(p.procentPrzeciw) || 0}%"></div>`;
     document.getElementById('detailStats').innerHTML =
-      `<span class="za-label">za ${(Number(p.procentZa) || 0).toFixed(1)}%</span><span class="przeciw-label">przeciw ${(Number(p.procentPrzeciw) || 0).toFixed(1)}%</span>`;
+      `<span class="za-label">za ${Math.round(Number(p.glosowZa) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentZa) || 0).toFixed(1)}%)</span><span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span>`;
     document.getElementById('detailTurnout').textContent =
-      `frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% aktywnych RCR` + (safeText(p.dataWygasniecia, '') ? ` · koniec: ${fmtDate(safeText(p.dataWygasniecia, ''))}` : '');
+      `frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów)` + (safeText(p.dataWygasniecia, '') ? ` · koniec: ${fmtDate(safeText(p.dataWygasniecia, ''))}` : '');
 
     const votesListSection = document.getElementById('votesListSection');
     const hasVotes = (p.glosowZa + p.glosowPrzeciw) > 0;
@@ -779,13 +791,13 @@
       ? '<button class="votes-toggle" id="showVotesBtn">Zobacz listę głosów</button><div id="votesTable"></div>'
       : '';
     if (hasVotes) {
-      document.getElementById('showVotesBtn').addEventListener('click', () => loadVotesList(id));
+      document.getElementById('showVotesBtn').addEventListener('click', () => loadVotesList(p.id));
     }
 
     const voteSection = document.getElementById('voteSection');
     if (p.status === 'Aktywny') {
       voteSection.innerHTML = '<button class="btn-primary" id="openVoteBtn" style="width:100%;">Zagłosuj</button>';
-      document.getElementById('openVoteBtn').addEventListener('click', () => openVoteModal(id));
+      document.getElementById('openVoteBtn').addEventListener('click', () => openVoteModal(p));
     } else { voteSection.innerHTML = ''; }
 
     openModal('detailModal');
@@ -845,10 +857,11 @@
     }
   }
 
-  function openVoteModal(id){
-    currentDetailId = id; currentVoteChoice = null;
-    const proposal = proposals.find(x => String(x.id) === String(id));
-    const title = proposal ? proposal.tytul : 'wnioskiem';
+  function openVoteModal(proposal){
+    if (!proposal) return;
+    currentDetailId = proposal.id;
+    currentVoteChoice = null;
+    const title = proposal.tytul || 'wnioskiem';
     document.getElementById('voteModalTitle').textContent = "Głosujesz nad wnioskiem: '" + title + "'";
     document.querySelectorAll('.vote-choice button').forEach(b => b.classList.remove('selected'));
     document.getElementById('voteLogin').value = '';
