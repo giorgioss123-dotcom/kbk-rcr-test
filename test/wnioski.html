@@ -618,6 +618,9 @@
   function getWnioskiSheetId() {
     return Promise.resolve(PUBLIC_SHEET_IDS.wnioskiFileId);
   }
+  function getTransakcjeSheetId() {
+    return Promise.resolve(PUBLIC_SHEET_IDS.transakcjeFileId);
+  }
 
   function fmtDate(iso){
     if (!iso) return '—';
@@ -690,13 +693,15 @@
     document.getElementById('syncLabel').textContent = 'wczytywanie…';
     try{
       const sheetId = await getWnioskiSheetId();
-      const [table, statsResponse] = await Promise.all([
+      const transakcjeSheetId = await getTransakcjeSheetId();
+      const [table, saldaTable] = await Promise.all([
         shared.loadSheetJSONP(sheetId, 'WNIOSKI', { cacheMs: 600000, timeoutMs: 15000 }),
-        fetch(APP_CONFIG.webAppUrl + '?action=proposalStats')
-          .then(function (response) { return response.json(); })
-          .catch(function () { return { ok: false, activeTotalRcr: 0 }; })
+        shared.loadSheetJSONP(transakcjeSheetId, 'SALDA', { cacheMs: 600000, timeoutMs: 15000 })
       ]);
-      const currentTotalRcr = statsResponse && statsResponse.ok ? Number(statsResponse.activeTotalRcr) || 0 : 0;
+      const currentTotalRcr = shared.tableToObjects(saldaTable).reduce(function (sum, row) {
+        const active = shared.strFromCell(shared.lookupCell(row, ['AKTYWNY', 'aktywny'])).trim().toLowerCase() === 'tak';
+        return active ? sum + shared.numFromCell(shared.lookupCell(row, ['RCR', 'rcr'])) : sum;
+      }, 0);
       const rows = shared.tableToObjects(table).map(function (row) {
         const id = shared.strFromCell(shared.lookupCell(row, ['ID', 'id'])) || '';
         const status = shared.strFromCell(shared.lookupCell(row, ['STATUS', 'status', 'Status'])) || '';
