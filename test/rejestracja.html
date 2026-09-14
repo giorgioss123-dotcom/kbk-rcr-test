@@ -325,7 +325,7 @@
       <svg viewBox="0 0 240 400"><use href="#kbk-logo"/></svg>
       KBK
     </a>
-    <a href="index.html" class="nav-back">← strona główna</a>
+    <a href="spolecznosc.html" class="nav-back">← strefa społeczności</a>
   </div>
 </nav>
 
@@ -345,7 +345,7 @@
 
     <form id="migrationForm" class="hidden">
       <label for="migrationLogin">Nazwa użytkownika</label>
-      <input type="text" id="migrationLogin" required autocomplete="off">
+      <input type="text" id="migrationLogin" list="loginSuggestions" required autocomplete="off">
       <label for="migrationEmail">E-mail</label>
       <input type="email" id="migrationEmail" required>
       <p class="hint">Podaj nam swoją nazwę użytkownika i email, żebyśmy mogli zweryfikować Twoją tożsamość</p>
@@ -357,7 +357,7 @@
       <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off">
 
       <label for="login">Login</label>
-      <input type="text" id="login" required autocomplete="off">
+      <input type="text" id="login" list="loginSuggestions" required autocomplete="off">
       <div class="hint" id="loginHint"></div>
       <button type="button" class="secondary-btn availability-btn" id="checkLoginBtn">Sprawdź dostępność</button>
 
@@ -410,6 +410,8 @@
   </div>
 </div>
 
+<datalist id="loginSuggestions"></datalist>
+
 <script src="public-config.js"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
@@ -447,7 +449,9 @@
   })();
 
   const loginInput = document.getElementById('login');
+  const migrationLoginInput = document.getElementById('migrationLogin');
   const loginHint = document.getElementById('loginHint');
+  const loginSuggestions = document.getElementById('loginSuggestions');
   const pinInput = document.getElementById('pin');
   const pinRepeatInput = document.getElementById('pinRepeat');
   const pinHint = document.getElementById('pinHint');
@@ -508,6 +512,27 @@
       });
   });
 
+  function populateLoginSuggestions(logins) {
+    if (!loginSuggestions) return;
+    loginSuggestions.innerHTML = '';
+    (logins || []).forEach(function (login) {
+      var option = document.createElement('option');
+      option.value = login;
+      loginSuggestions.appendChild(option);
+    });
+  }
+
+  function loadLoginSuggestions() {
+    fetch(APP_CONFIG.webAppUrl + '?action=listLogins')
+      .then(function (response) { return response.json(); })
+      .then(function (result) {
+        if (result && result.ok) populateLoginSuggestions(result.logins || []);
+      })
+      .catch(function () {
+        populateLoginSuggestions([]);
+      });
+  }
+
   function updatePostalConsentState() {
     const hasAddress = addressInput.value.trim().length > 0;
     const row = postalConsentInput.closest('.checkbox-row');
@@ -520,6 +545,7 @@
 
   addressInput.addEventListener('input', updatePostalConsentState);
   updatePostalConsentState();
+  loadLoginSuggestions();
 
   loginInput.addEventListener('input', function () {
     const cursorPos = loginInput.selectionStart;
