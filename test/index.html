@@ -294,6 +294,51 @@
     flex-shrink: 0;
   }
 
+  .attendance-band {
+    margin: 16px auto 0;
+    max-width: 660px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--line-2);
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .attendance-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px 18px;
+    text-align: left;
+  }
+
+  .attendance-item + .attendance-item { border-left: 1px solid var(--line); }
+
+  .attendance-label {
+    color: var(--muted-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+
+  .attendance-value {
+    color: var(--white);
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(1.35rem, 3vw, 1.9rem);
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.28);
+  }
+
+  .attendance-unit {
+    color: var(--muted-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
   /* ═══ SEKCJE ═══ */
   .section {
     max-width: var(--maxw);
@@ -1023,6 +1068,12 @@
       border-top: 1px solid var(--line);
     }
 
+    .attendance-band { grid-template-columns: 1fr; }
+    .attendance-item + .attendance-item {
+      border-left: none;
+      border-top: 1px solid var(--line);
+    }
+
     .section { padding: 54px 20px; }
     .section-alt { padding: 54px 0; }
     .section-alt > .section-inner { padding: 0 20px; }
@@ -1165,6 +1216,19 @@
       <span class="hb-label">Wrota otwarte</span>
       <span class="hb-value"><span class="dot"></span>Pon — Sob&nbsp;&nbsp;·&nbsp;&nbsp;16:00 — 23:00</span>
       <span class="hb-loc">Wstęp wolny</span>
+    </div>
+
+    <div class="attendance-band" aria-label="Frekwencja odwiedzających">
+      <div class="attendance-item">
+        <span class="attendance-label">W tym miesiącu odwiedziło nas już:</span>
+        <strong class="attendance-value" id="attendance-month">—</strong>
+        <span class="attendance-unit">osób</span>
+      </div>
+      <div class="attendance-item">
+        <span class="attendance-label">Od początku roku odwiedziło nas:</span>
+        <strong class="attendance-value" id="attendance-year">—</strong>
+        <span class="attendance-unit">osób</span>
+      </div>
     </div>
 
   </div>
@@ -1369,8 +1433,63 @@
   </div>
 </footer>
 
+<script src="public-config.js"></script>
+<script src="js/shared.js"></script>
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
+
+  function parseAttendanceDate(cell) {
+    if (!cell) return null;
+    const raw = cell.v !== undefined && cell.v !== null ? String(cell.v) : String(cell.f || '');
+    const dateMatch = raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})/);
+    if (dateMatch) return new Date(Number(dateMatch[1]), Number(dateMatch[2]), Number(dateMatch[3]));
+
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+
+    const polishMatch = raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+    if (!polishMatch) return null;
+    return new Date(Number(polishMatch[3]), Number(polishMatch[2]) - 1, Number(polishMatch[1]));
+  }
+
+  function formatAttendance(value) {
+    return value.toLocaleString('pl-PL');
+  }
+
+  async function loadAttendance() {
+    const monthEl = document.getElementById('attendance-month');
+    const yearEl = document.getElementById('attendance-year');
+    if (!monthEl || !yearEl || !window.KBKShared || !window.KBK_PUBLIC_SHEET_IDS) return;
+
+    try {
+      const table = await window.KBKShared.loadSheetJSONP(
+        window.KBK_PUBLIC_SHEET_IDS.transakcjeFileId,
+        'FREKWENCJA',
+        { cacheMs: 300000, timeoutMs: 15000 }
+      );
+      const rows = window.KBKShared.tableToObjects(table);
+      const now = new Date();
+      let monthTotal = 0;
+      let yearTotal = 0;
+
+      rows.forEach(function (row) {
+        const date = parseAttendanceDate(window.KBKShared.lookupCell(row, ['Data']));
+        if (!date || date.getFullYear() !== now.getFullYear()) return;
+        const value = window.KBKShared.numFromCell(
+          window.KBKShared.lookupCell(row, ['Frekwencja'])
+        );
+        yearTotal += value;
+        if (date.getMonth() === now.getMonth()) monthTotal += value;
+      });
+
+      monthEl.textContent = formatAttendance(monthTotal);
+      yearEl.textContent = formatAttendance(yearTotal);
+    } catch (error) {
+      console.info('Nie udało się pobrać frekwencji:', error.message);
+    }
+  }
+
+  loadAttendance();
 
   async function loadDoc(id, url) {
     const el = document.getElementById(id);
