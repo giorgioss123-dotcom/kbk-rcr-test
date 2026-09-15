@@ -162,11 +162,12 @@
   }
 
   .hero-logo {
-    width: 108px;
-    height: 154px;
+    width: 168px;
+    height: 238px;
     object-fit: contain;
-    margin: 0 auto 18px;
+    margin: 0 auto 58px;
     display: block;
+    transform: scale(1.35);
     filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.22));
   }
 
@@ -798,6 +799,33 @@
     text-align: center;
   }
 
+  #konstytucja .constitution-preamble-title,
+  #konstytucja .constitution-preamble-label {
+    display: block;
+    text-align: center;
+    color: var(--teal-deep);
+    font-weight: 700;
+  }
+
+  #konstytucja .constitution-preamble-title {
+    margin-bottom: 4px;
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #konstytucja .constitution-preamble-date,
+  #konstytucja .constitution-preamble-label {
+    margin-bottom: 20px;
+    font-size: 0.86rem;
+  }
+
+  #konstytucja .constitution-preamble-label {
+    margin-bottom: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
   .constitution-link {
     display: inline-flex;
     margin-top: 8px;
@@ -808,9 +836,43 @@
     font-size: 0.72rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+    cursor: pointer;
   }
 
   .constitution-link:hover { background: var(--teal-deep); color: var(--white); }
+
+  .constitution-preview {
+    margin-top: 22px;
+    text-align: left;
+  }
+
+  .constitution-preview summary {
+    display: inline-flex;
+    list-style: none;
+  }
+
+  .constitution-preview summary::-webkit-details-marker { display: none; }
+
+  .constitution-preview[open] summary { margin-bottom: 28px; }
+
+  .constitution-full-text {
+    color: #2b363c;
+    line-height: 1.78;
+    text-align: left;
+  }
+
+  .constitution-full-text h3,
+  .constitution-full-text h4 {
+    margin: 28px 0 12px;
+    color: var(--teal-deep);
+    text-align: center;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .constitution-full-text h3 { font-size: 1.12rem; }
+  .constitution-full-text h4 { font-size: 1rem; letter-spacing: 0.04em; }
+  .constitution-full-text p { margin: 0 0 14px; text-align: left; }
 
   .contact-grid {
     display: grid;
@@ -1075,7 +1137,7 @@
     body { font-size: 16px; }
 
     .hero { padding: 34px 20px 32px; }
-    .hero-logo { width: 82px; height: 118px; margin-bottom: 14px; }
+    .hero-logo { width: 120px; height: 170px; margin-bottom: 42px; transform: scale(1.25); }
 
     .hours-band {
       grid-template-columns: 1fr;
@@ -1319,8 +1381,14 @@
     </div>
     <h2>Konstytucja</h2>
     <div class="doc-content" id="konstytucja-content">
+      <strong class="constitution-preamble-title">KONSTYTUCJA KRÓLESTWA BEZ KRESU</strong>
+      <span class="constitution-preamble-date">z dnia 30 grudnia AD 2025</span>
+      <strong class="constitution-preamble-label">PREAMBUŁA</strong>
       <p>Wierni "Przesłaniu Pana Cogito" i manifestowi otwartej enklawy, świadomi fundamentów, na których zbudowane zostało Królestwo Bez Kresu - poezji Zbigniewa Herberta oraz tradycji Rzeczypospolitej, akceptując wielość poglądów obywateli i konieczność szerokiej współpracy w budowaniu dobra wspólnego, chcąc pozostać niepodległymi od wszystkiego co zamyka ludzi na siebie, w trosce o przyszłość dzieła rozpoczętego w 2015 roku, ustanawiamy tę Konstytucję.</p>
-      <a class="constitution-link" href="resources/konstytucja.txt" target="_blank" rel="noopener">Zobacz pełny tekst</a>
+      <details class="constitution-preview" id="constitution-preview">
+        <summary class="constitution-link">Zobacz pełny tekst</summary>
+        <div class="constitution-full-text" id="constitution-full-text">Ładowanie Konstytucji…</div>
+      </details>
     </div>
   </div>
 </section>
@@ -1532,6 +1600,60 @@
     }
   }
   loadDoc('manifest-content', 'manifest.txt');
+
+  function renderConstitutionPreview(text) {
+    const lines = text.split(/\r?\n/).map(line => line.trim());
+    const output = [];
+    let paragraph = [];
+
+    function flushParagraph() {
+      if (!paragraph.length) return;
+      output.push(`<p>${escapeHtml(paragraph.join(' '))}</p>`);
+      paragraph = [];
+    }
+
+    lines.forEach(line => {
+      if (!line) { flushParagraph(); return; }
+      if (output.length === 0) {
+        output.push(`<h3>${escapeHtml(line)}</h3>`);
+        return;
+      }
+      if (output.length === 1 && /^z dnia/i.test(line)) {
+        output.push(`<p style="text-align:center;">${escapeHtml(line)}</p>`);
+        return;
+      }
+      if (/^Artykuł \d+$/i.test(line)) {
+        flushParagraph();
+        output.push(`<h4>${escapeHtml(line)}</h4>`);
+        return;
+      }
+      if (/^[A-ZĄĆĘŁŃÓŚŹŻ0-9 ,'-]+$/.test(line) && line.length > 3) {
+        flushParagraph();
+        output.push(`<h3>${escapeHtml(line)}</h3>`);
+        return;
+      }
+      paragraph.push(line);
+    });
+    flushParagraph();
+    document.getElementById('constitution-full-text').innerHTML = output.join('');
+  }
+
+  const constitutionPreview = document.getElementById('constitution-preview');
+  if (constitutionPreview) {
+    constitutionPreview.addEventListener('toggle', function () {
+      if (!constitutionPreview.open || constitutionPreview.dataset.loaded) return;
+      constitutionPreview.dataset.loaded = 'true';
+      fetch('resources/konstytucja.txt')
+        .then(response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.text();
+        })
+        .then(renderConstitutionPreview)
+        .catch(function () {
+          document.getElementById('constitution-full-text').textContent = 'Nie udało się załadować tekstu Konstytucji.';
+        });
+    });
+  }
 
   const HIVE_ACCOUNT = 'krolestwo';
   const HIVE_LIMIT = 3;
