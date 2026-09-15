@@ -162,10 +162,9 @@
   }
 
   .hero-logo {
-    width: 76px;
-    height: 127px;
-    aspect-ratio: 240 / 400;
-    color: var(--white);
+    width: 108px;
+    height: 154px;
+    object-fit: contain;
     margin: 0 auto 18px;
     display: block;
     filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.22));
@@ -308,7 +307,7 @@
     flex-direction: column;
     gap: 5px;
     padding: 16px 18px;
-    text-align: left;
+    text-align: center;
   }
 
   .attendance-item + .attendance-item { border-left: 1px solid var(--line); }
@@ -794,6 +793,25 @@
     font-size: 0.82rem;
   }
 
+  #konstytucja .doc-content {
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .constitution-link {
+    display: inline-flex;
+    margin-top: 8px;
+    padding: 12px 18px;
+    border: 1px solid var(--line-2);
+    color: var(--teal-dark);
+    text-decoration: none;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .constitution-link:hover { background: var(--teal-deep); color: var(--white); }
+
   .contact-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -900,6 +918,13 @@
     aspect-ratio: 240 / 400;
     color: var(--white);
     display: block;
+    flex-shrink: 0;
+  }
+
+  .footer-brand-block .brand-line .brand-logo {
+    width: 42px;
+    height: 70px;
+    object-fit: contain;
     flex-shrink: 0;
   }
 
@@ -1050,7 +1075,7 @@
     body { font-size: 16px; }
 
     .hero { padding: 34px 20px 32px; }
-    .hero-logo { width: 62px; height: 103px; margin-bottom: 14px; }
+    .hero-logo { width: 82px; height: 118px; margin-bottom: 14px; }
 
     .hours-band {
       grid-template-columns: 1fr;
@@ -1177,7 +1202,7 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="#" class="nav-brand">
-      <svg viewBox="0 0 240 400"><use href="#kbk-logo"/></svg>
+      <img class="brand-logo" src="resources/1MNIEJSZA%20NIESK_Obszar%20roboczy%201%20kopia.png" alt="KBK">
       KBK
     </a>
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">MENU</button>
@@ -1196,9 +1221,7 @@
 <header class="hero">
   <div class="hero-inner">
 
-    <svg class="hero-logo" viewBox="0 0 240 400" aria-label="Godło KBK — klucz z nieskończonością">
-      <use href="#kbk-logo"/>
-    </svg>
+    <img class="hero-logo" src="resources/1MNIEJSZA%20NIESK_Obszar%20roboczy%201%20kopia.png" alt="Godło Królestwa Bez Kresu">
 
     <div class="hero-eyebrow">
       Otwarta enklawa <span class="sep">·</span> Biskupia 18 <span class="sep">·</span> Kraków
@@ -1237,10 +1260,10 @@
 <section class="section" id="wydarzenia">
   <div class="section-head">
     <h2>Wydarzenia</h2>
-    <a href="https://luma.com/user/kbk" target="_blank" rel="noopener" class="link-out">Otwórz kalendarz</a>
+    <a href="https://luma.com/kbk.events" target="_blank" rel="noopener" class="link-out">Otwórz kalendarz</a>
   </div>
 
-  <a class="luma-banner" href="https://luma.com/user/kbk" target="_blank" rel="noopener">
+  <a class="luma-banner" href="https://luma.com/kbk.events" target="_blank" rel="noopener">
     <div class="luma-banner-content">
       <span class="luma-eyebrow">Kalendarz KBK</span>
       <span class="luma-title">Wszystkie nadchodzące wydarzenia</span>
@@ -1250,7 +1273,7 @@
       </span>
     </div>
     <div class="luma-banner-cta">
-      <span>luma.com/user/kbk</span>
+      <span>luma.com/kbk.events</span>
       <span class="luma-arrow">→</span>
     </div>
   </a>
@@ -1296,7 +1319,8 @@
     </div>
     <h2>Konstytucja</h2>
     <div class="doc-content" id="konstytucja-content">
-      <p class="doc-placeholder">Konstytucja</p>
+      <p>Wierni "Przesłaniu Pana Cogito" i manifestowi otwartej enklawy, świadomi fundamentów, na których zbudowane zostało Królestwo Bez Kresu - poezji Zbigniewa Herberta oraz tradycji Rzeczypospolitej, akceptując wielość poglądów obywateli i konieczność szerokiej współpracy w budowaniu dobra wspólnego, chcąc pozostać niepodległymi od wszystkiego co zamyka ludzi na siebie, w trosce o przyszłość dzieła rozpoczętego w 2015 roku, ustanawiamy tę Konstytucję.</p>
+      <a class="constitution-link" href="resources/konstytucja.txt" target="_blank" rel="noopener">Zobacz pełny tekst</a>
     </div>
   </div>
 </section>
@@ -1338,7 +1362,7 @@
         <h3>Napisz do nas</h3>
         <p>
           Fundacja Tradycji Miast i Wsi<br>
-          <a href="mailto:fundacjatradycji@gmail.com">fundacjatradycji@gmail.com</a>
+          <a href="mailto:krolestwobezkresu@gmail.com">krolestwobezkresu@gmail.com</a>
         </p>
         <p style="margin-top:12px; font-size:0.84rem;">
           Wsparcie: <a href="https://zrzutka.pl/zhnzyt" target="_blank" rel="noopener">zrzutka.pl/zhnzyt</a>
@@ -1352,7 +1376,7 @@
           <a href="https://www.facebook.com/herberciarnia" target="_blank" rel="noopener">Facebook →</a>
           <a href="https://www.instagram.com/krolestwo.bez.kresu/" target="_blank" rel="noopener">Instagram →</a>
           <a href="https://peakd.com/@krolestwo" target="_blank" rel="noopener">PeakD (Hive) →</a>
-          <a href="https://luma.com/user/kbk" target="_blank" rel="noopener">Luma (wydarzenia) →</a>
+          <a href="https://luma.com/kbk.events" target="_blank" rel="noopener">Luma (wydarzenia) →</a>
         </p>
       </div>
 
@@ -1381,7 +1405,7 @@
 
     <div class="footer-brand-block">
       <div class="brand-line">
-        <svg viewBox="0 0 240 400" aria-hidden="true"><use href="#kbk-logo"/></svg>
+        <img class="brand-logo" src="resources/1MNIEJSZA%20NIESK_Obszar%20roboczy%201%20kopia.png" alt="KBK">
         <span class="brand-name">Królestwo<br>Bez Kresu</span>
       </div>
       <p>
@@ -1414,7 +1438,7 @@
         <a href="https://peakd.com/@krolestwo" target="_blank" rel="noopener" title="PeakD" aria-label="PeakD">
           <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
         </a>
-        <a href="https://luma.com/user/kbk" target="_blank" rel="noopener" title="Luma" aria-label="Luma">
+        <a href="https://luma.com/kbk.events" target="_blank" rel="noopener" title="Luma" aria-label="Luma">
           <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
         </a>
       </div>
@@ -1508,7 +1532,6 @@
     }
   }
   loadDoc('manifest-content', 'manifest.txt');
-  loadDoc('konstytucja-content', 'konstytucja.txt');
 
   const HIVE_ACCOUNT = 'krolestwo';
   const HIVE_LIMIT = 3;

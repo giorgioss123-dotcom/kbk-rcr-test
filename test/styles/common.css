@@ -40,6 +40,11 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+body,
+body * {
+  font-family: '29LT Zawi', 'Trebuchet MS', sans-serif !important;
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -94,6 +99,13 @@ body::before {
   aspect-ratio: 240 / 400;
   color: var(--kbk-white);
   display: block;
+  flex-shrink: 0;
+}
+
+.nav-brand .brand-logo {
+  width: 24px;
+  height: 34px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
