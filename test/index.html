@@ -787,23 +787,34 @@
     font-weight: 600;
   }
 
-  .doc-placeholder {
-    color: #96a0a6;
-    font-style: italic;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.82rem;
-  }
-
   #konstytucja .doc-content {
     margin: 0 auto;
+    color: var(--muted);
     text-align: center;
+  }
+
+  #konstytucja .constitution-area {
+    position: relative;
+  }
+
+  #konstytucja .constitution-area h2 {
+    margin: 0 0 34px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--white);
+    color: var(--white);
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(1.55rem, 3vw, 2.35rem);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 
   #konstytucja .constitution-preamble-title,
   #konstytucja .constitution-preamble-label {
     display: block;
     text-align: center;
-    color: var(--teal-deep);
+    color: var(--white);
     font-weight: 700;
   }
 
@@ -817,6 +828,7 @@
   #konstytucja .constitution-preamble-date,
   #konstytucja .constitution-preamble-label {
     margin-bottom: 20px;
+    color: var(--muted);
     font-size: 0.86rem;
   }
 
@@ -831,7 +843,7 @@
     margin-top: 8px;
     padding: 12px 18px;
     border: 1px solid var(--line-2);
-    color: var(--teal-dark);
+    color: var(--white);
     text-decoration: none;
     font-size: 0.72rem;
     letter-spacing: 0.14em;
@@ -856,7 +868,7 @@
   .constitution-preview[open] summary { margin-bottom: 28px; }
 
   .constitution-full-text {
-    color: #2b363c;
+    color: var(--muted);
     line-height: 1.78;
     text-align: left;
   }
@@ -864,7 +876,7 @@
   .constitution-full-text h3,
   .constitution-full-text h4 {
     margin: 28px 0 12px;
-    color: var(--teal-deep);
+    color: var(--white);
     text-align: center;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -1368,17 +1380,12 @@
     </div>
     <h2>Manifest</h2>
     <div class="doc-content" id="manifest-content">
-      <p class="doc-placeholder">Manifest</p>
     </div>
   </div>
 </section>
 
 <section class="section" id="konstytucja">
-  <div class="doc-section">
-    <div class="doc-meta">
-      <span>Dokument / 02</span>
-      <span>Zasady wspólnoty</span>
-    </div>
+  <div class="constitution-area">
     <h2>Konstytucja</h2>
     <div class="doc-content" id="konstytucja-content">
       <strong class="constitution-preamble-title">KONSTYTUCJA KRÓLESTWA BEZ KRESU</strong>
@@ -1386,7 +1393,7 @@
       <strong class="constitution-preamble-label">PREAMBUŁA</strong>
       <p>Wierni "Przesłaniu Pana Cogito" i manifestowi otwartej enklawy, świadomi fundamentów, na których zbudowane zostało Królestwo Bez Kresu - poezji Zbigniewa Herberta oraz tradycji Rzeczypospolitej, akceptując wielość poglądów obywateli i konieczność szerokiej współpracy w budowaniu dobra wspólnego, chcąc pozostać niepodległymi od wszystkiego co zamyka ludzi na siebie, w trosce o przyszłość dzieła rozpoczętego w 2015 roku, ustanawiamy tę Konstytucję.</p>
       <details class="constitution-preview" id="constitution-preview">
-        <summary class="constitution-link">Zobacz pełny tekst</summary>
+        <summary class="constitution-link"><span id="constitution-toggle-label">Zobacz pełny tekst</span></summary>
         <div class="constitution-full-text" id="constitution-full-text">Ładowanie Konstytucji…</div>
       </details>
     </div>
@@ -1641,6 +1648,9 @@
   const constitutionPreview = document.getElementById('constitution-preview');
   if (constitutionPreview) {
     constitutionPreview.addEventListener('toggle', function () {
+      document.getElementById('constitution-toggle-label').textContent = constitutionPreview.open
+        ? 'Zwiń pełny tekst'
+        : 'Zobacz pełny tekst';
       if (!constitutionPreview.open || constitutionPreview.dataset.loaded) return;
       constitutionPreview.dataset.loaded = 'true';
       fetch('resources/konstytucja.txt')
