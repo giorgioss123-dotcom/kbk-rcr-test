@@ -853,20 +853,6 @@
 
   .constitution-link:hover { background: var(--teal-deep); color: var(--white); }
 
-  .constitution-preview {
-    margin-top: 22px;
-    text-align: left;
-  }
-
-  .constitution-preview summary {
-    display: inline-flex;
-    list-style: none;
-  }
-
-  .constitution-preview summary::-webkit-details-marker { display: none; }
-
-  .constitution-preview[open] summary { margin-bottom: 28px; }
-
   .constitution-full-text {
     color: var(--muted);
     line-height: 1.78;
@@ -885,6 +871,51 @@
   .constitution-full-text h3 { font-size: 1.12rem; }
   .constitution-full-text h4 { font-size: 1rem; letter-spacing: 0.04em; }
   .constitution-full-text p { margin: 0 0 14px; text-align: left; }
+
+  .constitution-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    background: rgba(6, 29, 35, 0.82);
+    backdrop-filter: blur(8px);
+  }
+
+  .constitution-modal.hidden { display: none; }
+
+  .constitution-modal-card {
+    position: relative;
+    width: min(900px, 100%);
+    max-height: min(82vh, 900px);
+    overflow-y: auto;
+    padding: 42px 48px 38px;
+    background: rgba(19, 69, 79, 0.98);
+    border: 1px solid var(--line-2);
+    box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.28);
+  }
+
+  .constitution-modal-close {
+    display: block;
+    margin: 0 0 24px auto;
+    padding: 8px 12px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--white);
+    cursor: pointer;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .constitution-modal-close:hover { background: var(--white); color: var(--teal-deep); }
+
+  @media (max-width: 600px) {
+    .constitution-modal { padding: 16px; }
+    .constitution-modal-card { padding: 28px 22px 24px; }
+  }
 
   .contact-grid {
     display: grid;
@@ -1284,7 +1315,6 @@
       <a href="#wydarzenia">Wydarzenia</a>
       <a href="#dziennik">Dziennik</a>
       <a href="spolecznosc.html">Dla społeczności</a>
-      <a href="#manifest">Manifest</a>
       <a href="#konstytucja">Konstytucja</a>
       <a href="#kontakt">Kontakt</a>
       <a href="#mapa">Mapa</a>
@@ -1372,18 +1402,6 @@
   </div>
 </section>
 
-<section class="section" id="manifest">
-  <div class="doc-section">
-    <div class="doc-meta">
-      <span>Dokument / 01</span>
-      <span>Fundamenty</span>
-    </div>
-    <h2>Manifest</h2>
-    <div class="doc-content" id="manifest-content">
-    </div>
-  </div>
-</section>
-
 <section class="section" id="konstytucja">
   <div class="constitution-area">
     <h2>Konstytucja</h2>
@@ -1392,13 +1410,20 @@
       <span class="constitution-preamble-date">z dnia 30 grudnia AD 2025</span>
       <strong class="constitution-preamble-label">PREAMBUŁA</strong>
       <p>Wierni "Przesłaniu Pana Cogito" i manifestowi otwartej enklawy, świadomi fundamentów, na których zbudowane zostało Królestwo Bez Kresu - poezji Zbigniewa Herberta oraz tradycji Rzeczypospolitej, akceptując wielość poglądów obywateli i konieczność szerokiej współpracy w budowaniu dobra wspólnego, chcąc pozostać niepodległymi od wszystkiego co zamyka ludzi na siebie, w trosce o przyszłość dzieła rozpoczętego w 2015 roku, ustanawiamy tę Konstytucję.</p>
-      <details class="constitution-preview" id="constitution-preview">
-        <summary class="constitution-link"><span id="constitution-toggle-label">Zobacz pełny tekst</span></summary>
-        <div class="constitution-full-text" id="constitution-full-text">Ładowanie Konstytucji…</div>
-      </details>
+      <button class="constitution-link" type="button" id="constitution-open">Zobacz pełny tekst</button>
     </div>
   </div>
 </section>
+
+<div class="constitution-modal hidden" id="constitution-modal" role="dialog" aria-modal="true" aria-labelledby="constitution-modal-title">
+  <article class="constitution-modal-card">
+    <button class="constitution-modal-close" type="button" id="constitution-close">Zamknij</button>
+    <div class="constitution-full-text" id="constitution-full-text">
+      <h3 id="constitution-modal-title">Konstytucja</h3>
+      <p>Ładowanie Konstytucji…</p>
+    </div>
+  </article>
+</div>
 
 <section class="section-alt" id="kontakt">
   <div class="section-inner">
@@ -1494,7 +1519,6 @@
         <li><a href="#wydarzenia">Wydarzenia</a></li>
         <li><a href="#dziennik">Dziennik</a></li>
         <li><a href="spolecznosc.html">Dla społeczności</a></li>
-        <li><a href="#manifest">Manifest</a></li>
         <li><a href="#konstytucja">Konstytucja</a></li>
         <li><a href="#kontakt">Kontakt</a></li>
         <li><a href="#mapa">Mapa</a></li>
@@ -1606,8 +1630,6 @@
       console.info(`Nie udało się załadować ${url}:`, e.message);
     }
   }
-  loadDoc('manifest-content', 'manifest.txt');
-
   function renderConstitutionPreview(text) {
     const lines = text.split(/\r?\n/).map(line => line.trim());
     const output = [];
@@ -1645,14 +1667,23 @@
     document.getElementById('constitution-full-text').innerHTML = output.join('');
   }
 
-  const constitutionPreview = document.getElementById('constitution-preview');
-  if (constitutionPreview) {
-    constitutionPreview.addEventListener('toggle', function () {
-      document.getElementById('constitution-toggle-label').textContent = constitutionPreview.open
-        ? 'Zwiń pełny tekst'
-        : 'Zobacz pełny tekst';
-      if (!constitutionPreview.open || constitutionPreview.dataset.loaded) return;
-      constitutionPreview.dataset.loaded = 'true';
+  const constitutionModal = document.getElementById('constitution-modal');
+  const constitutionOpen = document.getElementById('constitution-open');
+  const constitutionClose = document.getElementById('constitution-close');
+  let constitutionLoaded = false;
+
+  function closeConstitutionModal() {
+    constitutionModal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  if (constitutionOpen && constitutionModal) {
+    constitutionOpen.addEventListener('click', function () {
+      constitutionModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      constitutionClose.focus();
+      if (constitutionLoaded) return;
+      constitutionLoaded = true;
       fetch('resources/konstytucja.txt')
         .then(response => {
           if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -1664,6 +1695,18 @@
         });
     });
   }
+
+  if (constitutionClose) constitutionClose.addEventListener('click', closeConstitutionModal);
+  if (constitutionModal) {
+    constitutionModal.addEventListener('click', function (event) {
+      if (event.target === constitutionModal) closeConstitutionModal();
+    });
+  }
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && constitutionModal && !constitutionModal.classList.contains('hidden')) {
+      closeConstitutionModal();
+    }
+  });
 
   const HIVE_ACCOUNT = 'krolestwo';
   const HIVE_LIMIT = 3;
