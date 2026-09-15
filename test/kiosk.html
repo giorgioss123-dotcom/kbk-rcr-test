@@ -229,6 +229,49 @@
   .status-box.ok    { border-color: rgba(77,122,95,0.4); background: rgba(77,122,95,0.08); color: var(--pos); }
   .status-box.info  { border-color: rgba(212,169,95,0.4); background: rgba(212,169,95,0.08); color: var(--paper-ink); }
 
+  .status-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(6, 29, 35, 0.78);
+    backdrop-filter: blur(8px);
+  }
+  .status-modal.hidden { display: none; }
+  .status-modal-card {
+    width: min(460px, 100%);
+    padding: 32px 28px 26px;
+    background: var(--paper);
+    color: var(--paper-ink);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.28);
+    text-align: center;
+  }
+  .status-modal-message {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .status-modal-message.error { color: var(--neg); }
+  .status-modal-message.ok { color: var(--pos); }
+  .status-modal-message.info { color: var(--paper-ink); }
+  .status-modal-close {
+    margin-top: 24px;
+    padding: 10px 18px;
+    border: 1px solid var(--teal-deep);
+    background: var(--teal-deep);
+    color: var(--paper);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .status-modal-close:hover { background: transparent; color: var(--teal-deep); }
+
   @media (max-width: 560px) {
     main { padding: 32px 24px 28px; }
     .wrap { padding: 40px 16px 60px; }
@@ -305,8 +348,14 @@
       <button id="submit">Wyślij zamówienie</button>
     </div>
 
-    <div id="message" class="status-box hidden" role="status" aria-live="polite"></div>
   </main>
+</div>
+
+<div class="status-modal hidden" id="status-modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-message">
+  <div class="status-modal-card">
+    <p class="status-modal-message" id="status-modal-message" role="status" aria-live="polite"></p>
+    <button class="status-modal-close" type="button" id="status-modal-close">OK</button>
+  </div>
 </div>
 
 <script src="public-config.js"></script>
@@ -316,13 +365,13 @@
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
   const safeText = shared.safeText;
-  const MESSAGE_TTL_MS = 4000;
   const PRODUCT_CACHE_MS = 300000;
   const productsEl = document.getElementById('products');
-  const messageEl = document.getElementById('message');
+  const statusModal = document.getElementById('status-modal');
+  const statusModalMessage = document.getElementById('status-modal-message');
+  const statusModalClose = document.getElementById('status-modal-close');
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
-  let messageTimer = null;
   let productCache = null;
   let productCacheTs = 0;
 
@@ -331,12 +380,21 @@
   }
 
   function showMessage(text, type) {
-    if (!text) { messageEl.textContent = ''; messageEl.className = 'status-box hidden'; return; }
-    messageEl.textContent = text;
-    messageEl.className = 'status-box ' + (type || 'info');
-    clearTimeout(messageTimer);
-    messageTimer = setTimeout(function () { showMessage('', 'info'); }, MESSAGE_TTL_MS);
+    if (!text) { statusModal.classList.add('hidden'); return; }
+    statusModalMessage.textContent = text;
+    statusModalMessage.className = 'status-modal-message ' + (type || 'info');
+    statusModal.classList.remove('hidden');
+    statusModalClose.focus();
   }
+
+  function closeStatusModal() { statusModal.classList.add('hidden'); }
+  statusModalClose.addEventListener('click', closeStatusModal);
+  statusModal.addEventListener('click', function (event) {
+    if (event.target === statusModal) closeStatusModal();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') closeStatusModal();
+  });
 
   function resetOrderForm() {
     loginInput.value = ''; pinInput.value = '';
