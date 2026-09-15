@@ -348,6 +348,8 @@
       <button id="submit">Wyślij zamówienie</button>
     </div>
 
+    <div id="processing-status" class="status-box hidden" role="status" aria-live="polite"></div>
+
   </main>
 </div>
 
@@ -367,6 +369,7 @@
   const safeText = shared.safeText;
   const PRODUCT_CACHE_MS = 300000;
   const productsEl = document.getElementById('products');
+  const processingStatus = document.getElementById('processing-status');
   const statusModal = document.getElementById('status-modal');
   const statusModalMessage = document.getElementById('status-modal-message');
   const statusModalClose = document.getElementById('status-modal-close');
@@ -385,6 +388,11 @@
     statusModalMessage.className = 'status-modal-message ' + (type || 'info');
     statusModal.classList.remove('hidden');
     statusModalClose.focus();
+  }
+
+  function showProcessingStatus(text) {
+    processingStatus.textContent = text || '';
+    processingStatus.className = text ? 'status-box info' : 'status-box hidden';
   }
 
   function closeStatusModal() { statusModal.classList.add('hidden'); }
@@ -471,7 +479,7 @@
     }
     var submitBtn = document.getElementById('submit');
     submitBtn.disabled = true; submitBtn.textContent = 'Przetwarzanie…';
-    showMessage('Wysyłanie zamówienia…', 'info');
+    showProcessingStatus('Wysyłanie zamówienia…');
     fetch(APP_CONFIG.webAppUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -481,9 +489,10 @@
       .then(function (data) {
         pinInput.value = '';
         if (data && data.ok) resetOrderForm();
+        showProcessingStatus('');
         showMessage(data && data.message ? data.message : (data && data.ok ? 'Zamówienie wysłane.' : 'Nie udało się wysłać zamówienia.'), data && data.ok ? 'ok' : 'error');
       })
-      .catch(function () { pinInput.value = ''; showMessage('Nie udało się połączyć z backendem.', 'error'); })
+      .catch(function () { pinInput.value = ''; showProcessingStatus(''); showMessage('Nie udało się połączyć z backendem.', 'error'); })
       .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });
   });
   loadProducts(true).catch(function () {
