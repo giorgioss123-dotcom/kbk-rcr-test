@@ -27,6 +27,16 @@
     --neg: #a44650;
     --maxw: 1140px;
   }
+    input[type="tel"] {
+      width: 100%;
+      border: 1px solid var(--paper-line);
+      border-radius: 0;
+      padding: 11px 13px;
+      background: #fffdf7;
+      color: var(--paper-ink);
+      font-size: 15px; font-family: 'Archivo', sans-serif;
+      transition: border-color 0.18s;
+    }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; overflow-x: hidden; }
   body {
@@ -43,6 +53,53 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .info-tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--teal);
+      font-family: 'Archivo', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: help;
+    }
+    .info-tip::after {
+      content: attr(data-info);
+      position: absolute;
+      left: 24px;
+      bottom: 0;
+      z-index: 5;
+      width: 240px;
+      padding: 10px 12px;
+      background: var(--teal-deep);
+      color: var(--white);
+      font-family: 'Archivo', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.45;
+      text-transform: none;
+      letter-spacing: 0;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.18s, visibility 0.18s;
+    }
+    .info-tip:hover::after,
+    .info-tip:focus::after,
+    .info-tip.is-open::after { opacity: 1; visibility: visible; }
   body::before {
     content: '';
     position: fixed; inset: 0;
@@ -50,6 +107,8 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
     mix-blend-mode: overlay;
   }
+    .checkbox-row.required { margin-top: 18px; }
+    .checkbox-row.required label a { color: var(--teal-deep); text-decoration: underline; }
 
   /* NAV */
   .nav {
@@ -366,11 +425,14 @@
       <label for="nazwisko">Nazwisko <span class="opt">(opcjonalnie)</span></label>
       <input type="text" id="nazwisko">
 
-      <label for="email">E-mail</label>
+      <label class="field-label" for="email">E-mail <button class="info-tip" type="button" aria-label="Dlaczego podać e-mail?" data-info="E-mail jest potrzebny do potwierdzenia rejestracji i kontaktu w sprawach konta." aria-expanded="false">i</button></label>
       <input type="email" id="email" required>
 
-      <label for="adres">Adres <span class="opt">(opcjonalnie)</span></label>
+      <label class="field-label" for="adres">Adres <span class="opt">(opcjonalnie)</span> <button class="info-tip" type="button" aria-label="Dlaczego podać adres?" data-info="Adres może ułatwić kontakt pocztowy i organizację spraw związanych ze społecznością." aria-expanded="false">i</button></label>
       <input type="text" id="adres" placeholder="ulica, miasto, kod pocztowy">
+
+      <label class="field-label" for="telefon">Numer telefonu <span class="opt">(opcjonalnie)</span> <button class="info-tip" type="button" aria-label="Dlaczego podać numer telefonu?" data-info="Telefon może ułatwić szybki kontakt w ważnych sprawach dotyczących społeczności." aria-expanded="false">i</button></label>
+      <input type="tel" id="telefon" autocomplete="tel" inputmode="tel">
 
       <div class="consent-block open" id="consentBlock">
         <div class="checkbox-row">
@@ -380,6 +442,10 @@
         <div class="checkbox-row">
           <input type="checkbox" id="zgodaPocztowy">
           <label for="zgodaPocztowy">Zgadzam się na kontakt pocztowy</label>
+        </div>
+        <div class="checkbox-row required">
+          <input type="checkbox" id="zgodaRODO" required>
+          <label for="zgodaRODO">Wyrażam zgodę na przetwarzanie moich danych osobowych (imię, nazwisko, e-mail, adres, telefon) oraz kontakt w sprawach związanych z byciem członkiem społeczności Królestwa Bez Kresu). <a href="resources/polityka-prywatnosci.pdf" target="_blank" rel="noopener">Polityka prywatności</a></label>
         </div>
         <div class="hint error" id="consentHint" style="display:none;"></div>
       </div>
@@ -395,7 +461,7 @@
       <div class="banner" id="banner"></div>
 
       <p class="privacy-note">
-        Podane dane (imię, nazwisko, e-mail, opcjonalnie adres) są przetwarzane wyłącznie
+        Podane dane (imię, nazwisko, e-mail, opcjonalnie adres i telefon) są przetwarzane wyłącznie
         w celu założenia i obsługi konta w systemie. Zgody na kontakt e-mailowy/pocztowy są
         dobrowolne i możesz je wycofać w dowolnym momencie, kontaktując się z nami.
       </p>
@@ -454,6 +520,7 @@
   const submitBtn = document.getElementById('submitBtn');
   const consentBlock = document.getElementById('consentBlock');
   const addressInput = document.getElementById('adres');
+  const phoneInput = document.getElementById('telefon');
   const postalConsentInput = document.getElementById('zgodaPocztowy');
 
   function showNewAccountForm() {
@@ -566,6 +633,7 @@
     var nazwisko = document.getElementById('nazwisko').value.trim();
     var email = document.getElementById('email').value.trim().toLowerCase();
     var adres = document.getElementById('adres').value.trim();
+    var telefon = phoneInput.value.trim();
     var pin = pinInput.value.trim();
 
     if (!login || !USERNAME_RE.test(login)) {
@@ -573,6 +641,9 @@
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showModal('Podaj poprawny adres e-mail.'); return;
+    }
+    if (!document.getElementById('zgodaRODO').checked) {
+      showModal('Aby założyć konto, zaakceptuj zgodę na przetwarzanie danych osobowych.'); return;
     }
     if (!validatePins(true)) return;
     if (adres && !document.getElementById('zgodaPocztowy').checked) {
@@ -587,9 +658,10 @@
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'register', formLoadedAt: String(formLoadedAt),
-        login, imie, nazwisko, email, adres, pin,
+        login, imie, nazwisko, email, adres, telefon, pin,
         zgodaEmail: document.getElementById('zgodaEmail').checked,
-        zgodaPocztowy: document.getElementById('zgodaPocztowy').checked
+        zgodaPocztowy: document.getElementById('zgodaPocztowy').checked,
+        zgodaRODO: document.getElementById('zgodaRODO').checked
       })
     })
       .then(function (r) { return r.json(); })
@@ -614,6 +686,13 @@
         submitBtn.disabled = false;
         submitBtn.textContent = 'Zarejestruj się';
       });
+  });
+
+  document.querySelectorAll('.info-tip').forEach(function (tip) {
+    tip.addEventListener('click', function () {
+      const isOpen = tip.classList.toggle('is-open');
+      tip.setAttribute('aria-expanded', String(isOpen));
+    });
   });
 </script>
 </body>

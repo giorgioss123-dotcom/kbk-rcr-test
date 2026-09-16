@@ -29,6 +29,7 @@ Nie otwieraj stron przez `file://`, ponieważ przeglądarka może zablokować ż
 - formularze rejestracji, logowania i głosowania wskazują właściwy Web App;
 - dane `CENNIK`, `WNIOSKI` i `TRANSAKCJE` są widoczne tylko w zakresie przewidzianym dla użytkownika;
 - działają widoki mobilne oraz linki do `confirm.html`;
+- formularz rejestracji zapisuje telefon i wymaga zgody RODO z działającym linkiem do polityki prywatności;
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
 
 ## 4. Opublikuj
