@@ -79,13 +79,15 @@
     .info-tip::after {
       content: attr(data-info);
       position: absolute;
-      left: 24px;
-      bottom: 0;
+      left: 22px;
+      bottom: calc(100% + 8px);
       z-index: 5;
-      width: 240px;
+      width: 250px;
       padding: 10px 12px;
       background: var(--teal-deep);
       color: var(--white);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.22);
       font-family: 'Archivo', sans-serif;
       font-size: 0.78rem;
       font-weight: 400;
@@ -103,12 +105,10 @@
 
     @media (max-width: 560px) {
       .info-tip::after {
-        position: fixed;
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        width: auto;
-        max-width: none;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        width: min(250px, calc(100vw - 48px));
+        transform: translateX(-50%);
       }
     }
   body::before {
@@ -701,8 +701,30 @@
 
   document.querySelectorAll('.info-tip').forEach(function (tip) {
     tip.addEventListener('click', function () {
+      document.querySelectorAll('.info-tip.is-open').forEach(function (openTip) {
+        if (openTip !== tip) {
+          openTip.classList.remove('is-open');
+          openTip.setAttribute('aria-expanded', 'false');
+        }
+      });
       const isOpen = tip.classList.toggle('is-open');
       tip.setAttribute('aria-expanded', String(isOpen));
+    });
+  });
+
+  document.addEventListener('click', function (event) {
+    if (event.target.closest('.info-tip')) return;
+    document.querySelectorAll('.info-tip.is-open').forEach(function (tip) {
+      tip.classList.remove('is-open');
+      tip.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('.info-tip.is-open').forEach(function (tip) {
+      tip.classList.remove('is-open');
+      tip.setAttribute('aria-expanded', 'false');
     });
   });
 </script>
