@@ -100,6 +100,17 @@
     .info-tip:hover::after,
     .info-tip:focus::after,
     .info-tip.is-open::after { opacity: 1; visibility: visible; }
+
+    @media (max-width: 560px) {
+      .info-tip::after {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        width: auto;
+        max-width: none;
+      }
+    }
   body::before {
     content: '';
     position: fixed; inset: 0;
@@ -411,7 +422,7 @@
       <button type="button" class="secondary-btn" id="migrationBack">Wróć</button>
     </form>
 
-    <form id="regForm" class="hidden">
+    <form id="regForm" class="hidden" novalidate>
       <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off">
 
       <label for="login">Login</label>
@@ -671,7 +682,7 @@
           form.reset();
           updatePostalConsentState();
           pinHint.textContent = ''; pinHint.className = 'hint';
-          consentBlock.classList.remove('open');
+          consentBlock.classList.add('open');
         } else {
           var message = result && result.message ? result.message : 'Nie udało się zarejestrować konta.';
           if (result && result.error === 'email_taken') message = 'Ten adres e-mail jest już zarejestrowany.';
