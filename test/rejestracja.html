@@ -105,9 +105,10 @@
 
     @media (max-width: 560px) {
       .info-tip::after {
+        position: fixed;
         left: 50%;
-        bottom: calc(100% + 10px);
-        width: min(250px, calc(100vw - 48px));
+        bottom: var(--tooltip-bottom, 72px);
+        width: min(250px, calc(100vw - 32px));
         transform: translateX(-50%);
       }
     }
@@ -700,6 +701,11 @@
   });
 
   document.querySelectorAll('.info-tip').forEach(function (tip) {
+    function positionMobileTooltip() {
+      const rect = tip.getBoundingClientRect();
+      tip.style.setProperty('--tooltip-bottom', Math.max(16, window.innerHeight - rect.top + 10) + 'px');
+    }
+
     tip.addEventListener('click', function () {
       document.querySelectorAll('.info-tip.is-open').forEach(function (openTip) {
         if (openTip !== tip) {
@@ -709,7 +715,14 @@
       });
       const isOpen = tip.classList.toggle('is-open');
       tip.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) positionMobileTooltip();
     });
+    window.addEventListener('resize', function () {
+      if (tip.classList.contains('is-open')) positionMobileTooltip();
+    });
+    window.addEventListener('scroll', function () {
+      if (tip.classList.contains('is-open')) positionMobileTooltip();
+    }, { passive: true });
   });
 
   document.addEventListener('click', function (event) {
