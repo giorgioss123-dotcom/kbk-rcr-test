@@ -3,8 +3,8 @@ window.KBK_APP_CONFIG = {
 };
 
 window.KBK_PUBLIC_SHEET_IDS = {
-  cennikFileId: '1hNjYyBCsWSEGOSqjnIGl6mYjldfz-qkxIfy73BMHd0M',
+  cennikFileId: '1YwUfc_SrM9yAj4CasraaLqi32qEEIxTSs4CJyxlXXgY',
   wnioskiFileId: '1mRTK0JR6D7qIE7aIn2ggEuu5QBTOhdYGqO0kD8PbtLU',
   transakcjeFileId: '1dDVJd-BbCpnvbTDa0gacVRYeGzQ7zGHE5iM3NRhLMSw',
-  transakcjeArchiveFileId: ''
+  transakcjeArchiveFileId: '1SnhoLAv_X2lqlsVuhzghr2_2bDbLBIQS3ERxRS66xJg'
 };
