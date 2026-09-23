@@ -573,8 +573,10 @@
 
 <script src="public-config.js"></script>
 <script src="js/shared.js"></script>
+<script src="js/pin-reset.js"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
+  const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
   const safeText = shared.safeText;
@@ -901,6 +903,8 @@
       if (data.ok) {
         banner.textContent = 'Głos zapisany — sprawdź maila, żeby go potwierdzić.';
         banner.className = 'modal-banner show ok';
+      } else if (pinReset.isLocked(data)) {
+        pinReset.open(login);
       } else {
         banner.textContent = data.message || 'Nie udało się oddać głosu.';
         banner.className = 'modal-banner show error';
@@ -946,6 +950,8 @@
       if (data.ok) {
         banner.textContent = 'Wniosek zapisany — sprawdź maila, żeby go aktywować.';
         banner.className = 'modal-banner show ok';
+      } else if (pinReset.isLocked(data)) {
+        pinReset.open(login);
       } else {
         banner.textContent = data.message || 'Nie udało się złożyć wniosku.';
         banner.className = 'modal-banner show error';

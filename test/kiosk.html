@@ -334,7 +334,6 @@
     text-transform: uppercase;
   }
   .status-modal-close:hover { background: transparent; color: var(--teal-deep); }
-
   @media (max-width: 560px) {
     main { padding: 32px 24px 28px; }
     .wrap { padding: 40px 16px 60px; }
@@ -450,6 +449,7 @@
 
 <script src="public-config.js"></script>
 <script src="js/shared.js"></script>
+<script src="js/pin-reset.js"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
@@ -463,6 +463,7 @@
   const statusModalClose = document.getElementById('status-modal-close');
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
+  const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
   let productCache = null;
   let productCacheTs = 0;
   let selectedCurrency = 'RCR';
@@ -604,7 +605,8 @@
         pinInput.value = '';
         if (data && data.ok) resetOrderForm();
         showProcessingStatus('');
-        showMessage(data && data.message ? data.message : (data && data.ok ? 'Zamówienie wysłane.' : 'Nie udało się wysłać zamówienia.'), data && data.ok ? 'ok' : 'error');
+        if (pinReset.isLocked(data)) pinReset.open(login);
+        else showMessage(data && data.message ? data.message : (data && data.ok ? 'Zamówienie wysłane.' : 'Nie udało się wysłać zamówienia.'), data && data.ok ? 'ok' : 'error');
       })
       .catch(function () { pinInput.value = ''; showProcessingStatus(''); showMessage('Nie udało się połączyć z backendem.', 'error'); })
       .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });
