@@ -447,17 +447,24 @@
       <input type="tel" id="telefon" autocomplete="tel" inputmode="tel">
 
       <div class="consent-block open" id="consentBlock">
+        <div class="checkbox-row required">
+          <input type="checkbox" id="zgodaRODO" required>
+          <label for="zgodaRODO">
+            <strong>Wymagane:</strong> Wyrażam zgodę na przetwarzanie moich danych osobowych (imię, nazwisko, e-mail, adres, telefon) oraz kontakt w sprawach związanych z byciem członkiem społeczności Królestwa Bez Kresu.
+            <a href="resources/polityka-prywatnosci.pdf" target="_blank" rel="noopener">Polityka prywatności</a>
+          </label>
+        </div>
         <div class="checkbox-row">
-          <input type="checkbox" id="zgodaEmail">
-          <label for="zgodaEmail">Zgadzam się na kontakt mailowy</label>
+          <input type="checkbox" id="zgodaNewsletter">
+          <label for="zgodaNewsletter">Wyrażam zgodę na dopisanie do newslettera i otrzymywanie wiadomości na temat ważnych spraw dotyczących KBK drogą mailową.</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="zgodaWhatsapp">
+          <label for="zgodaWhatsapp">Chcę dołączyć do społeczności KBK na WhatsAppie (wymaga podania numeru telefonu).</label>
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="zgodaPocztowy">
-          <label for="zgodaPocztowy">Zgadzam się na kontakt pocztowy</label>
-        </div>
-        <div class="checkbox-row required">
-          <input type="checkbox" id="zgodaRODO" required>
-          <label for="zgodaRODO">Wyrażam zgodę na przetwarzanie moich danych osobowych (imię, nazwisko, e-mail, adres, telefon) oraz kontakt w sprawach związanych z byciem członkiem społeczności Królestwa Bez Kresu). <a href="resources/polityka-prywatnosci.pdf" target="_blank" rel="noopener">Polityka prywatności</a></label>
+          <label for="zgodaPocztowy">Chcę otrzymywać okazjonalne upminki dorgą pocztową lub odebrać w ten sposób paszport KBK (wymaga podania adresu do wysyłki).</label>
         </div>
         <div class="hint error" id="consentHint" style="display:none;"></div>
       </div>
@@ -534,6 +541,8 @@
   const addressInput = document.getElementById('adres');
   const phoneInput = document.getElementById('telefon');
   const postalConsentInput = document.getElementById('zgodaPocztowy');
+  const whatsappConsentInput = document.getElementById('zgodaWhatsapp');
+  const newsletterConsentInput = document.getElementById('zgodaNewsletter');
 
   function showNewAccountForm() {
     choicePanel.classList.add('hidden');
@@ -586,18 +595,28 @@
       });
   });
 
-  function updatePostalConsentState() {
+  function updateConsentState() {
     const hasAddress = addressInput.value.trim().length > 0;
-    const row = postalConsentInput.closest('.checkbox-row');
+    const hasPhone = phoneInput.value.trim().length > 0;
+
+    const postalRow = postalConsentInput.closest('.checkbox-row');
+    const whatsappRow = whatsappConsentInput.closest('.checkbox-row');
+    const newsletterRow = newsletterConsentInput.closest('.checkbox-row');
+
     postalConsentInput.disabled = !hasAddress;
-    postalConsentInput.checked = hasAddress ? postalConsentInput.checked : false;
-    if (row) {
-      row.classList.toggle('disabled', !hasAddress);
-    }
+    if (!hasAddress) postalConsentInput.checked = false;
+    if (postalRow) postalRow.classList.toggle('disabled', !hasAddress);
+
+    whatsappConsentInput.disabled = !hasPhone;
+    if (!hasPhone) whatsappConsentInput.checked = false;
+    if (whatsappRow) whatsappRow.classList.toggle('disabled', !hasPhone);
+
+    if (newsletterRow) newsletterRow.classList.remove('disabled');
   }
 
-  addressInput.addEventListener('input', updatePostalConsentState);
-  updatePostalConsentState();
+  addressInput.addEventListener('input', updateConsentState);
+  phoneInput.addEventListener('input', updateConsentState);
+  updateConsentState();
 
   loginInput.addEventListener('input', function () {
     const cursorPos = loginInput.selectionStart;
@@ -655,11 +674,20 @@
       showModal('Podaj poprawny adres e-mail.'); return;
     }
     if (!document.getElementById('zgodaRODO').checked) {
-      showModal('Aby założyć konto, zaakceptuj zgodę na przetwarzanie danych osobowych.'); return;
+      showModal('Aby założyć konto, zaakceptuj obowiązkową zgodę na przetwarzanie danych osobowych.'); return;
     }
     if (!validatePins(true)) return;
+    if (document.getElementById('zgodaWhatsapp').checked && !telefon) {
+      showModal('Aby wyrazić zgodę na kontakt WhatsApp, podaj numer telefonu.'); return;
+    }
+    if (document.getElementById('zgodaPocztowy').checked && !adres) {
+      showModal('Aby wyrazić zgodę na kontakt pocztowy, podaj adres do wysyłki.'); return;
+    }
+    if (telefon && !document.getElementById('zgodaWhatsapp').checked) {
+      showModal('Jeśli podajesz numer telefonu, musisz zaakceptować zgodę na kontakt WhatsApp.'); return;
+    }
     if (adres && !document.getElementById('zgodaPocztowy').checked) {
-      showModal('Jeśli podajesz adres, musisz zaakceptować kontakt pocztowy.'); return;
+      showModal('Jeśli podajesz adres, musisz zaakceptować zgodę na kontakt pocztowy.'); return;
     }
 
     submitBtn.disabled = true;
@@ -671,7 +699,8 @@
       body: JSON.stringify({
         action: 'register', formLoadedAt: String(formLoadedAt),
         login, imie, nazwisko, email, adres, telefon, pin,
-        zgodaEmail: document.getElementById('zgodaEmail').checked,
+        zgodaNewsletter: document.getElementById('zgodaNewsletter').checked,
+        zgodaWhatsapp: document.getElementById('zgodaWhatsapp').checked,
         zgodaPocztowy: document.getElementById('zgodaPocztowy').checked,
         zgodaRODO: document.getElementById('zgodaRODO').checked
       })
