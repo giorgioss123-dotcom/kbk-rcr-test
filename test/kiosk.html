@@ -194,6 +194,9 @@
     min-width: 0;
     word-break: break-word;
   }
+  .product-cost {
+    white-space: nowrap;
+  }
   .qty-control {
     display: flex; align-items: center; gap: 8px;
     flex-shrink: 0;
@@ -522,7 +525,7 @@
     productsEl.innerHTML = products.map(function (product, index) {
       var qty = currentQuantities[index] || 0;
       var displayCost = Number(product.cost);
-      return '<div class="product"><span class="product-name">' + escapeHtml(product.name) + ' · ' + displayCost + ' RCR</span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
+      return '<div class="product"><span class="product-name">' + escapeHtml(product.name) + ' · <span class="product-cost">' + displayCost + ' RCR</span></span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
     }).join('');
   }
   function loadProducts(forceReload) {
