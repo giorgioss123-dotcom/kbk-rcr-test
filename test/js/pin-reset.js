@@ -3,6 +3,10 @@
 
   var LOCKED_MESSAGE = 'Konto zablokowane. Zbyt wiele razy podano niepoprawny PIN. Czy chcesz teraz ustawić nowy?';
 
+  function normalizeResetMessage(text) {
+    return String(text || '').replace(/PIN-u/g, 'PINu');
+  }
+
   function attach(options) {
     options = options || {};
     if (!document.getElementById('kbk-pin-reset-styles')) {
@@ -11,8 +15,8 @@
       style.textContent = '.kbk-pin-reset{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,29,35,.78);backdrop-filter:blur(8px)}' +
         '.kbk-pin-reset.hidden{display:none}.kbk-pin-reset-prompt.hidden,.kbk-pin-reset-form.hidden,.kbk-pin-reset-success.hidden{display:none}.kbk-pin-reset-card{width:min(460px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:32px 30px 28px;background:#f4eee0;color:#1a252a;border:1px solid rgba(0,0,0,.12);box-shadow:10px 10px 0 rgba(0,0,0,.28)}' +
         '.kbk-pin-reset-prompt{text-align:center}.kbk-pin-reset-kicker{margin:0 0 18px;font:500 .68rem/1.2 "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#7a6f4d}.kbk-pin-reset-message{margin:0 auto 26px;max-width:34rem;line-height:1.55;color:#a44650}.kbk-pin-reset-actions{display:flex;justify-content:center;gap:10px}.kbk-pin-reset-actions button{min-width:92px}' +
-        '.kbk-pin-reset-actions button,.kbk-pin-reset-form button{border:1px solid #0c3038;background:#0c3038;color:#f4eee0;padding:12px 16px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;transition:background .18s,color .18s}' +
-        '.kbk-pin-reset-actions button:hover,.kbk-pin-reset-form button:hover{background:#1a5a6b}.kbk-pin-reset-actions button:last-child,.kbk-pin-reset-form .kbk-pin-reset-cancel{background:transparent;color:#0c3038}.kbk-pin-reset-actions button:last-child:hover,.kbk-pin-reset-form .kbk-pin-reset-cancel:hover{background:rgba(12,48,56,.08)}.kbk-pin-reset-form.hidden{display:none}' +
+        '.kbk-pin-reset-actions button,.kbk-pin-reset-form button,.kbk-pin-reset-success .kbk-pin-reset-close{appearance:none;-webkit-appearance:none;border:1px solid #0c3038;background:#0c3038;color:#f4eee0;padding:12px 16px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;transition:background .18s,color .18s}' +
+        '.kbk-pin-reset-actions button:hover,.kbk-pin-reset-form button:hover,.kbk-pin-reset-success .kbk-pin-reset-close:hover{background:#1a5a6b}.kbk-pin-reset-actions button:last-child,.kbk-pin-reset-form .kbk-pin-reset-cancel{background:transparent;color:#0c3038}.kbk-pin-reset-actions button:last-child:hover,.kbk-pin-reset-form .kbk-pin-reset-cancel:hover{background:rgba(12,48,56,.08)}.kbk-pin-reset-form.hidden{display:none}' +
         '.kbk-pin-reset-form h2,.kbk-pin-reset-success h2{margin:0 0 8px;font:400 1.7rem/1.1 Anton,sans-serif;letter-spacing:.01em;text-transform:uppercase;color:#0c3038}.kbk-pin-reset-form-intro,.kbk-pin-reset-success p{margin:0 0 22px;color:#7a6f4d;line-height:1.5;font-size:.9rem}.kbk-pin-reset-success{text-align:center}.kbk-pin-reset-success.hidden{display:none}.kbk-pin-reset-success .kbk-pin-reset-close{width:100%;margin-top:4px}' +
         '.kbk-pin-reset-form label{display:block;margin:14px 0 6px;font:500 .68rem/1.2 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#0c3038}' +
         '.kbk-pin-reset-form label:first-child{margin-top:0}.kbk-pin-reset-form input{display:block;width:100%;min-height:46px;border:1px solid rgba(12,48,56,.18);background:#fffdf7;padding:12px 13px;color:#1a252a;font:15px Archivo,sans-serif}.kbk-pin-reset-form input:focus{outline:2px solid rgba(26,90,107,.28);outline-offset:1px;border-color:#1a5a6b}' +
@@ -43,9 +47,9 @@
       '<p class="kbk-pin-reset-feedback" aria-live="polite"></p>' +
       '</form>' +
       '<div class="kbk-pin-reset-success hidden">' +
-      '<p class="kbk-pin-reset-kicker">Reset PIN-u</p>' +
+      '<p class="kbk-pin-reset-kicker">Reset PINu</p>' +
       '<h2>Sprawdź e-mail</h2>' +
-      '<p class="kbk-pin-reset-success-message">Wysłaliśmy link potwierdzający zmianę PIN-u. Kliknij go, aby zakończyć operację.</p>' +
+      '<p class="kbk-pin-reset-success-message">Wysłaliśmy link potwierdzający zmianę PINu. Kliknij go, aby zakończyć operację.</p>' +
       '<button type="button" class="kbk-pin-reset-close">Zamknij</button>' +
       '</div></div>';
     document.body.appendChild(modal);
@@ -112,12 +116,12 @@
       })
         .then(function (response) { return response.json(); })
         .then(function (data) {
-          feedback.textContent = data && data.message ? data.message : 'Nie udało się wysłać wiadomości.';
+          feedback.textContent = normalizeResetMessage(data && data.message ? data.message : 'Nie udało się wysłać wiadomości.');
           feedback.className = 'kbk-pin-reset-feedback ' + (data && data.ok ? 'ok' : 'error');
           if (data && data.ok) {
             form.classList.add('hidden');
             success.classList.remove('hidden');
-            success.querySelector('.kbk-pin-reset-success-message').textContent = data.message || 'Wysłaliśmy link potwierdzający zmianę PIN-u. Kliknij go, aby zakończyć operację.';
+            success.querySelector('.kbk-pin-reset-success-message').textContent = normalizeResetMessage(data.message || 'Wysłaliśmy link potwierdzający zmianę PINu. Kliknij go, aby zakończyć operację.');
           } else {
             submit.disabled = false;
           }
