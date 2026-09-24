@@ -9,14 +9,14 @@
       var style = document.createElement('style');
       style.id = 'kbk-pin-reset-styles';
       style.textContent = '.kbk-pin-reset{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,29,35,.78);backdrop-filter:blur(8px)}' +
-        '.kbk-pin-reset.hidden{display:none}.kbk-pin-reset-card{width:min(460px,100%);padding:30px 28px 26px;background:#f4eee0;color:#1a252a;border:1px solid rgba(0,0,0,.12);box-shadow:10px 10px 0 rgba(0,0,0,.28)}' +
-        '.kbk-pin-reset-prompt{text-align:center}.kbk-pin-reset-message{margin:0 auto 22px;max-width:34rem;line-height:1.55;color:#a44650}.kbk-pin-reset-actions{display:flex;justify-content:center;gap:10px}' +
-        '.kbk-pin-reset-actions button,.kbk-pin-reset-form button{border:1px solid #0c3038;background:#0c3038;color:#f4eee0;padding:11px 16px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}' +
-        '.kbk-pin-reset-actions button:last-child,.kbk-pin-reset-form .kbk-pin-reset-cancel{background:transparent;color:#0c3038}.kbk-pin-reset-form.hidden{display:none}' +
-        '.kbk-pin-reset-form h2,.kbk-pin-reset-success h2{margin:0 0 8px;font:400 1.55rem/1.1 Anton,sans-serif;letter-spacing:.01em;text-transform:uppercase;color:#0c3038}.kbk-pin-reset-form-intro,.kbk-pin-reset-success p{margin:0 0 20px;color:#7a6f4d;line-height:1.5;font-size:.9rem}.kbk-pin-reset-success{text-align:center}.kbk-pin-reset-success.hidden{display:none}.kbk-pin-reset-success .kbk-pin-reset-close{border:1px solid #0c3038;background:#0c3038;color:#f4eee0;padding:11px 16px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}' +
-        '.kbk-pin-reset-form label{display:block;margin:14px 0 6px;font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#0c3038}' +
-        '.kbk-pin-reset-form label:first-child{margin-top:0}.kbk-pin-reset-form input{display:block;width:100%;min-height:46px;border:1px solid rgba(12,48,56,.18);background:#fffdf7;padding:12px 13px;color:#1a252a;font:15px Archivo,sans-serif}' +
-        '.kbk-pin-reset-form button{width:100%;margin-top:20px}.kbk-pin-reset-form .kbk-pin-reset-cancel{margin-top:10px}.kbk-pin-reset-feedback{margin:14px 0 0;font-size:.85rem;line-height:1.45}.kbk-pin-reset-feedback.error{color:#a44650}.kbk-pin-reset-feedback.ok{color:#4d7a5f}';
+        '.kbk-pin-reset.hidden{display:none}.kbk-pin-reset-card{width:min(460px,100%);max-height:calc(100vh - 40px);overflow:auto;padding:32px 30px 28px;background:#f4eee0;color:#1a252a;border:1px solid rgba(0,0,0,.12);box-shadow:10px 10px 0 rgba(0,0,0,.28)}' +
+        '.kbk-pin-reset-prompt{text-align:center}.kbk-pin-reset-kicker{margin:0 0 18px;font:500 .68rem/1.2 "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:#7a6f4d}.kbk-pin-reset-message{margin:0 auto 26px;max-width:34rem;line-height:1.55;color:#a44650}.kbk-pin-reset-actions{display:flex;justify-content:center;gap:10px}.kbk-pin-reset-actions button{min-width:92px}' +
+        '.kbk-pin-reset-actions button,.kbk-pin-reset-form button{border:1px solid #0c3038;background:#0c3038;color:#f4eee0;padding:12px 16px;cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;transition:background .18s,color .18s}' +
+        '.kbk-pin-reset-actions button:hover,.kbk-pin-reset-form button:hover{background:#1a5a6b}.kbk-pin-reset-actions button:last-child,.kbk-pin-reset-form .kbk-pin-reset-cancel{background:transparent;color:#0c3038}.kbk-pin-reset-actions button:last-child:hover,.kbk-pin-reset-form .kbk-pin-reset-cancel:hover{background:rgba(12,48,56,.08)}.kbk-pin-reset-form.hidden{display:none}' +
+        '.kbk-pin-reset-form h2,.kbk-pin-reset-success h2{margin:0 0 8px;font:400 1.7rem/1.1 Anton,sans-serif;letter-spacing:.01em;text-transform:uppercase;color:#0c3038}.kbk-pin-reset-form-intro,.kbk-pin-reset-success p{margin:0 0 22px;color:#7a6f4d;line-height:1.5;font-size:.9rem}.kbk-pin-reset-success{text-align:center}.kbk-pin-reset-success.hidden{display:none}.kbk-pin-reset-success .kbk-pin-reset-close{width:100%;margin-top:4px}' +
+        '.kbk-pin-reset-form label{display:block;margin:14px 0 6px;font:500 .68rem/1.2 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#0c3038}' +
+        '.kbk-pin-reset-form label:first-child{margin-top:0}.kbk-pin-reset-form input{display:block;width:100%;min-height:46px;border:1px solid rgba(12,48,56,.18);background:#fffdf7;padding:12px 13px;color:#1a252a;font:15px Archivo,sans-serif}.kbk-pin-reset-form input:focus{outline:2px solid rgba(26,90,107,.28);outline-offset:1px;border-color:#1a5a6b}' +
+        '.kbk-pin-reset-form button{width:100%;margin-top:22px}.kbk-pin-reset-form .kbk-pin-reset-cancel{margin-top:10px}.kbk-pin-reset-feedback{margin:14px 0 0;font-size:.85rem;line-height:1.45}.kbk-pin-reset-feedback.error{color:#a44650}.kbk-pin-reset-feedback.ok{color:#4d7a5f}@media(max-width:480px){.kbk-pin-reset{padding:14px}.kbk-pin-reset-card{padding:26px 20px 22px;box-shadow:6px 6px 0 rgba(0,0,0,.25)}}';
       document.head.appendChild(style);
     }
     var modal = document.createElement('div');
@@ -25,6 +25,7 @@
     modal.setAttribute('aria-modal', 'true');
     modal.innerHTML = '<div class="kbk-pin-reset-card">' +
       '<div class="kbk-pin-reset-prompt">' +
+      '<p class="kbk-pin-reset-kicker">Bezpieczeństwo konta</p>' +
       '<p class="kbk-pin-reset-message">' + LOCKED_MESSAGE + '</p>' +
       '<div class="kbk-pin-reset-actions">' +
       '<button type="button" data-pin-reset="yes">TAK</button>' +
@@ -42,6 +43,7 @@
       '<p class="kbk-pin-reset-feedback" aria-live="polite"></p>' +
       '</form>' +
       '<div class="kbk-pin-reset-success hidden">' +
+      '<p class="kbk-pin-reset-kicker">Reset PIN-u</p>' +
       '<h2>Sprawdź e-mail</h2>' +
       '<p>Wysłaliśmy link potwierdzający zmianę PIN-u. Kliknij go, aby zakończyć operację.</p>' +
       '<button type="button" class="kbk-pin-reset-close">Zamknij</button>' +
