@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salda RCR – zestawienie z blockchainem Hive</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5f3;--card:#fff;--ink:#1e1c1b;--mute:#6b6662;--line:#e2dfdb;--red:#b01522;--blue:#2f5f8f;--ok:#c9c5c0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171514;--card:#211f1e;--ink:#efece8;--mute:#a09a94;--line:#35312f;--red:#e4525e;--blue:#6fa3d6;--ok:#4a4643}}
+:root[data-theme="dark"]{--bg:#171514;--card:#211f1e;--ink:#efece8;--mute:#a09a94;--line:#35312f;--red:#e4525e;--blue:#6fa3d6;--ok:#4a4643}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+main{max-width:920px;margin:0 auto;padding:32px 18px 64px}
+h1,h2,.big{font-family:Newsreader,Georgia,serif;font-weight:700;letter-spacing:-.01em}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:0 0 8px}
+h2{font-size:24px;margin:44px 0 6px}
+.sub,.note{color:var(--mute)}.sub{max-width:62ch;margin:0}
+.big{font-size:clamp(40px,9vw,68px);line-height:1;margin:28px 0 4px}
+.strip{display:flex;flex-wrap:wrap;gap:3px;margin:16px 0 10px}
+.strip i{width:13px;height:13px;border-radius:2px;background:var(--ok)}
+.strip i.p{background:var(--red)}.strip i.m{background:var(--blue)}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--mute)}
+.leg b{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:28px}
+.kpi div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi strong{display:block;font:700 26px Newsreader,Georgia,serif}
+.kpi span{font-size:13px;color:var(--mute)}
+.find{display:grid;gap:12px;margin-top:14px}
+.find div{background:var(--card);border-left:3px solid var(--red);padding:12px 16px;border-radius:0 8px 8px 0}
+.find div:nth-child(2){border-color:var(--blue)}.find div:nth-child(3){border-color:var(--ok)}
+.find b{display:block;margin-bottom:2px}
+.bars{margin-top:14px;font-size:13px}
+.bar{display:grid;grid-template-columns:110px 1fr 56px;align-items:center;gap:8px;padding:2px 0}
+.bar .t{display:grid;grid-template-columns:1fr 1fr;height:14px}
+.bar .t u{display:block;height:100%;border-radius:2px;text-decoration:none}
+.bar .l{justify-self:end;width:100%;display:flex;justify-content:flex-end}
+.bar .l u{background:var(--blue)}.bar .r u{background:var(--red)}
+.bar .t{border-left:1px solid var(--mute)}
+.bar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+.bar span:first-child{overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 8px}
+input{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+label{display:flex;align-items:center;gap:6px;font-size:14px}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:560px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{position:sticky;top:0;background:var(--card);cursor:pointer;font-weight:600;font-size:13px}
+td.p{color:var(--red);font-weight:600}td.m{color:var(--blue);font-weight:600}td.s{color:var(--mute)}
+details{margin-top:36px;color:var(--mute);font-size:14px}summary{cursor:pointer;color:var(--ink);font-weight:600}
+details p{max-width:70ch}
+</style></head><body><main>
+<h1>Salda RCR po zsumowaniu wszystkich transakcji</h1>
+<p class="sub">Dane z blockchaina Hive (transfery z memo od konta <b>fundacja</b>) zestawione ze stroną profilu i plikiem z saldami.</p>
+<div class="big">278 z 309</div>
+<p class="sub">sald z pliku zgadza się co do jednostki z sumą wszystkich transakcji. Każdy kwadrat to jeden użytkownik.</p>
+<div class="strip" id="strip"></div>
+<div class="leg"><span><b style="background:var(--ok)"></b>zgodne</span><span><b style="background:var(--red)"></b>suma wyższa niż w pliku (22)</span><span><b style="background:var(--blue)"></b>suma niższa niż w pliku (9)</span></div>
+<div class="kpi">
+<div><strong>4 323</strong><span>transakcji na blockchainie, 2019–2026</span></div>
+<div><strong>243 717</strong><span>RCR razem po zsumowaniu (w pliku: 241 589)</span></div>
+<div><strong>+2 128</strong><span>RCR różnicy netto w 31 profilach</span></div>
+<div><strong>8</strong><span>profili, w których strona różni się od chaina</span></div>
+</div>
+<h2>Co z tego wynika</h2>
+<div class="find">
+<div><b>Strona pokazuje to samo, co blockchain.</b>Nie gubi wierszy. Osiem profili różni się o 1–2 RCR (u jednego o 28), bo w memo z 2019 roku są ułamki (np. +33,6), które strona obcina, albo wpis „herbacianymag nick +28", którego nie widzi.</div>
+<div><b>Saldo w pliku to po prostu ostatnie „suma" z memo.</b>Bywa niższe lub wyższe niż suma kwot, gdy memo nie doliczyło którejś transakcji. W 31 profilach suma jest wyższa w 22 (razem +2 344 RCR) i niższa w 9 (-216 RCR). Pięć największych różnic to 1 617 RCR.</div>
+<div><b>Seria z 24 września 2026, ok. 2:10–2:13 UTC.</b>W 181 transakcjach dla 60 użytkowników każde memo niesie to samo, końcowe saldo. Stąd identyczne salda w kolejnych wierszach na stronie. Tak jest zapisane na blockchainie, a końcowe sumy się zgadzają.</div>
+</div>
+<h2>Największe rozbieżności</h2>
+<p class="sub">Różnica = suma wszystkich transakcji minus saldo z pliku. Czerwony: suma wyższa, niebieski: niższa.</p>
+<div class="bars" id="bars"></div>
+<p class="note" style="margin-top:14px">Przykłady przyczyn: <b>foggymeadow</b> (+570 z 18.06.2020 nie zwiększyło salda w memo), <b>czyzu</b> (dwa wpisy +300 z 12.03.2026 mają saldo 600), <b>beatititis</b> (wpis +180 z 8.04.2026 ustawił saldo na 180 zamiast 287), <b>vinece</b> (dwa wpisy +280 z 18.07.2025 mają to samo saldo 280).</p>
+<h2>Wszyscy użytkownicy</h2>
+<div class="tools"><input id="q" type="search" placeholder="Szukaj loginu"><label><input id="only" type="checkbox" style="min-width:0;flex:none"> tylko różnice</label></div>
+<div class="wrap"><table><thead><tr><th data-k="0">Login</th><th data-k="1">Suma transakcji</th><th data-k="2">Saldo z pliku</th><th data-k="4">Różnica</th><th data-k="3">Strona</th></tr></thead><tbody id="tb"></tbody></table></div>
+<details><summary>Jak to policzono</summary>
+<p>Saldo = suma kwot wszystkich transakcji z memo w formacie „login +N RCR / suma: X RCR". Dwadzieścia memo, których automatyczny odczyt nie rozpoznał (przecinki dziesiętne, „nick", podwójny minus), zostało doliczonych ręcznie. Pominięto przelew 5 HIVE bez memo oraz dwa uszkodzone memo thedarzya, które wysłano ponownie w poprawnej formie.</p>
+<p>Cztery memo z kwotą 0 (hallmann, foggymeadow, dwa u kubaka) wyglądają na ręczne korekty salda. Nie zmieniają sumy kwot, ale mogły zmienić saldo z pliku.</p></details>
+</main><script>
+const D=[["hallmann",63300,63300,63300],["kubak",49542,49467,49542],["burbon9",9476,9376,9476],["raptusiewicz",7309,7314,7309],["mligeza",7169,7172,7169],["karolt",6401,6401,6401],["wayward-dreams",6447,6342,6447],["lpa",5636,5647,5636],["grigorijj",5511,5461,5511],["konslib",3795,3695,3795],["protokaryon",3121,3121,3121],["twisniewski333",2987,2987,2987],["przemeksz",2615,2615,2615],["bartvng",2270,2272,2270],["szmulkberg",2211,2173,2211],["rymwid",2129,2129,2129],["prawdawtvmowili",2078,2078,2078],["mk",2000,2000,2000],["mynewart",1737,1737,1737],["mciszczon",1712,1712,1712],["filippal",1686,1686,1686],["alicjamendrek",1587,1562,1587],["czyzu",1840,1540,1840],["vinece",2003,1468,2003],["engrave",1428,1428,1428],["rafal",1405,1405,1405],["janwszolek",1384,1384,1384],["mtik333",1357,1357,1357],["radomirgs",1268,1268,1268],["mmmmkkkk311",1190,1190,1190],["avarski",1170,1170,1170],["klc",1125,1125,1125],["fsroka",957,1107,957],["michuzet",1033,1033,1033],["toshirskij",935,935,935],["foggymeadow",1452,882,1452],["natalia",860,860,860],["thedarzya",831,851,831],["oniriusz",850,850,850],["kotul",835,835,835],["patrycjak",803,803,803],["wawrzyniec",790,790,790],["wadera",787,787,787],["anielka",678,678,678],["wierzbik",638,618,638],["kapitanpolak",611,611,610],["eugenegal",641,606,641],["krigers",600,600,600],["oksana",577,577,577],["romualdd",585,574,583],["magdalenagubernat",570,570,570],["malgub",570,570,570],["virtus4",553,553,553],["janhausner",540,540,540],["danxios",536,536,536],["marcon",524,524,524],["erykkidacki",514,514,514],["justynao",482,482,482],["edwinedwin",457,457,457],["onurgunes",441,441,441],["grzesiekk",419,419,419],["przybysz",391,391,391],["piosko",386,386,386],["matthewmtkpl",363,363,363],["gtg",356,356,356],["ewaengel",346,346,346],["dawidpiotrowski",325,325,325],["andrzej520715",324,324,324],["berthordin",319,319,319],["agni",289,289,289],["basementdisco",288,288,287],["sibelius",282,282,282],["olusiu",280,280,280],["kamil",261,261,261],["rlip",245,245,245],["brut-to",227,232,227],["kbkach",227,227,227],["michalinamio",226,226,226],["bvlk",225,225,225],["fpsf",224,224,224],["xayu-s",209,209,209],["favsti",203,203,203],["anastasiia",202,202,202],["dawidr",200,200,200],["oligator",200,200,200],["lilithu",195,195,195],["bogdang",195,195,195],["fabianmysli",194,194,194],["drd97",192,192,192],["benedykt",190,190,190],["klonowski",182,182,182],["kenaj",177,177,177],["cichociemny",175,175,175],["velmafia",175,175,175],["beatititis",281,174,281],["sarmaticus",172,172,172],["sylwir",165,165,165],["maciektr",163,163,163],["kamil.ambrozy",162,162,162],["nari49",156,156,156],["annakraska",155,155,155],["drakkar",150,150,150],["radpie9203",150,150,150],["becia13",150,150,150],["arthurel",150,150,150],["kuba-madeja",150,150,150],["katetravel",150,150,150],["pocichu",143,143,143],["lucjuszd",136,136,136],["innomine",135,135,135],["jocieprosza",133,133,133],["pawelpakula",130,130,130],["ataraksja",130,130,130],["szyszek",130,130,130],["anialavender",127,127,127],["trzaskal",150,125,150],["pszuklow",124,124,124],["czwartek",120,120,120],["alicjab",119,119,119],["kropka",116,116,116],["stafhalr",115,115,115],["darek.esz",113,113,113],["venti",113,113,113],["lukaszszala",109,109,109],["tosia",105,105,105],["sunriced56",103,103,103],["filipjankowski12",100,100,100],["legun",100,100,100],["kruppe",100,100,100],["ergorg",98,98,98],["jozefsekowski",98,98,98],["mwlazlo",98,98,98],["yavad",97,97,97],["zabrylka",95,95,95],["kacper94",94,94,94],["michalx2008x",92,92,90],["madlend",92,92,92],["foqs3",92,92,92],["kjensen",90,90,90],["kaysh",89,89,88],["ptaku",87,87,87],["charles25",86,86,86],["westa",85,85,85],["hiacynt",82,82,82],["litosci",80,80,80],["spiros",80,80,80],["pawelz01",80,80,80],["makaroshka",80,80,80],["karolusia",77,77,77],["lesiopm",76,76,76],["grafzero",75,75,75],["htom",75,75,75],["lukaszpajak",75,75,75],["lidil",71,71,71],["mys",70,70,70],["korczynska",69,69,69],["mendrekola",116,66,116],["marmoladka",65,65,65],["aleksanderfurtak",65,65,65],["blind-spot",62,62,62],["kufelhutnika",61,61,61],["helcim",61,61,61],["bowess",107,57,107],["maciejweigt",55,55,55],["kamdul",55,55,55],["jakubadamw",53,53,53],["dotu",52,52,52],["hleblazovik17",51,51,51],["ptaszki",50,50,50],["gilkam",50,50,50],["adam.ski",50,50,50],["nausika",50,50,50],["jtdziadosz",50,50,50],["tradipramen",50,50,50],["emiliagarbien",49,49,49],["mededu",48,48,48],["staryeudoksji",48,48,48],["small.minion",47,47,47],["cichoswiat",47,47,47],["szymon1607",46,46,46],["margrzeta",45,45,45],["panjanek",45,45,45],["oabdelmetaal",45,45,45],["kacper",43,43,43],["mtyszczak",43,43,43],["jfilip",41,41,41],["arturtynski",41,41,41],["donpietro",40,40,40],["dawidgorski",40,40,40],["jakubpodsiadlo",40,40,40],["kasian",40,40,40],["apostolska",40,40,40],["kultywacja",40,40,40],["krag",35,35,35],["torreamare",35,35,35],["lukmarcus",34,34,34],["wojtyla",34,34,34],["olena",33,33,33],["benedyktb",30,30,30],["lukij",30,30,30],["lukzloty",28,28,28],["megliken",28,28,28],["dmklosowicz",28,28,28],["simoon",28,28,28],["bierny",28,28,28],["filipkru",28,28,28],["postcardsfromlbn",28,28,28],["nieczyne",27,27,27],["szymonwiatr",27,27,27],["caius",26,26,26],["alkor77",26,26,26],["belenzuka",25,25,25],["lulu",25,25,25],["amadi93",25,25,25],["kon.w0j",50,25,50],["grzesiek",25,25,25],["filipaz",25,25,25],["qmisiek",25,25,25],["agus2026",25,25,25],["borowski",48,23,48],["damxios",20,20,20],["niewyspany",20,20,20],["michaljp",20,20,20],["pignys",20,20,20],["lukaszsroczynski",20,20,20],["santiagodepolonia",20,20,20],["klaudiaw",20,20,20],["jarekk",20,20,20],["gapjer",19,19,19],["mkukier",17,17,17],["elzlonkiewicz",17,17,17],["ajanchy",16,16,16],["jarr80",16,16,16],["michalaniol",15,15,15],["maciek007",15,15,15],["ryeman",15,15,15],["filip223",15,15,15],["galdun",15,15,15],["emteroo",14,14,14],["janinachrzan",14,14,14],["karolb",13,13,13],["agat",13,13,13],["elemes",12,12,12],["herosik",12,12,12],["szejq",12,12,12],["rozku",12,12,11],["jubed",11,11,11],["kociata",11,11,11],["katb359",11,11,11],["ziemowitp",10,10,10],["dariat",10,10,10],["gleblazovik17",10,10,10],["grzegorzniemkiewicz",10,10,10],["hellebelle",10,10,10],["danzis",10,10,10],["baro89",9,9,8],["aga.csln",8,8,8],["arek-k",8,8,8],["hrabiaeryk",8,8,8],["michal99",7,7,7],["boredomnotes",7,7,7],["kozieja",6,6,6],["deepresearch",6,6,6],["marl.boroman",5,5,5],["thomasward9",5,5,5],["agullax",5,5,5],["pepe20",5,5,5],["global1010",5,5,5],["monikasu",5,5,5],["olazajac",5,5,5],["magpas",5,5,5],["kregulec",3,3,3],["gwyddpel",-10,3,-10],["czcibor360",2,2,2],["herbacianymag",1,1,-27],["sanuich",0,0,0],["ambrozy",0,0,0],["pawianywychodzazesciany",0,0,0],["lorenzo",50,0,50],["klararaptusiewicz",0,0,0],["kuba",0,0,0],["luc",0,0,0],["madlen91",0,0,0],["medrekola",0,0,0],["twszolek",0,0,0],["aniaes",0,0,0],["ania",0,0,0],["ambrozykamil",0,0,0],["mkubera",0,0,0],["michalrapala",0,0,0],["mindmat",0,0,0],["olek",0,0,0],["fundacja",0,0,null],["dominicus",0,0,0],["parkasiewicz",0,0,0],["filippaluch",-7,0,-7],["heinz23",0,0,0],["nn",0,0,null],["mynewlife",0,0,0],["drwal",0,0,0],["daryna",28,0,28],["rycer",0,0,0],["psypek",0,0,0],["panna.sarna",0,0,null],["emigarbien",0,0,0],["wstawarz",20,0,20],["okolczuga",-5,-5,-5],["gonteix",-9,-9,-9],["maksoo",-26,-26,-26]].map(r=>[...r,r[1]-r[2]]);
+const F=n=>n==null?"–":n.toLocaleString("pl-PL");
+document.getElementById("strip").innerHTML=D.map(r=>`<i class="${r[4]>0?"p":r[4]<0?"m":""}" title="${r[0]}: ${F(r[1])} (plik ${F(r[2])})"></i>`).join("");
+const X=D.filter(r=>r[4]).sort((a,b)=>b[4]-a[4]),M=Math.max(...X.map(r=>Math.abs(r[4])));
+document.getElementById("bars").innerHTML=X.map(r=>{const w=Math.max(1.5,Math.abs(r[4])/M*100)+"%";
+return `<div class="bar"><span>${r[0]}</span><div class="t"><div class="l">${r[4]<0?`<u style="width:${w}"></u>`:""}</div><div class="r">${r[4]>0?`<u style="width:${w}"></u>`:""}</div></div><em>${r[4]>0?"+":""}${r[4]}</em></div>`}).join("");
+let sk=2,asc=false;const tb=document.getElementById("tb"),q=document.getElementById("q"),only=document.getElementById("only");
+function draw(){const t=q.value.trim().toLowerCase();
+let L=D.filter(r=>r[0].includes(t)&&(!only.checked||r[4]));
+L.sort((a,b)=>sk==0?(asc?1:-1)*b[0].localeCompare(a[0]):(asc?1:-1)*((b[sk]??-1e9)-(a[sk]??-1e9)));
+tb.innerHTML=L.map(r=>`<tr><td>${r[0]}</td><td>${F(r[1])}</td><td>${F(r[2])}</td><td class="${r[4]>0?"p":r[4]<0?"m":""}">${r[4]>0?"+":""}${r[4]||"0"}</td><td class="s">${r[3]!=null&&r[3]!=r[1]?F(r[3]):(r[3]==null?"–":"zgodna")}</td></tr>`).join("")}
+document.querySelectorAll("th").forEach(h=>h.onclick=()=>{const k=+h.dataset.k;asc=(sk==k)?!asc:false;sk=k;draw()});
+q.oninput=only.onchange=draw;draw();
+</script></body></html>
