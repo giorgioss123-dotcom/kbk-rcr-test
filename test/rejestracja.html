@@ -263,11 +263,13 @@
   .checkbox-row input {
     margin-top: 4px;
     accent-color: var(--teal-deep);
+    flex: 0 0 auto;
   }
   .checkbox-row input:disabled {
     cursor: not-allowed;
   }
   .checkbox-row label {
+    flex: 1 1 0; min-width: 0; overflow-wrap: anywhere;
     margin: 0; font-family: 'Archivo', sans-serif;
     font-size: 0.9rem; font-weight: 400;
     letter-spacing: 0; text-transform: none; color: var(--paper-ink);
@@ -276,7 +278,7 @@
     max-height: 0; overflow: hidden;
     transition: max-height 0.25s ease;
   }
-  .consent-block.open { max-height: 260px; }
+  .consent-block.open { max-height: 1000px; }
 
   .hidden { display: none !important; }
   .choice-grid { display: grid; gap: 12px; margin: 26px 0 8px; }
