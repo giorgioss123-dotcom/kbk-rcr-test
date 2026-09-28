@@ -1,5 +1,5 @@
 window.KBK_APP_CONFIG = {
-  webAppUrl: 'https://script.google.com/macros/s/AKfycbyrzbUD0J09E6fPnfCY0J3a7v7hXwLNCACJQLExfWSbnm6_34LzzgmZxxVdRaHiV_tr/exec'
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbwKdJl1YF29xY4WIbShn5cvINSRjM5KToIdc2TWVDYPgr8p3Wiy8Dlb3E_mdX9yPtFk/exec'
 };
 
 window.KBK_PUBLIC_SHEET_IDS = {
