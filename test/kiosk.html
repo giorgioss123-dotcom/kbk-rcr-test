@@ -489,6 +489,20 @@
     statusModalClose.focus();
   }
 
+  function claimErrorMessage(error) {
+    var messages = {
+      invalid_request: 'Sprawdź login, PIN i wybrane produkty.',
+      wrong_pin: 'Nieprawidłowy login lub PIN.',
+      user_not_found: 'Nie udało się zweryfikować konta.',
+      invalid_total: 'Nie udało się obliczyć wartości zamówienia.',
+      insufficient_funds: 'Brak wystarczającego salda dla tego zamówienia.',
+      server_error: 'Nie udało się wysłać zamówienia. Spróbuj ponownie później.'
+    };
+    return Object.prototype.hasOwnProperty.call(messages, error)
+      ? messages[error]
+      : 'Nie udało się wysłać zamówienia. Spróbuj ponownie później.';
+  }
+
   function showProcessingStatus(text) {
     processingStatus.textContent = text || '';
     processingStatus.className = text ? 'status-box info' : 'status-box hidden';
@@ -607,7 +621,7 @@
         if (data && data.ok) resetOrderForm();
         showProcessingStatus('');
         if (pinReset.isLocked(data)) pinReset.open(login);
-        else showMessage(data && data.message ? data.message : (data && data.ok ? 'Zamówienie wysłane.' : 'Nie udało się wysłać zamówienia.'), data && data.ok ? 'ok' : 'error');
+        else showMessage(data && data.ok ? 'Zamówienie przekazano do zatwierdzenia.' : claimErrorMessage(data && data.error), data && data.ok ? 'ok' : 'error');
       })
       .catch(function () { pinInput.value = ''; showProcessingStatus(''); showMessage('Nie udało się połączyć z backendem.', 'error'); })
       .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });

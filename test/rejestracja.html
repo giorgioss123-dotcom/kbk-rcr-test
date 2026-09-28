@@ -514,6 +514,26 @@
     document.getElementById('messageModal').classList.remove('hidden');
   }
 
+  function registrationErrorMessage(error) {
+    var messages = {
+      invalid_login: 'Podaj poprawną nazwę użytkownika.',
+      invalid_email: 'Podaj poprawny adres e-mail.',
+      invalid_pin: 'PIN musi składać się z dokładnie 6 cyfr.',
+      rodo_consent_required: 'Zaakceptuj obowiązkową zgodę na przetwarzanie danych osobowych.',
+      phone_required: 'Aby wyrazić zgodę na kontakt WhatsApp, podaj numer telefonu.',
+      address_required: 'Aby wyrazić zgodę na kontakt pocztowy, podaj adres.',
+      migration_email_mismatch: 'Podany adres e-mail nie zgadza się z danymi zatwierdzonymi dla tego loginu.',
+      login_taken: 'Ten login jest już zajęty. Wybierz inny.',
+      email_taken: 'Ten adres e-mail jest już zarejestrowany.',
+      too_fast: 'Formularz został wysłany zbyt szybko. Odczekaj chwilę i spróbuj ponownie.',
+      mail_failed: 'Nie udało się wysłać wiadomości aktywacyjnej. Spróbuj ponownie później.',
+      server_error: 'Wystąpił błąd podczas rejestracji. Spróbuj ponownie później.'
+    };
+    return Object.prototype.hasOwnProperty.call(messages, error)
+      ? messages[error]
+      : 'Nie udało się zarejestrować konta. Spróbuj ponownie później.';
+  }
+
   document.getElementById('modalOk').addEventListener('click', function () {
     document.getElementById('messageModal').classList.add('hidden');
   });
@@ -528,7 +548,7 @@
       invalid: 'Link jest nieprawidłowy albo wygasł. Zarejestruj się ponownie.',
       error: 'Link jest nieprawidłowy albo wygasł. Zarejestruj się ponownie.'
     };
-    const message = map[status] || map.invalid;
+    const message = Object.prototype.hasOwnProperty.call(map, status) ? map[status] : map.invalid;
     showModal(message);
     window.history.replaceState({}, document.title, window.location.pathname);
   })();
@@ -589,8 +609,10 @@
         missing: 'Podany użytkownik nie istnieje. Stwórz nowe konto wybierając opcję "Chcę utworzyć nowe konto rycarowe".',
         mismatch: 'Podany adres e-mail nie zgadza się z adresem zapisanym dla tego użytkownika.'
       };
-      if (!result.ok) return showModal(result.message || 'Nie udało się wysłać zgłoszenia.');
-      showModal(messages[result.status] || 'Nie udało się wysłać zgłoszenia.');
+      if (!result.ok) return showModal(registrationErrorMessage(result.error));
+      showModal(Object.prototype.hasOwnProperty.call(messages, result.status)
+        ? messages[result.status]
+        : 'Nie udało się wysłać zgłoszenia.');
     }).catch(function () { showModal('Nie udało się połączyć z backendem. Spróbuj ponownie później.'); })
       .finally(function () {
         migrationSubmitBtn.disabled = false;
@@ -686,13 +708,6 @@
     if (document.getElementById('zgodaPocztowy').checked && !adres) {
       showModal('Aby wyrazić zgodę na kontakt pocztowy, podaj adres do wysyłki.'); return;
     }
-    if (telefon && !document.getElementById('zgodaWhatsapp').checked) {
-      showModal('Jeśli podajesz numer telefonu, musisz zaakceptować zgodę na kontakt WhatsApp.'); return;
-    }
-    if (adres && !document.getElementById('zgodaPocztowy').checked) {
-      showModal('Jeśli podajesz adres, musisz zaakceptować zgodę na kontakt pocztowy.'); return;
-    }
-
     submitBtn.disabled = true;
     submitBtn.textContent = 'Wysyłanie…';
 
@@ -717,10 +732,7 @@
           pinHint.textContent = ''; pinHint.className = 'hint';
           consentBlock.classList.add('open');
         } else {
-          var message = result && result.message ? result.message : 'Nie udało się zarejestrować konta.';
-          if (result && result.error === 'email_taken') message = 'Ten adres e-mail jest już zarejestrowany.';
-          if (result && result.error === 'login_taken') message = 'Ten login jest już zajęty. Wybierz inny.';
-          showModal(message);
+          showModal(registrationErrorMessage(result && result.error));
         }
       })
       .catch(function () {

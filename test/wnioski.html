@@ -609,7 +609,9 @@
       'vote-error': ['Wystąpił błąd. Spróbuj ponownie później.', 'error']
     };
     const key = confirmed + '-' + status;
-    const [text, type] = messages[key] || ['Nieznany status potwierdzenia.', 'error'];
+    const [text, type] = Object.prototype.hasOwnProperty.call(messages, key)
+      ? messages[key]
+      : ['Nie udało się potwierdzić operacji. Spróbuj ponownie później.', 'error'];
     banner.textContent = text;
     banner.className = 'confirm-banner show ' + type;
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -886,6 +888,25 @@
     });
   });
 
+  function proposalErrorMessage(error, fallback) {
+    const messages = {
+      invalid_title: 'Tytuł jest za krótki.',
+      invalid_content: 'Treść wniosku jest za krótka.',
+      invalid_justification: 'Uzasadnienie jest za krótkie.',
+      wrong_pin: 'Nieprawidłowy login lub PIN.',
+      user_not_found: 'Nie udało się zweryfikować konta.',
+      insufficient_rcr: 'Potrzebujesz co najmniej 1 RCR salda, aby wykonać tę czynność.',
+      proposal_limit: 'Masz już wniosek oczekujący lub aktywny.',
+      vote_pending: 'Masz już oczekujący głos na ten wniosek. Sprawdź pocztę i potwierdź go.',
+      not_active: 'To głosowanie nie jest już aktywne.',
+      ended: 'Czas na głosowanie już minął.',
+      invalid_vote: 'Wybierz poprawny głos.',
+      mail_failed: 'Nie udało się wysłać wiadomości potwierdzającej. Spróbuj ponownie później.',
+      server_error: 'Wystąpił błąd. Spróbuj ponownie później.'
+    };
+    return Object.prototype.hasOwnProperty.call(messages, error) ? messages[error] : fallback;
+  }
+
   document.getElementById('voteSubmitBtn').addEventListener('click', async () => {
     const banner = document.getElementById('voteBanner');
     banner.className = 'modal-banner';
@@ -907,7 +928,7 @@
       } else if (pinReset.isLocked(data)) {
         pinReset.open(login);
       } else {
-        banner.textContent = data.message || 'Nie udało się oddać głosu.';
+        banner.textContent = proposalErrorMessage(data.error, 'Nie udało się oddać głosu. Spróbuj ponownie później.');
         banner.className = 'modal-banner show error';
       }
     }catch(err){
@@ -954,7 +975,7 @@
       } else if (pinReset.isLocked(data)) {
         pinReset.open(login);
       } else {
-        banner.textContent = data.message || 'Nie udało się złożyć wniosku.';
+        banner.textContent = proposalErrorMessage(data.error, 'Nie udało się złożyć wniosku. Spróbuj ponownie później.');
         banner.className = 'modal-banner show error';
       }
     }catch(err){

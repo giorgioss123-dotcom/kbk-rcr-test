@@ -7,6 +7,25 @@
     return String(text || '').replace(/PIN-u/g, 'PINu');
   }
 
+  function resetResponseMessage(data) {
+    if (data && data.ok) {
+      return 'Wysłaliśmy link potwierdzający zmianę PINu. Kliknij go, aby zakończyć operację.';
+    }
+    var messages = {
+      invalid_login: 'Podaj poprawny login.',
+      invalid_email: 'Podaj poprawny adres e-mail.',
+      invalid_pin: 'PIN-y muszą być identyczne i składać się z 6 cyfr.',
+      identity_mismatch: 'Login lub e-mail nie zgadza się z danymi konta.',
+      account_not_locked: 'Reset PINu jest dostępny po zablokowaniu konta.',
+      mail_failed: 'Nie udało się wysłać wiadomości. Spróbuj ponownie później.',
+      server_error: 'Nie udało się rozpocząć resetu PINu. Spróbuj ponownie później.'
+    };
+    var error = data && data.error;
+    return normalizeResetMessage(Object.prototype.hasOwnProperty.call(messages, error)
+      ? messages[error]
+      : 'Nie udało się wysłać wiadomości. Spróbuj ponownie później.');
+  }
+
   function attach(options) {
     options = options || {};
     if (!document.getElementById('kbk-pin-reset-styles')) {
@@ -116,12 +135,12 @@
       })
         .then(function (response) { return response.json(); })
         .then(function (data) {
-          feedback.textContent = normalizeResetMessage(data && data.message ? data.message : 'Nie udało się wysłać wiadomości.');
+          feedback.textContent = resetResponseMessage(data);
           feedback.className = 'kbk-pin-reset-feedback ' + (data && data.ok ? 'ok' : 'error');
           if (data && data.ok) {
             form.classList.add('hidden');
             success.classList.remove('hidden');
-            success.querySelector('.kbk-pin-reset-success-message').textContent = normalizeResetMessage(data.message || 'Wysłaliśmy link potwierdzający zmianę PINu. Kliknij go, aby zakończyć operację.');
+            success.querySelector('.kbk-pin-reset-success-message').textContent = resetResponseMessage(data);
           } else {
             submit.disabled = false;
           }
