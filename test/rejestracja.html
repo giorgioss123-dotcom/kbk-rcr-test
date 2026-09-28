@@ -728,7 +728,7 @@
         if (result && result.ok) {
           showModal('Wysłano zapytanie o aktywację konta. Sprawdź skrzynkę mailową, by potwierdzić rejestrację.');
           form.reset();
-          updatePostalConsentState();
+          updateConsentState();
           pinHint.textContent = ''; pinHint.className = 'hint';
           consentBlock.classList.add('open');
         } else {
@@ -736,7 +736,7 @@
         }
       })
       .catch(function () {
-        showModal('Nie udało się połączyć z backendem. Spróbuj ponownie później.');
+        showModal('Nie udało się odczytać odpowiedzi serwera. Sprawdź pocztę: jeśli otrzymałeś link aktywacyjny, rejestracja jest w toku i nie wysyłaj formularza ponownie. Jeśli wiadomość nie dotrze, spróbuj ponownie za kilka minut.');
       })
       .finally(function () {
         submitBtn.disabled = false;
