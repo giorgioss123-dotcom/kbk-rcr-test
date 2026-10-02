@@ -1,4 +1,79 @@
 (function () {
+  let activeDialogController = null;
+
+  function openDialog(dialog, options) {
+    options = options || {};
+    const returnFocus = document.activeElement;
+    const previousDialog = activeDialogController;
+    if (previousDialog) previousDialog.deactivate();
+
+    function getFocusableElements() {
+      return Array.from(dialog.querySelectorAll(
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      )).filter(function (element) {
+        return element.getClientRects().length > 0;
+      });
+    }
+
+    function onKeydown(event) {
+      if (event.key === 'Escape' && typeof options.onEscape === 'function') {
+        event.preventDefault();
+        options.onEscape();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const focusable = getFocusableElements();
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    const controller = {
+      activate: function () {
+        dialog.removeAttribute('inert');
+        dialog.setAttribute('aria-hidden', 'false');
+        document.addEventListener('keydown', onKeydown);
+      },
+      deactivate: function () {
+        document.removeEventListener('keydown', onKeydown);
+        dialog.setAttribute('inert', '');
+        dialog.setAttribute('aria-hidden', 'true');
+      }
+    };
+    activeDialogController = controller;
+    controller.activate();
+    const initialFocus = typeof options.initialFocus === 'string'
+      ? dialog.querySelector(options.initialFocus)
+      : null;
+    const focusable = getFocusableElements();
+    (initialFocus || focusable[0] || dialog).focus();
+
+    return function (restoreFocus) {
+      controller.deactivate();
+      if (activeDialogController === controller) {
+        activeDialogController = restoreFocus !== false ? previousDialog : null;
+        if (activeDialogController) activeDialogController.activate();
+      }
+      if (restoreFocus !== false && returnFocus && typeof returnFocus.focus === 'function') {
+        returnFocus.focus();
+      }
+    };
+  }
+
+  window.KBKDialog = { open: openDialog };
+
   const CONFIG = window.KBK_FEEDBACK_CONFIG || { categories: [], enabled: false };
   if (!CONFIG.enabled) return;
 
@@ -53,9 +128,12 @@
     modal.className = 'kbk-feedback-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.setAttribute('inert', '');
+    modal.setAttribute('aria-labelledby', 'kbkFeedbackTitle');
     modal.innerHTML = [
       '<div class="kbk-feedback-card">',
-      '  <h2>Zgłoś problem / uwagi</h2>',
+      '  <h2 id="kbkFeedbackTitle">Zgłoś problem / uwagi</h2>',
       '  <form id="kbkFeedbackForm" novalidate>',
       '    <label for="kbkFeedbackCategory">Rodzaj problemu</label>',
       '    <select id="kbkFeedbackCategory" name="category" required>',
@@ -92,10 +170,16 @@
   const preview = modal.querySelector('#kbkFeedbackPreview');
   const banner = modal.querySelector('#kbkFeedbackBanner');
   const cancelButton = modal.querySelector('#kbkFeedbackCancel');
+  let closeDialogFocus = null;
 
   function close() {
     modal.classList.remove('open');
     document.body.style.overflow = '';
+    if (closeDialogFocus) {
+      const releaseFocus = closeDialogFocus;
+      closeDialogFocus = null;
+      releaseFocus();
+    }
     form.reset();
     preview.classList.remove('show');
     preview.src = '';
@@ -106,9 +190,10 @@
   function open() {
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
-    setTimeout(function () {
-      categorySelect.focus();
-    }, 20);
+    closeDialogFocus = window.KBKDialog.open(modal, {
+      initialFocus: '#kbkFeedbackCategory',
+      onEscape: close
+    });
   }
 
   function readAttachmentDataUrl(file) {
@@ -154,10 +239,6 @@
   modal.addEventListener('click', function (event) {
     if (event.target === modal) close();
   });
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && modal.classList.contains('open')) close();
-  });
-
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     const category = categorySelect.value.trim();

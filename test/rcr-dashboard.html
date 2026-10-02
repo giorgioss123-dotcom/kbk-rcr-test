@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RCR — bilans społeczności · KBK</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -578,8 +575,8 @@
 </aside>
 
 <script src="public-config.js"></script>
-<script src="js/feedback.js"></script>
-<script src="js/shared.js"></script>
+<script src="js/feedback.js?v=20260930-2"></script>
+<script src="js/shared.js?v=20261001-1"></script>
 <script>
   const shared = window.KBKShared;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
@@ -603,8 +600,12 @@
     return isNaN(n) ? 0 : n;
   }
 
-  function loadSheetJSONP(sheetId, sheetName){
-    return shared.loadSheetJSONP(sheetId, sheetName, { cacheMs: 5 * 60 * 1000, timeoutMs: JSONP_TIMEOUT_MS });
+  function loadSheetJSONP(sheetId, sheetName, forceReload){
+    return shared.loadSheetJSONP(sheetId, sheetName, {
+      cacheMs: 5 * 60 * 1000,
+      timeoutMs: JSONP_TIMEOUT_MS,
+      forceReload: !!forceReload
+    });
   }
 
   function tableToObjects(table){
@@ -657,8 +658,8 @@
     setSyncState('loading', isManual ? 'odświeżanie…' : 'wczytywanie…');
     try{
       const [saldaTable, rcrTable] = await Promise.all([
-        loadSheetJSONP(SHEET_ID, 'SALDA'),
-        loadSheetJSONP(SHEET_ID, 'RCR')
+        loadSheetJSONP(SHEET_ID, 'SALDA', isManual),
+        loadSheetJSONP(SHEET_ID, 'RCR', isManual)
       ]);
       const saldaObjs = tableToObjects(saldaTable);
       const rcrObjs = tableToObjects(rcrTable);

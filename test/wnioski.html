@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wnioski — KBK</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -516,11 +513,11 @@
 
 <div class="scrim" id="scrim"></div>
 
-<div class="modal" id="detailModal">
-  <button class="close-x" data-close>✕</button>
+<div class="modal" id="detailModal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="detailTitle">
+  <button class="close-x" type="button" data-close aria-label="Zamknij">✕</button>
   <div class="card-meta" id="detailAuthor"></div>
   <div class="card-meta secondary" id="detailRemaining"></div>
-  <h2 id="detailTitle"></h2>
+  <h2 id="detailTitle" tabindex="-1"></h2>
   <div id="detailBadge"></div>
   <div class="block-label">Treść</div>
   <p class="block-text" id="detailText"></p>
@@ -533,16 +530,16 @@
   <div id="voteSection" style="margin-top:20px;"></div>
 </div>
 
-<div class="modal" id="voteModal">
-  <button class="close-x" data-close>✕</button>
-  <h2 id="voteModalTitle">Głosujesz nad wnioskiem</h2>
-  <div class="vote-choice">
-    <button type="button" class="za" data-choice="za">Za</button>
-    <button type="button" class="przeciw" data-choice="przeciw">Przeciw</button>
+<div class="modal" id="voteModal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="voteModalTitle">
+  <button class="close-x" type="button" data-close aria-label="Zamknij">✕</button>
+  <h2 id="voteModalTitle" tabindex="-1">Głosujesz nad wnioskiem</h2>
+  <div class="vote-choice" role="group" aria-label="Wybierz głos">
+    <button type="button" class="za" data-choice="za" aria-pressed="false">Za</button>
+    <button type="button" class="przeciw" data-choice="przeciw" aria-pressed="false">Przeciw</button>
   </div>
-  <label>Login</label>
+  <label for="voteLogin">Login</label>
   <input type="text" id="voteLogin" autocomplete="off" style="text-transform:lowercase;">
-  <label>PIN</label>
+  <label for="votePin">PIN</label>
   <input type="password" id="votePin" maxlength="6" inputmode="numeric">
   <div class="modal-banner" id="voteBanner"></div>
   <div class="modal-actions">
@@ -551,18 +548,18 @@
   </div>
 </div>
 
-<div class="modal" id="proposalModal">
-  <button class="close-x" data-close>✕</button>
-  <h2>Nowy wniosek</h2>
-  <label>Tytuł</label>
+<div class="modal" id="proposalModal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="proposalModalTitle">
+  <button class="close-x" type="button" data-close aria-label="Zamknij">✕</button>
+  <h2 id="proposalModalTitle" tabindex="-1">Nowy wniosek</h2>
+  <label for="proposalTytul">Tytuł</label>
   <input type="text" id="proposalTytul" placeholder="Krótki, zwięzły tytuł">
-  <label>Treść wniosku</label>
+  <label for="proposalText">Treść wniosku</label>
   <textarea id="proposalText" placeholder="Co dokładnie proponujesz?"></textarea>
-  <label>Uzasadnienie</label>
+  <label for="proposalJustification">Uzasadnienie</label>
   <textarea id="proposalJustification" placeholder="Dlaczego to warto zrobić?"></textarea>
-  <label>Login</label>
+  <label for="proposalLogin">Login</label>
   <input type="text" id="proposalLogin" autocomplete="off" style="text-transform:lowercase;">
-  <label>PIN</label>
+  <label for="proposalPin">PIN</label>
   <input type="password" id="proposalPin" maxlength="6" inputmode="numeric">
   <div class="modal-banner" id="proposalBanner"></div>
   <div class="modal-actions">
@@ -572,9 +569,9 @@
 </div>
 
 <script src="public-config.js"></script>
-<script src="js/feedback.js"></script>
-<script src="js/shared.js"></script>
-<script src="js/pin-reset.js"></script>
+<script src="js/feedback.js?v=20260930-2"></script>
+<script src="js/shared.js?v=20261001-1"></script>
+<script src="js/pin-reset.js?v=20260930-1"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
@@ -653,9 +650,6 @@
   function escapeHtml(s){
     return String(safeText(s, '')).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-  function loadSheetJSONP(sheetId, sheetName) {
-    return shared.loadSheetJSONP(sheetId, sheetName, { cacheMs: 600000, timeoutMs: 15000 });
-  }
   function cardHtml(p, archived){
     const safeTitle = safeText(p.tytul, '');
     const safeAutor = safeText(p.autor, '');
@@ -700,8 +694,12 @@
       const sheetId = await getWnioskiSheetId();
       const transakcjeSheetId = await getTransakcjeSheetId();
       const [table, saldaTable] = await Promise.all([
-        shared.loadSheetJSONP(sheetId, 'WNIOSKI', { cacheMs: 600000, timeoutMs: 15000 }),
-        shared.loadSheetJSONP(transakcjeSheetId, 'SALDA', { cacheMs: 600000, timeoutMs: 15000 })
+        shared.loadSheetJSONP(sheetId, 'WNIOSKI', {
+          cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
+        }),
+        shared.loadSheetJSONP(transakcjeSheetId, 'SALDA', {
+          cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
+        })
       ]);
       const currentTotalRcr = shared.tableToObjects(saldaTable).reduce(function (sum, row) {
         const active = shared.strFromCell(shared.lookupCell(row, ['AKTYWNY', 'aktywny'])).trim().toLowerCase() === 'tak';
@@ -843,7 +841,7 @@
     btn.textContent = 'Wczytywanie…'; btn.disabled = true;
     try{
       const sheetId = await getWnioskiSheetId();
-      const sheet = await shared.loadSheetJSONP(sheetId, 'GŁOSY', { cacheMs: 600000, timeoutMs: 15000 });
+      const sheet = await shared.loadSheetJSONP(sheetId, 'GŁOSY', { cacheMs: VOTES_CACHE_MS, timeoutMs: 15000 });
       const rows = shared.tableToObjects(sheet).filter(function (row) {
         const rowId = shared.strFromCell(shared.lookupCell(row, ['WNIOSEK_ID', 'WNIOSEKID', 'wniosekid', 'wniosekId']));
         return String(rowId).trim() === String(wniosekId).trim();
@@ -873,7 +871,10 @@
     currentVoteChoice = null;
     const title = proposal.tytul || 'wnioskiem';
     document.getElementById('voteModalTitle').textContent = "Głosujesz nad wnioskiem: '" + title + "'";
-    document.querySelectorAll('.vote-choice button').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.vote-choice button').forEach(b => {
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed', 'false');
+    });
     document.getElementById('voteLogin').value = '';
     document.getElementById('votePin').value = '';
     document.getElementById('voteBanner').className = 'modal-banner';
@@ -883,7 +884,10 @@
   document.querySelectorAll('.vote-choice button').forEach(btn => {
     btn.addEventListener('click', () => {
       currentVoteChoice = btn.dataset.choice;
-      document.querySelectorAll('.vote-choice button').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('.vote-choice button').forEach(b => {
+        b.classList.remove('selected');
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
       btn.classList.add('selected');
     });
   });
@@ -926,6 +930,7 @@
         banner.textContent = 'Głos zapisany — sprawdź maila, żeby go potwierdzić.';
         banner.className = 'modal-banner show ok';
       } else if (pinReset.isLocked(data)) {
+        closeModals();
         pinReset.open(login);
       } else {
         banner.textContent = proposalErrorMessage(data.error, 'Nie udało się oddać głosu. Spróbuj ponownie później.');
@@ -970,9 +975,9 @@
       });
       const data = await res.json();
       if (data.ok) {
-        banner.textContent = 'Wniosek zapisany — sprawdź maila, żeby go aktywować.';
-        banner.className = 'modal-banner show ok';
+        closeModals();
       } else if (pinReset.isLocked(data)) {
+        closeModals();
         pinReset.open(login);
       } else {
         banner.textContent = proposalErrorMessage(data.error, 'Nie udało się złożyć wniosku. Spróbuj ponownie później.');
@@ -986,18 +991,50 @@
     }
   });
 
+  let dialogFocusRelease = null;
+  let modalReturnFocus = null;
   function openModal(id){
-    document.querySelectorAll('.modal.open').forEach(m => { if (m.id !== id) m.classList.remove('open'); });
+    const alreadyOpen = document.querySelector('.modal.open');
+    if (!alreadyOpen) modalReturnFocus = document.activeElement;
+    if (dialogFocusRelease) {
+      const releaseFocus = dialogFocusRelease;
+      dialogFocusRelease = null;
+      releaseFocus(false);
+    }
+    document.querySelectorAll('.modal.open').forEach(m => {
+      if (m.id !== id) {
+        m.classList.remove('open');
+        m.setAttribute('inert', '');
+        m.setAttribute('aria-hidden', 'true');
+      }
+    });
     document.getElementById('scrim').classList.add('open');
-    document.getElementById(id).classList.add('open');
+    const modal = document.getElementById(id);
+    modal.classList.add('open');
+    const initialFocus = id === 'detailModal' ? '#detailTitle' :
+      (id === 'voteModal' ? '#voteModalTitle' : '#proposalModalTitle');
+    dialogFocusRelease = window.KBKDialog.open(modal, {
+      initialFocus: initialFocus,
+      onEscape: closeModals
+    });
   }
   function closeModals(){
     document.getElementById('scrim').classList.remove('open');
-    document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.modal').forEach(m => {
+      m.classList.remove('open');
+      m.setAttribute('inert', '');
+      m.setAttribute('aria-hidden', 'true');
+    });
+    if (dialogFocusRelease) {
+      const releaseFocus = dialogFocusRelease;
+      dialogFocusRelease = null;
+      releaseFocus(false);
+    }
+    if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') modalReturnFocus.focus();
+    modalReturnFocus = null;
   }
   document.getElementById('scrim').addEventListener('click', closeModals);
   document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModals));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
 
   loadProposals(true);
   setInterval(() => loadProposals(false), REFRESH_MS);

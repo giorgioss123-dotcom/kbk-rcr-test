@@ -72,21 +72,34 @@
     return 0;
   }
 
+  function jsonpCallbackName(cacheKey) {
+    let hash = 2166136261;
+    for (let i = 0; i < cacheKey.length; i += 1) {
+      hash ^= cacheKey.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return 'gvizCb_' + (hash >>> 0).toString(36);
+  }
+
   function loadSheetJSONP(sheetId, sheetName, options) {
     const sheetCache = (window.__KBK_SHEET_CACHE__ = window.__KBK_SHEET_CACHE__ || {});
     const cacheKey = String(sheetId) + '|' + String(sheetName);
-    const cacheMs = (options && options.cacheMs) || 600000;
+    const cacheMs = options && typeof options.cacheMs === 'number'
+      ? Math.max(0, options.cacheMs)
+      : 600000;
     const cached = sheetCache[cacheKey];
-    if (cached && cached.expiresAt && Date.now() < cached.expiresAt && cached.table) {
-      return Promise.resolve(cached.table);
-    }
     if (cached && cached.promise) {
       return cached.promise;
     }
+    if (!(options && options.forceReload) && cached && cached.expiresAt &&
+        Date.now() < cached.expiresAt && cached.table) {
+      return Promise.resolve(cached.table);
+    }
 
     const promise = new Promise(function (resolve, reject) {
-      const cbName = 'gvizCb_' + String(sheetName).replace(/[^a-zA-Z0-9]/g, '') + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
-      const url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json;responseHandler:' + cbName + '&sheet=' + encodeURIComponent(sheetName) + '&t=' + Date.now();
+      const cbName = jsonpCallbackName(cacheKey);
+      const cacheBust = options && options.forceReload ? '&t=' + Date.now() : '';
+      const url = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json;responseHandler:' + cbName + '&sheet=' + encodeURIComponent(sheetName) + cacheBust;
       const script = document.createElement('script');
       let settled = false;
 
@@ -102,7 +115,9 @@
         delete sheetCache[cacheKey];
         console.error('Przekroczono czas oczekiwania na dane arkusza:', sheetName);
         reject(new Error('Przekroczono czas oczekiwania na dane.'));
-      }, (options && options.timeoutMs) || 15000);
+      }, options && typeof options.timeoutMs === 'number' && options.timeoutMs > 0
+        ? options.timeoutMs
+        : 15000);
 
       window[cbName] = function (json) {
         if (settled) return;

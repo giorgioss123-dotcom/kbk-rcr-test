@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strefa społeczności — KBK</title>
+<link rel="stylesheet" href="styles/common.css">
+<style>
+  html { scroll-behavior: smooth; }
+
+  :root {
+    --teal: #1a5a6b;
+    --teal-dark: #13454f;
+    --teal-deep: #0c3038;
+    --white: #ffffff;
+    --line: rgba(255, 255, 255, 0.18);
+    --line-2: rgba(255, 255, 255, 0.32);
+    --muted: rgba(255, 255, 255, 0.82);
+    --muted-dim: rgba(255, 255, 255, 0.58);
+    --gold: #d4a95f;
+    --maxw: 1140px;
+  }
+
+  /* ═══ NAWIGACJA ═══ */
+  .nav-back {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .nav-back:hover { color: var(--white); border-color: var(--line-2); }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .nav-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: var(--white);
+    color: var(--teal-deep);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s;
+  }
+
+  .nav-cta::after {
+    content: '→';
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  .nav-cta:hover { background: var(--gold); }
+
+  /* ═══ GŁÓWNY KONTENER ═══ */
+  .community-wrap {
+    position: relative;
+    z-index: 2;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 40px 24px 110px;
+  }
+
+  /* ═══ NAGŁÓWEK STRONY ═══ */
+  .community-header {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 40px;
+    align-items: start;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 34px;
+  }
+
+  .community-header-text { min-width: 0; }
+
+  .eyebrow {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--muted-dim);
+    margin-bottom: 10px;
+  }
+
+  .community-header h1 {
+    margin: 0 0 10px;
+    color: var(--white);
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(1.9rem, 4vw, 3rem);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.28);
+  }
+
+  .community-header .intro {
+    max-width: 66ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.96rem;
+    line-height: 1.65;
+  }
+
+  /* ═══ TEASER REJESTRACJI W NAGŁÓWKU ═══ */
+  .join-teaser {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 22px 24px 22px 26px;
+    border: 1px solid var(--line-2);
+    background: rgba(0, 0, 0, 0.14);
+  }
+
+  .join-teaser::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--gold);
+    opacity: 0.7;
+  }
+
+  .join-teaser .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .join-teaser p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .join-teaser p strong { color: var(--white); font-weight: 700; }
+
+  .join-teaser-btn {
+    margin-top: 4px;
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    color: var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+  }
+
+  .join-teaser-btn::after {
+    content: '↓';
+    font-size: 0.9rem;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+
+  .join-teaser-btn:hover {
+    background: var(--white);
+    color: var(--teal-deep);
+    border-color: var(--white);
+  }
+
+  .join-teaser-btn:hover::after { transform: translateY(3px); }
+
+  /* ═══ KIOSK — HERO ═══ */
+  .kiosk-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    border: 1px solid var(--line-2);
+    background:
+      radial-gradient(ellipse at 0% 100%, rgba(212, 169, 95, 0.13) 0%, transparent 55%),
+      rgba(0, 0, 0, 0.18);
+    margin-bottom: 22px;
+    overflow: hidden;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .kiosk-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gold);
+  }
+
+  .kiosk-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 110% -10%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .kiosk-content {
+    position: relative;
+    padding: 46px 44px 42px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-right: 1px solid var(--line);
+  }
+
+  .kiosk-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .kiosk-content h2 {
+    margin: 0;
+    font-family: 'Anton', sans-serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 4.2vw, 3rem);
+    line-height: 1;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .kiosk-content p {
+    margin: 0;
+    max-width: 46ch;
+    color: var(--muted);
+    font-size: 0.98rem;
+    line-height: 1.68;
+  }
+
+  .kiosk-content p strong { color: var(--white); font-weight: 700; }
+
+  .kiosk-cta {
+    margin-top: 12px;
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 24px;
+    background: var(--white);
+    color: var(--teal-deep);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.76rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transition: background 0.18s, color 0.18s, gap 0.2s;
+  }
+
+  .kiosk-cta::after {
+    content: '→';
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+
+  .kiosk-hero:hover .kiosk-cta {
+    background: var(--gold);
+    gap: 20px;
+  }
+
+  .kiosk-hero:hover .kiosk-cta::after { transform: translateX(3px); }
+
+  .kiosk-steps {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 40px 40px 38px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    justify-content: center;
+  }
+
+  .kiosk-steps li {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .kiosk-steps .num {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .kiosk-steps .body {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .kiosk-steps .body strong {
+    display: block;
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.94rem;
+    margin-bottom: 3px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ═══ NARZĘDZIA DLA STAŁYCH ═══ */
+  .tools-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 52px;
+  }
+
+  .tool {
+    display: flex;
+    flex-direction: column;
+    padding: 26px 26px 22px;
+    border: 1px solid var(--line-2);
+    background: rgba(0, 0, 0, 0.12);
+    color: var(--white);
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    min-height: 170px;
+  }
+
+  .tool:hover {
+    background: rgba(0, 0, 0, 0.22);
+    border-color: var(--white);
+    transform: translateY(-3px);
+  }
+
+  .tool-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.64rem;
+    letter-spacing: 0.22em;
+    color: var(--muted-dim);
+    margin-bottom: 20px;
+  }
+
+  .tool h3 {
+    margin: 0 0 10px;
+    font-family: 'Anton', sans-serif;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 2.2vw, 1.65rem);
+    line-height: 1;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+  }
+
+  .tool p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    max-width: 44ch;
+  }
+
+  .tool-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 22px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .tool-action::after {
+    content: '→';
+    font-size: 1.05rem;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+
+  .tool:hover .tool-action::after { transform: translateX(5px); }
+
+  /* ═══ REJESTRACJA — DOLNA SEKCJA ═══ */
+  .join-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 14px;
+    margin-bottom: 26px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .join-head h2 {
+    margin: 0;
+    font-family: 'Anton', sans-serif;
+    font-weight: 400;
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+
+  .join-head .note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted-dim);
+    white-space: nowrap;
+  }
+
+  .join-banner {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    border: 1px solid var(--line-2);
+    background: rgba(0, 0, 0, 0.14);
+    overflow: hidden;
+  }
+
+  .join-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--gold);
+    opacity: 0.85;
+  }
+
+  .join-content {
+    position: relative;
+    padding: 38px 40px 34px;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .join-content h3 {
+    margin: 0;
+    font-family: 'Anton', sans-serif;
+    font-weight: 400;
+    font-size: clamp(1.5rem, 2.8vw, 2rem);
+    line-height: 1.05;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.28);
+  }
+
+  .join-content p {
+    margin: 0;
+    max-width: 52ch;
+    color: var(--muted);
+    font-size: 0.94rem;
+    line-height: 1.66;
+  }
+
+  .join-content p strong { color: var(--white); font-weight: 700; }
+
+  .join-cta {
+    margin-top: 14px;
+    align-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 22px;
+    border: 1px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.18s, color 0.18s, gap 0.2s;
+  }
+
+  .join-cta::after {
+    content: '→';
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .join-cta:hover {
+    background: var(--white);
+    color: var(--teal-deep);
+    gap: 20px;
+  }
+
+  .join-benefits {
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 34px 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    justify-content: center;
+  }
+
+  .join-benefits li {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 14px;
+    align-items: start;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .join-benefits .marker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    color: var(--gold);
+    padding-top: 4px;
+  }
+
+  .join-benefits strong { color: var(--white); font-weight: 700; }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 920px) {
+    .community-header { grid-template-columns: 1fr; gap: 24px; }
+
+    .kiosk-hero { grid-template-columns: 1fr; }
+    .kiosk-content {
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding: 34px 28px 30px;
+    }
+    .kiosk-steps { padding: 30px 28px 32px; gap: 18px; }
+
+    .join-banner { grid-template-columns: 1fr; }
+    .join-content {
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding: 30px 28px 26px;
+    }
+    .join-benefits { padding: 28px 28px; }
+
+    .tools-row { grid-template-columns: 1fr; margin-bottom: 40px; }
+  }
+
+  @media (max-width: 720px) {
+    .community-wrap { padding: 28px 20px 80px; }
+    .community-header { margin-bottom: 26px; }
+
+    .join-teaser { padding: 20px 22px 20px 24px; }
+
+    .kiosk-content h2 { font-size: 1.9rem; }
+    .kiosk-cta { width: 100%; justify-content: space-between; }
+
+    .join-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .nav-actions { gap: 6px; }
+    .nav-cta { padding: 8px 12px; font-size: 0.64rem; letter-spacing: 0.1em; }
+    .nav-back { padding: 8px 8px; font-size: 0.66rem; letter-spacing: 0.1em; }
+  }
+
+  @media (max-width: 480px) {
+    .kiosk-content, .kiosk-steps,
+    .join-content, .join-benefits { padding-left: 22px; padding-right: 22px; }
+
+    .tool { min-height: 150px; padding: 22px 22px 20px; }
+
+    /* na bardzo małych ekranach chowamy „← Główna" — brand już prowadzi do index */
+    .nav-back { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="kbk-logo" viewBox="0 0 240 400">
+      <rect x="111" y="0" width="18" height="400" fill="currentColor"/>
+      <circle cx="72" cy="105" r="58" fill="none" stroke="currentColor" stroke-width="14"/>
+      <circle cx="168" cy="105" r="58" fill="none" stroke="currentColor" stroke-width="14"/>
+      <path d="M 129 248 L 192 248 L 158 272 L 192 296 L 158 320 L 192 344 L 158 368 L 192 392 L 192 400 L 129 400 Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand">
+      <img class="brand-logo" src="resources/1MNIEJSZA%20NIESK_Obszar%20roboczy%201%20kopia.png" alt="KBK">
+      KBK
+    </a>
+    <div class="nav-actions">
+      <a href="index.html" class="nav-back">← Główna</a>
+      <a href="rejestracja.html" class="nav-cta">Zarejestruj się</a>
+    </div>
+  </div>
+</nav>
+
+<main class="community-wrap">
+
+  <header class="community-header">
+    <div class="community-header-text">
+      <span class="eyebrow">Strefa / społeczność</span>
+      <h1>Sprawy wspólne</h1>
+      <p class="intro">
+        Codzienne narzędzia społeczności Królestwa Bez Kresu — od wymiany ryarów na nagrody,
+        przez wspólne decyzje, po wgląd w stan kont. Wszystko w jednym miejscu.
+      </p>
+    </div>
+
+    <aside class="join-teaser" aria-labelledby="join-teaser-label">
+      <span class="label" id="join-teaser-label">Nowi w Królestwie</span>
+      <p>
+        Załóż <strong>konto rycarowe</strong>, zbieraj rycary za wolontariat i wsparcie,
+        wymieniaj je na nagrody oraz głosuj w sprawach wspólnych.
+      </p>
+      <a href="#dolacz" class="join-teaser-btn">Dowiedz się więcej</a>
+    </aside>
+  </header>
+
+  <!-- ═══ KIOSK — GŁÓWNA AKCJA ═══ -->
+  <a href="kiosk.html" class="kiosk-hero" aria-labelledby="kiosk-title">
+    <div class="kiosk-content">
+      <span class="kiosk-eyebrow">Ryneczek KBK</span>
+      <h2 id="kiosk-title">Wymień rycary na nagrody</h2>
+      <p>
+        Zajrzyj do aktualnego katalogu nagród i wymień <strong>rycary</strong>, które zebrałeś/aś
+        za wolontariat i wsparcie Królestwa. Katalog aktualizujemy na bieżąco.
+      </p>
+      <span class="kiosk-cta">Otwórz ryneczek</span>
+    </div>
+
+    <ol class="kiosk-steps" aria-label="Jak to działa">
+      <li>
+        <span class="num">1</span>
+        <span class="body">
+          <strong>Zbierz rycary</strong>
+          za wolontariat, pomoc przy wydarzeniach i wsparcie wspólnych działań.
+        </span>
+      </li>
+      <li>
+        <span class="num">2</span>
+        <span class="body">
+          <strong>Wybierz nagrodę</strong>
+          z katalogu — od drobnych rzeczy po wyjątkowe doświadczenia.
+        </span>
+      </li>
+      <li>
+        <span class="num">3</span>
+        <span class="body">
+          <strong>Odbierz w KBK</strong>
+          przy Biskupiej 18. Rynek działa cały czas — bez terminów.
+        </span>
+      </li>
+    </ol>
+  </a>
+
+  <!-- ═══ NARZĘDZIA DLA STAŁYCH BYWALCÓW ═══ -->
+  <div class="tools-row">
+    <a href="wnioski.html" class="tool">
+      <span class="tool-num">— 01</span>
+      <h3>Wnioski</h3>
+      <p>Zgłoś własny pomysł, poznaj propozycje innych i weź udział w głosowaniu nad tym, co dzieje się w Królestwie.</p>
+      <span class="tool-action">Złóż wniosek lub zagłosuj</span>
+    </a>
+
+    <a href="rcr-dashboard.html" class="tool">
+      <span class="tool-num">— 02</span>
+      <h3>Statystyki</h3>
+      <p>Zobacz stan kont rycarowych i przejrzyj historię transakcji społeczności.</p>
+      <span class="tool-action">Zobacz statystyki</span>
+    </a>
+  </div>
+
+  <!-- ═══ REJESTRACJA — DLA NOWYCH ═══ -->
+  <section id="dolacz" aria-labelledby="join-title">
+    <div class="join-head">
+      <h2 id="join-title">Nowi w Królestwie?</h2>
+      <span class="note">Zacznij tutaj</span>
+    </div>
+
+    <div class="join-banner">
+      <div class="join-content">
+        <h3>Załóż konto rycarowe</h3>
+        <p>
+          Dołącz do społeczności otwartej enklawy przy Biskupiej 18. Konto rycarowe pozwala Ci
+          zbierać <strong>rycary</strong> za wolontariat i wsparcie, wymieniać je na nagrody
+          w Ryneczku, a także <strong>składać wnioski</strong> i <strong>głosować</strong>
+          w sprawach wspólnych.
+        </p>
+        <p>
+          Rejestracja jest bezpłatna i zajmuje minutę.
+        </p>
+        <a href="rejestracja.html" class="join-cta">Zarejestruj się</a>
+      </div>
+
+      <ul class="join-benefits">
+        <li><span class="marker">01</span><span>Otrzymuj <strong>rycary</strong> za wsparcie i wolontariat.</span></li>
+        <li><span class="marker">02</span><span>Wymieniaj je na <strong>nagrody</strong> w Ryneczku.</span></li>
+        <li><span class="marker">03</span><span><strong>Składaj wnioski</strong> i głosuj w sprawach społeczności.</span></li>
+        <li><span class="marker">04</span><span>Współtwórz <strong>otwartą enklawę</strong> razem z innymi.</span></li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<script src="public-config.js"></script>
+<script src="js/feedback.js?v=20260930-2"></script>
+</body>
+</html>
