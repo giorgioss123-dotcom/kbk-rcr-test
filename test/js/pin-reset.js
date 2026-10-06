@@ -46,6 +46,9 @@
     modal.className = 'kbk-pin-reset hidden';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.setAttribute('inert', '');
+    modal.setAttribute('aria-label', 'Bezpieczeństwo konta');
     modal.innerHTML = '<div class="kbk-pin-reset-card">' +
       '<div class="kbk-pin-reset-prompt">' +
       '<p class="kbk-pin-reset-kicker">Bezpieczeństwo konta</p>' +
@@ -57,10 +60,10 @@
       '<form class="kbk-pin-reset-form hidden">' +
       '<h2>Ustaw nowy PIN</h2>' +
       '<p class="kbk-pin-reset-form-intro">Podaj dane konta. Na podany adres e-mail wyślemy link potwierdzający.</p>' +
-      '<label>Login</label><input name="login" autocomplete="username" required>' +
-      '<label>E-mail</label><input name="email" type="email" autocomplete="email" required>' +
-      '<label>Nowy PIN</label><input name="newPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required>' +
-      '<label>Potwierdź PIN</label><input name="confirmPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required>' +
+      '<label for="kbkPinResetLogin">Login</label><input id="kbkPinResetLogin" name="login" autocomplete="username" required>' +
+      '<label for="kbkPinResetEmail">E-mail</label><input id="kbkPinResetEmail" name="email" type="email" autocomplete="email" required>' +
+      '<label for="kbkPinResetNewPin">Nowy PIN</label><input id="kbkPinResetNewPin" name="newPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required>' +
+      '<label for="kbkPinResetConfirmPin">Potwierdź PIN</label><input id="kbkPinResetConfirmPin" name="confirmPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required>' +
       '<button type="submit">Wyślij link potwierdzający</button>' +
       '<button type="button" class="kbk-pin-reset-cancel">Anuluj</button>' +
       '<p class="kbk-pin-reset-feedback" aria-live="polite"></p>' +
@@ -80,9 +83,15 @@
     var feedback = modal.querySelector('.kbk-pin-reset-feedback');
     var submit = form.querySelector('[type="submit"]');
     var loginField = form.querySelector('[name="login"]');
+    var closeDialogFocus = null;
 
     function close() {
       modal.classList.add('hidden');
+      if (closeDialogFocus) {
+        var releaseFocus = closeDialogFocus;
+        closeDialogFocus = null;
+        releaseFocus();
+      }
       actions.classList.remove('hidden');
       prompt.classList.remove('hidden');
       form.classList.add('hidden');
@@ -97,7 +106,10 @@
       close();
       modal.classList.remove('hidden');
       loginField.value = String(login || '').trim().toLowerCase();
-      modal.querySelector('[data-pin-reset="no"]').focus();
+      closeDialogFocus = window.KBKDialog.open(modal, {
+        initialFocus: '[data-pin-reset="no"]',
+        onEscape: close
+      });
     }
 
     modal.querySelector('[data-pin-reset="no"]').addEventListener('click', close);

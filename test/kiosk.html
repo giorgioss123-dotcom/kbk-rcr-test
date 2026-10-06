@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ryneczek — KBK</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -440,7 +437,7 @@
   </main>
 </div>
 
-<div class="status-modal hidden" id="status-modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-message">
+<div class="status-modal hidden" id="status-modal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="status-modal-message">
   <div class="status-modal-card">
     <p class="status-modal-message" id="status-modal-message" role="status" aria-live="polite"></p>
     <button class="status-modal-close" type="button" id="status-modal-close">OK</button>
@@ -448,9 +445,9 @@
 </div>
 
 <script src="public-config.js"></script>
-<script src="js/feedback.js"></script>
-<script src="js/shared.js"></script>
-<script src="js/pin-reset.js"></script>
+<script src="js/feedback.js?v=20260930-2"></script>
+<script src="js/shared.js?v=20261001-1"></script>
+<script src="js/pin-reset.js?v=20260930-1"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
@@ -462,6 +459,7 @@
   const statusModal = document.getElementById('status-modal');
   const statusModalMessage = document.getElementById('status-modal-message');
   const statusModalClose = document.getElementById('status-modal-close');
+  let statusDialogRelease = null;
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
@@ -482,11 +480,16 @@
   }
 
   function showMessage(text, type) {
-    if (!text) { statusModal.classList.add('hidden'); return; }
+    if (!text) { closeStatusModal(); return; }
     statusModalMessage.textContent = text;
     statusModalMessage.className = 'status-modal-message ' + (type || 'info');
-    statusModal.classList.remove('hidden');
-    statusModalClose.focus();
+    if (statusModal.classList.contains('hidden')) {
+      statusModal.classList.remove('hidden');
+      statusDialogRelease = window.KBKDialog.open(statusModal, {
+        initialFocus: '#status-modal-close',
+        onEscape: closeStatusModal
+      });
+    }
   }
 
   function claimErrorMessage(error) {
@@ -508,15 +511,18 @@
     processingStatus.className = text ? 'status-box info' : 'status-box hidden';
   }
 
-  function closeStatusModal() { statusModal.classList.add('hidden'); }
+  function closeStatusModal() {
+    statusModal.classList.add('hidden');
+    if (statusDialogRelease) {
+      const releaseFocus = statusDialogRelease;
+      statusDialogRelease = null;
+      releaseFocus();
+    }
+  }
   statusModalClose.addEventListener('click', closeStatusModal);
   statusModal.addEventListener('click', function (event) {
     if (event.target === statusModal) closeStatusModal();
   });
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') closeStatusModal();
-  });
-
   function resetOrderForm() {
     loginInput.value = ''; pinInput.value = '';
     productsEl.querySelectorAll('.qty-value').forEach(function (f) { f.value = '0'; });

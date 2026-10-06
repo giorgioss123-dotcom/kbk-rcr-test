@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KBK — Królestwo Bez Kresu</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -555,20 +552,6 @@
     width: 42px;
     height: 70px;
     aspect-ratio: 240 / 400;
-  }
-
-  .journal-tag {
-    position: absolute;
-    top: 0;
-    left: 0;
-    padding: 7px 12px;
-    background: var(--teal-deep);
-    color: var(--white);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    z-index: 2;
   }
 
   .journal-body {
@@ -1421,7 +1404,7 @@
   </div>
 </section>
 
-<div class="constitution-modal hidden" id="constitution-modal" role="dialog" aria-modal="true" aria-labelledby="constitution-modal-title">
+<div class="constitution-modal hidden" id="constitution-modal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="constitution-modal-title">
   <article class="constitution-modal-card">
     <button class="constitution-modal-close" type="button" id="constitution-close">Zamknij</button>
     <div class="constitution-full-text" id="constitution-full-text">
@@ -1563,8 +1546,8 @@
 </footer>
 
 <script src="public-config.js"></script>
-<script src="js/feedback.js"></script>
-<script src="js/shared.js"></script>
+<script src="js/feedback.js?v=20260930-2"></script>
+<script src="js/shared.js?v=20261001-1"></script>
 <script>
   document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -1678,17 +1661,26 @@
   const constitutionOpen = document.getElementById('constitution-open');
   const constitutionClose = document.getElementById('constitution-close');
   let constitutionLoaded = false;
+  let constitutionDialogRelease = null;
 
   function closeConstitutionModal() {
     constitutionModal.classList.add('hidden');
     document.body.style.overflow = '';
+    if (constitutionDialogRelease) {
+      const releaseFocus = constitutionDialogRelease;
+      constitutionDialogRelease = null;
+      releaseFocus();
+    }
   }
 
   if (constitutionOpen && constitutionModal) {
     constitutionOpen.addEventListener('click', function () {
       constitutionModal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
-      constitutionClose.focus();
+      constitutionDialogRelease = window.KBKDialog.open(constitutionModal, {
+        initialFocus: '#constitution-close',
+        onEscape: closeConstitutionModal
+      });
       if (constitutionLoaded) return;
       constitutionLoaded = true;
       fetch('resources/konstytucja.txt')
@@ -1709,12 +1701,6 @@
       if (event.target === constitutionModal) closeConstitutionModal();
     });
   }
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && constitutionModal && !constitutionModal.classList.contains('hidden')) {
-      closeConstitutionModal();
-    }
-  });
-
   const HIVE_ACCOUNT = 'krolestwo';
   const HIVE_LIMIT = 3;
 
@@ -1778,7 +1764,6 @@
         const img = extractImage(post);
         const title = escapeHtml(post.title || 'Bez tytułu');
         const excerpt = escapeHtml(cleanExcerpt(post.body));
-        const category = escapeHtml((post.category || 'wpis').toString().toUpperCase());
         const author = escapeHtml(post.author || HIVE_ACCOUNT);
         const url = `https://peakd.com/@${post.author}/${post.permlink}`;
 
@@ -1791,7 +1776,6 @@
         return `
           <a href="${url}" target="_blank" rel="noopener" class="journal-card">
             <div class="journal-cover">
-              <span class="journal-tag">${category}</span>
               ${cover}
             </div>
             <div class="journal-body">
