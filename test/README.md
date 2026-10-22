@@ -37,6 +37,9 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 - działają widoki mobilne oraz linki do `confirm.html`;
 - formularz rejestracji zapisuje telefon i wymaga zgody RODO z działającym linkiem do polityki prywatności;
 - wnioski, głosowanie i ryneczek pozwalają wybrać logowanie PIN-em albo skanowanie QR paszportu kamerą (wymagane HTTPS i zgoda na kamerę);
+- po odczytaniu QR kamera się wyłącza; ryneczek, głosowanie i składanie wniosku wysyłają wybraną operację od razu po skanie (głosowanie i wniosek nadal wymagają późniejszego potwierdzenia linkiem e-mailowym);
+- przy nieznanym wyniku zamówienia ryneczek informuje o konieczności sprawdzenia poczekalni przez dyżurnego; formularz nie blokuje kolejnych prób, a każde nowe wysłanie dostaje nowy identyfikator, podczas gdy backend zachowuje idempotencję dla powtórzeń tego samego żądania;
+- wnioski i głosy po niejednoznacznym wyniku jasno informują o możliwym zapisie, blokują ponowne wysłanie w tym formularzu i kierują do sprawdzenia poczty oraz folderu spam;
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
 
 Kod QR paszportu jest samodzielnym sekretem uwierzytelniającym do tych operacji. Każda osoba

@@ -176,6 +176,55 @@
     outline: 2px solid rgba(26, 90, 107, 0.4);
     outline-offset: 2px;
   }
+  #rewardAuth .qr-auth-method-label {
+    margin: 0;
+    color: var(--teal-deep);
+    font-size: 0.96rem;
+    font-weight: 800;
+  }
+  #rewardAuth .qr-auth-method-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 0 0 16px;
+  }
+  #rewardAuth .qr-auth-methods {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 5px;
+    border: 1px solid var(--paper-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 20px rgba(12, 48, 56, 0.08);
+  }
+  #rewardAuth .qr-auth-method {
+    flex: 1 1 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--teal-deep);
+    padding: 10px 16px;
+    font: 700 0.82rem 'Archivo', sans-serif;
+    letter-spacing: 0.02em;
+    white-space: normal;
+    text-align: center;
+  }
+  #rewardAuth .qr-auth-method:hover:not(.active) {
+    background: rgba(26, 90, 107, 0.06);
+  }
+  #rewardAuth .qr-auth-method.active {
+    background: var(--teal-deep);
+    color: var(--paper);
+    box-shadow: 0 3px 0 rgba(12, 48, 56, 0.18);
+  }
+  #rewardAuth .qr-auth-method:focus-visible {
+    outline: 2px solid rgba(26, 90, 107, 0.4);
+    outline-offset: 2px;
+  }
   .product {
     display: flex; justify-content: space-between; align-items: center; gap: 12px;
     border-bottom: 1px solid var(--paper-line);
@@ -331,6 +380,31 @@
     text-transform: uppercase;
   }
   .status-modal-close:hover { background: transparent; color: var(--teal-deep); }
+  @media (max-width: 700px) {
+    .currency-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .currency-segment {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .currency-option {
+      min-width: 0;
+      flex: 1 1 0;
+      padding: 10px;
+      font-size: 0.74rem;
+    }
+    #rewardAuth .qr-auth-method-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #rewardAuth .qr-auth-methods {
+      width: 100%;
+    }
+  }
   @media (max-width: 560px) {
     main { padding: 32px 24px 28px; }
     .wrap { padding: 40px 16px 60px; }
@@ -348,6 +422,14 @@
       flex: 1 1 0;
       padding: 10px 10px;
       font-size: 0.74rem;
+    }
+    #rewardAuth .qr-auth-method-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #rewardAuth .qr-auth-methods {
+      width: 100%;
     }
     .product { align-items: center; gap: 8px; }
     .qty-button { width: 36px; height: 36px; font-size: 20px; }
@@ -430,8 +512,8 @@
         <label for="pin">PIN</label>
         <input id="pin" class="auth-input" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password">
       </div>
-      <button id="submit">Wyślij zamówienie</button>
     </div>
+    <button id="submit">Wyślij zamówienie</button>
 
     <div id="processing-status" class="status-box hidden" role="status" aria-live="polite"></div>
 
@@ -450,13 +532,19 @@
 <script src="js/shared.js?v=20261001-1"></script>
 <script src="js/pin-reset.js?v=20260930-1"></script>
 <script src="js/vendor/jsQR-1.4.0.js"></script>
-<script src="js/qr-auth.js?v=20261022-1"></script>
+<script src="js/qr-auth.js?v=20261022-7"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
   const safeText = shared.safeText;
   const PRODUCT_CACHE_MS = 300000;
+  const UNKNOWN_ORDER_STATUS_MESSAGE = 'Nie udało się potwierdzić statusu zamówienia. Podejdź do dyżurnego, który sprawdzi, czy zamówienie trafiło do poczekalni. Jeśli go tam nie ma, możesz spróbować zamówić ponownie.';
+  try {
+    sessionStorage.removeItem('kbk_pending_kiosk_order_v1');
+  } catch (error) {
+    console.error('Nie udało się usunąć starego zapisu zamówienia z pamięci sesji.', error);
+  }
   const productsEl = document.getElementById('products');
   const processingStatus = document.getElementById('processing-status');
   const statusModal = document.getElementById('status-modal');
@@ -465,11 +553,97 @@
   let statusDialogRelease = null;
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
-  const rewardAuth = window.KBKQrAuth.create({mountId:'rewardAuth',pinFieldIds:['rewardLoginField','rewardPinField'],loginInputId:'login',pinInputId:'pin'});
+  const rewardAuth = window.KBKQrAuth.create({
+    mountId:'rewardAuth',
+    pinFieldIds:['rewardLoginField','rewardPinField'],
+    loginInputId:'login',
+    pinInputId:'pin',
+    confirmButtonId:'submit',
+    methodLabel:'Potwierdzam transakcję za pomocą:',
+    qrLabel:'Kod QR',
+    scanOnSelect:false,
+    onModeChange:onAuthModeChange,
+    onScanStateChange:onScanStateChange,
+    onScanError:onScanError,
+    onQrScan:onQrScan
+  });
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
   let productCache = null;
   let productCacheTs = 0;
   let selectedCurrency = 'RCR';
+  let qrScanOrder = null;
+  let orderInProgress = false;
+
+  function getSelectedOrderTotal() {
+    if (!productCache) return 0;
+    return Array.from(productsEl.querySelectorAll('.qty-value')).reduce(function (total, input) {
+      var product = productCache[Number(input.dataset.index)];
+      return product ? total + product.cost * clampQuantity(input.value) : total;
+    }, 0);
+  }
+
+  function updateSubmitLabel() {
+    var total = getSelectedOrderTotal();
+    var label = total > 0 ? 'Zamów za ' + Number(total.toFixed(2)) + ' ' + selectedCurrency : 'Wyślij zamówienie';
+    if (rewardAuth && rewardAuth.isQrMode()) {
+      label = total > 0
+        ? 'Zeskanuj kod QR i zamów za ' + Number(total.toFixed(2)) + ' ' + selectedCurrency
+        : 'Zeskanuj kod QR i zamów';
+    }
+    document.getElementById('submit').textContent = label;
+  }
+
+  function setOrderControlsDisabled(disabled) {
+    document.querySelectorAll('.currency-option, .qty-button').forEach(function (control) {
+      control.disabled = disabled;
+    });
+  }
+
+  function onAuthModeChange(mode) {
+    if (mode === 'pin') {
+      qrScanOrder = null;
+      if (!orderInProgress) {
+        setOrderControlsDisabled(false);
+        showProcessingStatus('');
+      }
+    }
+    updateSubmitLabel();
+  }
+
+  function onScanStateChange(scanning) {
+    if (orderInProgress) return;
+    setOrderControlsDisabled(scanning);
+    var submitButton = document.getElementById('submit');
+    submitButton.disabled = scanning;
+    if (scanning) submitButton.textContent = 'Przyłóż paszport do kamery…';
+    else updateSubmitLabel();
+  }
+
+  function onScanError() {
+    qrScanOrder = null;
+    onScanStateChange(false);
+  }
+
+  function onQrScan(qrHash) {
+    if (!qrScanOrder) return;
+    var order = qrScanOrder;
+    qrScanOrder = null;
+    submitOrder(order.items, order.currency, {qrHash: qrHash});
+  }
+
+  function createRequestId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    if (!window.crypto || typeof window.crypto.getRandomValues !== 'function') {
+      throw new Error('Ta przeglądarka nie może bezpiecznie utworzyć identyfikatora zamówienia.');
+    }
+    var bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    var hex = Array.from(bytes, function (byte) { return byte.toString(16).padStart(2, '0'); });
+    return hex.slice(0, 4).join('') + '-' + hex.slice(4, 6).join('') + '-' +
+      hex.slice(6, 8).join('') + '-' + hex.slice(8, 10).join('') + '-' + hex.slice(10).join('');
+  }
 
   function updateCurrencyButtons() {
     document.querySelectorAll('.currency-option').forEach(function (button) {
@@ -504,6 +678,7 @@
       user_not_found: 'Nie udało się zweryfikować konta.',
       invalid_total: 'Nie udało się obliczyć wartości zamówienia.',
       insufficient_funds: 'Brak wystarczającego salda dla tego zamówienia.',
+      request_id_conflict: 'Nie można bezpiecznie sprawdzić tego zamówienia. Skontaktuj się z dyżurnym.',
       server_error: 'Nie udało się wysłać zamówienia. Spróbuj ponownie później.'
     };
     return Object.prototype.hasOwnProperty.call(messages, error)
@@ -511,9 +686,14 @@
       : 'Nie udało się wysłać zamówienia. Spróbuj ponownie później.';
   }
 
-  function showProcessingStatus(text) {
+  function isDefinitiveClaimError(error) {
+    return ['invalid_request', 'wrong_pin', 'invalid_qr', 'account_locked', 'user_not_found',
+      'invalid_total', 'insufficient_funds', 'server_error'].indexOf(error) !== -1;
+  }
+
+  function showProcessingStatus(text, type) {
     processingStatus.textContent = text || '';
-    processingStatus.className = text ? 'status-box info' : 'status-box hidden';
+    processingStatus.className = text ? 'status-box ' + (type || 'info') : 'status-box hidden';
   }
 
   function closeStatusModal() {
@@ -531,6 +711,7 @@
   function resetOrderForm() {
     rewardAuth.reset();
     productsEl.querySelectorAll('.qty-value').forEach(function (f) { f.value = '0'; });
+    updateSubmitLabel();
   }
   function escapeHtml(value) {
     const text = safeText(value, '');
@@ -554,6 +735,7 @@
       var displayCost = Number(product.cost);
       return '<div class="product"><span class="product-name"><span class="catalogue-product-title">' + escapeHtml(product.name) + '</span> · <span class="product-cost">' + displayCost + ' RCR</span></span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
     }).join('');
+    updateSubmitLabel();
   }
   function loadProducts(forceReload) {
     const now = Date.now();
@@ -594,6 +776,7 @@
       selectedCurrency = button.dataset.currency || 'RCR';
       updateCurrencyButtons();
       if (productCache) renderProducts(productCache);
+      else updateSubmitLabel();
     });
   });
 
@@ -606,41 +789,92 @@
     var current = clampQuantity(input.value);
     var nextValue = button.dataset.action === 'increment' ? current + 1 : current - 1;
     input.value = String(clampQuantity(nextValue));
+    updateSubmitLabel();
   });
+  async function submitOrder(items, currency, credentials) {
+    if (orderInProgress) return;
+    var requestId;
+    try {
+      requestId = createRequestId();
+    } catch (error) {
+      console.error('Nie udało się utworzyć identyfikatora zamówienia.', error);
+      rewardAuth.clearStatus();
+      showMessage(error.message, 'error');
+      return;
+    }
+    orderInProgress = true;
+    setOrderControlsDisabled(true);
+    rewardAuth.setDisabled(true);
+    var submitBtn = document.getElementById('submit');
+    submitBtn.disabled = true; submitBtn.textContent = 'Przetwarzanie…';
+    window.KBKQrAuth.stopAll();
+    showProcessingStatus('Wysyłanie zamówienia…', 'info');
+    try {
+      var data;
+      try {
+        var response = await fetch(APP_CONFIG.webAppUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(Object.assign({ action: 'claimRewards', items: items, currency: currency, requestId: requestId }, credentials))
+        });
+        if (!response.ok) throw new Error('Nieoczekiwany status odpowiedzi: ' + response.status);
+        data = await response.json();
+      } catch (error) {
+        console.error('Nie udało się jednoznacznie ustalić wyniku zamówienia.', error);
+        showProcessingStatus(UNKNOWN_ORDER_STATUS_MESSAGE, 'error');
+        showMessage(UNKNOWN_ORDER_STATUS_MESSAGE, 'error');
+        return;
+      }
+      if (data && data.ok) {
+        resetOrderForm();
+        showProcessingStatus('');
+        showMessage(data.message || 'Zamówienie przekazano do zatwierdzenia.', 'ok');
+      } else if (!data || !isDefinitiveClaimError(data.error)) {
+        showProcessingStatus(UNKNOWN_ORDER_STATUS_MESSAGE, 'error');
+        showMessage(UNKNOWN_ORDER_STATUS_MESSAGE, 'error');
+      } else {
+        showProcessingStatus('');
+        if (data && data.error === 'invalid_qr') rewardAuth.rescan();
+        if (pinReset.isLocked(data) && credentials.login) pinReset.open(credentials.login);
+        else showMessage(data && data.message ? data.message : claimErrorMessage(data && data.error), 'error');
+      }
+    } finally {
+      orderInProgress = false;
+      setOrderControlsDisabled(false);
+      rewardAuth.setDisabled(false);
+      if (rewardAuth.isQrMode()) rewardAuth.clearStatus();
+      submitBtn.disabled = false;
+      updateSubmitLabel();
+    }
+  }
+
   document.getElementById('submit').addEventListener('click', function () {
     var items = Array.from(productsEl.querySelectorAll('.qty-value'))
       .map(function (input) { return { name: input.dataset.name, quantity: Number(input.value) }; })
       .filter(function (item) { return item.quantity > 0; });
+    if (items.length === 0) {
+      showMessage(rewardAuth.isQrMode()
+        ? 'Wybierz produkt, aby zeskanować kod QR i złożyć zamówienie.'
+        : 'Wybierz metodę uwierzytelnienia, podaj wymagane dane i wybierz produkt.', 'error');
+      return;
+    }
+    if (rewardAuth.isQrMode()) {
+      qrScanOrder = {items: items, currency: selectedCurrency};
+      rewardAuth.startScan();
+      return;
+    }
     var credentials = rewardAuth.credentials();
-    if (!credentials || (credentials.pin !== undefined && (!credentials.login || !/^\d{6}$/.test(credentials.pin))) || items.length === 0) {
+    if (!credentials || !credentials.login || !/^\d{6}$/.test(credentials.pin)) {
       showMessage('Wybierz metodę uwierzytelnienia, podaj wymagane dane i wybierz produkt.', 'error');
       return;
     }
-    var submitBtn = document.getElementById('submit');
-    submitBtn.disabled = true; submitBtn.textContent = 'Przetwarzanie…';
-    window.KBKQrAuth.stopAll();
-    showProcessingStatus('Wysyłanie zamówienia…');
-    fetch(APP_CONFIG.webAppUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ action: 'claimRewards', items: items, currency: selectedCurrency }, credentials))
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        rewardAuth.reset();
-        if (data && data.ok) resetOrderForm();
-        showProcessingStatus('');
-        if (pinReset.isLocked(data) && credentials.login) pinReset.open(credentials.login);
-        else showMessage(data && data.ok ? 'Zamówienie przekazano do zatwierdzenia.' : claimErrorMessage(data && data.error), data && data.ok ? 'ok' : 'error');
-      })
-      .catch(function () { rewardAuth.reset(); showProcessingStatus(''); showMessage('Nie udało się połączyć z backendem.', 'error'); })
-      .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });
+    submitOrder(items, selectedCurrency, credentials);
   });
   updateCurrencyButtons();
   loadProducts(true).catch(function () {
     productsEl.innerHTML = '<div class="product"><span class="product-name">Nie udało się wczytać produktów.</span></div>';
   });
 </script>
-<script src="js/i18n.js?v=20261022-2"></script>
+<script src="js/i18n.js?v=20261022-7"></script>
 </body>
 </html>

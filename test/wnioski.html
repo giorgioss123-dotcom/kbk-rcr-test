@@ -347,6 +347,54 @@
     background: var(--neg-bg); border-color: var(--neg-dk); color: var(--neg-dk);
   }
 
+  #voteAuth .qr-auth-methods,
+  #proposalAuth .qr-auth-methods {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 5px;
+    border: 1px solid var(--paper-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.45);
+  }
+  #voteAuth .qr-auth-method-row,
+  #proposalAuth .qr-auth-method-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 18px 0 12px;
+  }
+  #voteAuth .qr-auth-method-label,
+  #proposalAuth .qr-auth-method-label {
+    margin: 0;
+    color: var(--teal-deep);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  #voteAuth .qr-auth-method,
+  #proposalAuth .qr-auth-method {
+    flex: 1 1 0;
+    min-width: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--teal-deep);
+    padding: 9px 14px;
+    font: 700 0.78rem 'Archivo', sans-serif;
+    letter-spacing: 0.02em;
+    white-space: normal;
+    text-align: center;
+  }
+  #voteAuth .qr-auth-method.active,
+  #proposalAuth .qr-auth-method.active {
+    background: var(--teal-deep);
+    color: var(--paper);
+  }
+
   .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
   .modal-actions button.confirm {
     flex: 1;
@@ -446,6 +494,16 @@
     .card { padding: 20px 18px 18px; }
     header { align-items: flex-start; }
     .modal { padding: 32px 24px 24px; }
+    #voteAuth .qr-auth-method-row,
+    #proposalAuth .qr-auth-method-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #voteAuth .qr-auth-methods,
+    #proposalAuth .qr-auth-methods {
+      width: 100%;
+    }
   }
 
   @media (max-width: 480px) {
@@ -579,17 +637,88 @@
 <script src="js/shared.js?v=20261001-1"></script>
 <script src="js/pin-reset.js?v=20260930-1"></script>
 <script src="js/vendor/jsQR-1.4.0.js"></script>
-<script src="js/qr-auth.js?v=20261022-1"></script>
+<script src="js/qr-auth.js?v=20261022-7"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
-  const voteAuth = window.KBKQrAuth.create({mountId:'voteAuth',pinFieldIds:['votePinFields'],loginInputId:'voteLogin',pinInputId:'votePin'});
-  const proposalAuth = window.KBKQrAuth.create({mountId:'proposalAuth',pinFieldIds:['proposalPinFields'],loginInputId:'proposalLogin',pinInputId:'proposalPin'});
+  let voteQrPayload = null;
+  let proposalQrPayload = null;
+  const voteAuth = window.KBKQrAuth.create({
+    mountId:'voteAuth',
+    pinFieldIds:['votePinFields'],
+    loginInputId:'voteLogin',
+    pinInputId:'votePin',
+    confirmButtonId:'voteSubmitBtn',
+    methodLabel:'Potwierdzam oddanie głosu za pomocą:',
+    qrLabel:'Kod QR',
+    scanOnSelect:false,
+    onModeChange:onVoteAuthModeChange,
+    onScanStateChange:onVoteScanStateChange,
+    onScanError:() => { voteQrPayload = null; },
+    onQrScan:onVoteQrScan
+  });
+  const proposalAuth = window.KBKQrAuth.create({
+    mountId:'proposalAuth',
+    pinFieldIds:['proposalPinFields'],
+    loginInputId:'proposalLogin',
+    pinInputId:'proposalPin',
+    confirmButtonId:'proposalSubmitBtn',
+    methodLabel:'Potwierdzam złożenie wniosku za pomocą:',
+    qrLabel:'Kod QR',
+    scanOnSelect:false,
+    onModeChange:onProposalAuthModeChange,
+    onScanStateChange:onProposalScanStateChange,
+    onScanError:() => { proposalQrPayload = null; },
+    onQrScan:onProposalQrScan
+  });
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
   const safeText = shared.safeText;
   const lookupCell = shared.lookupCell;
   const strFromCell = shared.strFromCell;
+  function updateVoteSubmitLabel() {
+    const choice = currentVoteChoice === 'za' ? 'Za' : currentVoteChoice === 'przeciw' ? 'Przeciw' : '';
+    document.getElementById('voteSubmitBtn').textContent = voteAuth && voteAuth.isQrMode()
+      ? (choice ? 'Zeskanuj kod QR i zagłosuj: ' + choice : 'Zeskanuj kod QR, aby zagłosować')
+      : (choice ? 'Wyślij głos: ' + choice : 'Wyślij głos');
+  }
+  function updateProposalSubmitLabel() {
+    document.getElementById('proposalSubmitBtn').textContent = proposalAuth && proposalAuth.isQrMode()
+      ? 'Zeskanuj kod QR i złóż wniosek'
+      : 'Złóż wniosek';
+  }
+  function onVoteAuthModeChange(mode) {
+    if (mode === 'pin') voteQrPayload = null;
+    updateVoteSubmitLabel();
+  }
+  function onProposalAuthModeChange(mode) {
+    if (mode === 'pin') proposalQrPayload = null;
+    updateProposalSubmitLabel();
+  }
+  function onVoteScanStateChange(scanning) {
+    document.querySelectorAll('#voteModal .vote-choice button').forEach(button => { button.disabled = scanning; });
+    document.getElementById('voteSubmitBtn').disabled = scanning;
+    if (scanning) document.getElementById('voteSubmitBtn').textContent = 'Przyłóż paszport do kamery…';
+    else updateVoteSubmitLabel();
+  }
+  function onProposalScanStateChange(scanning) {
+    document.querySelectorAll('#proposalModal input, #proposalModal textarea').forEach(field => {
+      if (!field.classList.contains('qr-auth-method')) field.disabled = scanning;
+    });
+    document.getElementById('proposalSubmitBtn').disabled = scanning;
+    if (scanning) document.getElementById('proposalSubmitBtn').textContent = 'Przyłóż paszport do kamery…';
+    else updateProposalSubmitLabel();
+  }
+  function onVoteQrScan(qrHash) {
+    const payload = voteQrPayload;
+    voteQrPayload = null;
+    if (payload) submitVote(payload, {qrHash});
+  }
+  function onProposalQrScan(qrHash) {
+    const payload = proposalQrPayload;
+    proposalQrPayload = null;
+    if (payload) submitProposal(payload, {qrHash});
+  }
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
   const VOTES_CACHE_MS = 30000;
@@ -891,6 +1020,11 @@
     document.getElementById('voteLogin').value = '';
     document.getElementById('votePin').value = '';
     voteAuth.reset();
+    document.querySelectorAll('#voteModal .qr-auth-method, #voteModal .vote-choice button, #voteModal input').forEach(button => { button.disabled = false; });
+    const voteSubmitBtn = document.getElementById('voteSubmitBtn');
+    voteSubmitBtn.disabled = false;
+    updateVoteSubmitLabel();
+    voteAuth.setDisabled(false);
     document.getElementById('voteBanner').className = 'modal-banner';
     openModal('voteModal');
   }
@@ -903,6 +1037,7 @@
         b.setAttribute('aria-pressed', String(b === btn));
       });
       btn.classList.add('selected');
+      updateVoteSubmitLabel();
     });
   });
 
@@ -915,48 +1050,90 @@
       invalid_qr: 'Nie udało się uwierzytelnić kodu QR z paszportu.',
       user_not_found: 'Nie udało się zweryfikować konta.',
       insufficient_rcr: 'Potrzebujesz co najmniej 1 RCR salda, aby wykonać tę czynność.',
-      proposal_limit: 'Masz już wniosek oczekujący lub aktywny.',
-      vote_pending: 'Masz już oczekujący głos na ten wniosek. Sprawdź pocztę i potwierdź go.',
+      proposal_limit: 'Masz już wniosek oczekujący lub aktywny. Jeśli składałeś go przed chwilą, sprawdź pocztę i folder spam.',
+      vote_pending: 'Głos na ten wniosek już oczekuje na potwierdzenie. Sprawdź pocztę i folder spam; nie wysyłaj go ponownie.',
+      email_unavailable: 'Nie możemy wysłać linku potwierdzającego, bo konto nie ma dostępnego adresu e-mail.',
       not_active: 'To głosowanie nie jest już aktywne.',
       ended: 'Czas na głosowanie już minął.',
       invalid_vote: 'Wybierz poprawny głos.',
-      mail_failed: 'Nie udało się wysłać wiadomości potwierdzającej. Spróbuj ponownie później.',
-      server_error: 'Wystąpił błąd. Spróbuj ponownie później.'
+      mail_failed: 'Nie udało się wysłać wiadomości potwierdzającej. Operacja nie została przyjęta; spróbuj ponownie później.',
+      outcome_unknown: 'Wynik jest nieznany. Operacja mogła zostać zapisana. Sprawdź pocztę i folder spam; nie wysyłaj ponownie.',
+      server_error: 'Nie udało się wysłać operacji. Nie została przyjęta; spróbuj ponownie.'
     };
     return Object.prototype.hasOwnProperty.call(messages, error) ? messages[error] : fallback;
   }
 
-  document.getElementById('voteSubmitBtn').addEventListener('click', async () => {
+  function isDefinitiveProposalError(error) {
+    return ['invalid_title', 'invalid_content', 'invalid_justification', 'wrong_pin', 'invalid_qr',
+      'account_locked', 'user_not_found', 'insufficient_rcr', 'proposal_limit', 'vote_pending',
+      'not_active', 'ended', 'invalid_vote', 'email_unavailable', 'mail_failed', 'server_error'].indexOf(error) !== -1;
+  }
+
+  async function submitVote(payload, credentials) {
     const banner = document.getElementById('voteBanner');
     banner.className = 'modal-banner';
-    if (!currentVoteChoice) { banner.textContent = 'Wybierz "za" albo "przeciw".'; banner.className = 'modal-banner show error'; return; }
-    const credentials = voteAuth.credentials();
-    if (!credentials || (credentials.pin !== undefined && (!credentials.login || !/^\d{6}$/.test(credentials.pin)))) { banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.'; banner.className = 'modal-banner show error'; return; }
     const btn = document.getElementById('voteSubmitBtn');
+    let unknownResult = false;
+    let completed = false;
     btn.disabled = true; btn.textContent = 'Wysyłanie…';
+    document.querySelectorAll('#voteModal .qr-auth-method, #voteModal .vote-choice button, #voteModal input').forEach(field => { field.disabled = true; });
     try{
       const res = await fetch(APP_CONFIG.webAppUrl, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify(Object.assign({ action:'castVote', wniosekId: currentDetailId, glos: currentVoteChoice }, credentials))
+        body: JSON.stringify(Object.assign({ action:'castVote', wniosekId: payload.wniosekId, glos: payload.glos }, credentials))
       });
+      if (!res.ok) throw new Error('Nieoczekiwany status odpowiedzi: ' + res.status);
       const data = await res.json();
       if (data.ok) {
-        banner.textContent = 'Głos zapisany — sprawdź maila, żeby go potwierdzić.';
+        completed = true;
+        voteAuth.reset();
+        banner.textContent = 'Głos został wysłany do potwierdzenia. Sprawdź pocztę i folder spam.';
         banner.className = 'modal-banner show ok';
       } else if (pinReset.isLocked(data)) {
         closeModals();
         pinReset.open(credentials.login);
+      } else if (!isDefinitiveProposalError(data.error)) {
+        unknownResult = true;
+        banner.textContent = proposalErrorMessage(data.error, 'Nie znamy wyniku wysłania. Głos mógł zostać zapisany. Sprawdź pocztę i folder spam; nie wysyłaj go ponownie.');
+        banner.className = 'modal-banner show error';
       } else {
         banner.textContent = proposalErrorMessage(data.error, 'Nie udało się oddać głosu. Spróbuj ponownie później.');
         banner.className = 'modal-banner show error';
+        if (data.error === 'invalid_qr') voteAuth.rescan();
+        if (data.error === 'vote_pending') unknownResult = true;
       }
     }catch(err){
-      banner.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+      console.error('Nie udało się ustalić wyniku wysłania głosu.', err);
+      unknownResult = true;
+      banner.textContent = 'Nie znamy wyniku wysłania. Głos mógł zostać zapisany i czekać na potwierdzenie. Sprawdź pocztę i folder spam; nie wysyłaj go ponownie.';
       banner.className = 'modal-banner show error';
     }finally{
-      voteAuth.reset();
-      btn.disabled = false; btn.textContent = 'Wyślij głos';
+      btn.disabled = unknownResult || completed;
+      if (unknownResult) btn.textContent = 'Sprawdź pocztę przed ponowieniem';
+      else if (completed) btn.textContent = 'Sprawdź e-mail';
+      else updateVoteSubmitLabel();
+      if (!unknownResult && !completed) {
+        document.querySelectorAll('#voteModal .qr-auth-method, #voteModal .vote-choice button, #voteModal input').forEach(field => { field.disabled = false; });
+      }
+      if (unknownResult || completed) {
+        document.querySelectorAll('#voteModal .qr-auth-method, #voteModal .vote-choice button, #voteModal input').forEach(button => { button.disabled = true; });
+      }
     }
+  }
+
+  document.getElementById('voteSubmitBtn').addEventListener('click', () => {
+    const banner = document.getElementById('voteBanner');
+    banner.className = 'modal-banner';
+    if (!currentVoteChoice) { banner.textContent = 'Wybierz "za" albo "przeciw".'; banner.className = 'modal-banner show error'; return; }
+    const payload = {wniosekId: currentDetailId, glos: currentVoteChoice};
+    if (voteAuth.isQrMode()) {
+      voteQrPayload = payload;
+      voteAuth.startScan();
+      return;
+    }
+    const credentials = voteAuth.credentials();
+    if (!credentials || !credentials.login || !/^\d{6}$/.test(credentials.pin)) { banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.'; banner.className = 'modal-banner show error'; return; }
+    submitVote(payload, credentials);
   });
 
   document.getElementById('newProposalBtn').addEventListener('click', () => {
@@ -966,45 +1143,87 @@
     document.getElementById('proposalLogin').value = '';
     document.getElementById('proposalPin').value = '';
     proposalAuth.reset();
+    const proposalSubmitBtn = document.getElementById('proposalSubmitBtn');
+    proposalSubmitBtn.disabled = false;
+    updateProposalSubmitLabel();
+    proposalAuth.setDisabled(false);
+    document.querySelectorAll('#proposalModal .qr-auth-method, #proposalModal input, #proposalModal textarea').forEach(field => { field.disabled = false; });
     document.getElementById('proposalBanner').className = 'modal-banner';
     openModal('proposalModal');
   });
+  document.getElementById('proposalTytul').addEventListener('input', updateProposalSubmitLabel);
 
-  document.getElementById('proposalSubmitBtn').addEventListener('click', async () => {
+  async function submitProposal(payload, credentials) {
     const banner = document.getElementById('proposalBanner');
     banner.className = 'modal-banner';
-    const tytul = document.getElementById('proposalTytul').value.trim();
-    const tresc = document.getElementById('proposalText').value.trim();
-    const uzasadnienie = document.getElementById('proposalJustification').value.trim();
-    if (tytul.length < 5) { banner.textContent = 'Tytuł jest za krótki.'; banner.className='modal-banner show error'; return; }
-    if (tresc.length < 10) { banner.textContent = 'Treść wniosku jest za krótka.'; banner.className='modal-banner show error'; return; }
-    if (uzasadnienie.length < 10) { banner.textContent = 'Uzasadnienie jest za krótkie.'; banner.className='modal-banner show error'; return; }
-    const credentials = proposalAuth.credentials();
-    if (!credentials || (credentials.pin !== undefined && (!credentials.login || !/^\d{6}$/.test(credentials.pin)))) { banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.'; banner.className='modal-banner show error'; return; }
     const btn = document.getElementById('proposalSubmitBtn');
+    let unknownResult = false;
+    let completed = false;
     btn.disabled = true; btn.textContent = 'Wysyłanie…';
+    document.querySelectorAll('#proposalModal .qr-auth-method, #proposalModal input, #proposalModal textarea').forEach(field => { field.disabled = true; });
     try{
       const res = await fetch(APP_CONFIG.webAppUrl, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify(Object.assign({ action:'submitProposal', tytul, tresc, uzasadnienie }, credentials))
+        body: JSON.stringify(Object.assign({ action:'submitProposal', tytul: payload.tytul, tresc: payload.tresc, uzasadnienie: payload.uzasadnienie }, credentials))
       });
+      if (!res.ok) throw new Error('Nieoczekiwany status odpowiedzi: ' + res.status);
       const data = await res.json();
       if (data.ok) {
-        closeModals();
+        completed = true;
+        proposalAuth.reset();
+        banner.textContent = 'Wniosek został wysłany do potwierdzenia. Sprawdź pocztę i folder spam.';
+        banner.className = 'modal-banner show ok';
       } else if (pinReset.isLocked(data)) {
         closeModals();
         pinReset.open(credentials.login);
+      } else if (!isDefinitiveProposalError(data.error)) {
+        unknownResult = true;
+        banner.textContent = proposalErrorMessage(data.error, 'Nie znamy wyniku wysłania. Wniosek mógł zostać zapisany. Sprawdź pocztę i folder spam; nie składaj go ponownie.');
+        banner.className = 'modal-banner show error';
       } else {
         banner.textContent = proposalErrorMessage(data.error, 'Nie udało się złożyć wniosku. Spróbuj ponownie później.');
         banner.className = 'modal-banner show error';
+        if (data.error === 'invalid_qr') proposalAuth.rescan();
+        if (data.error === 'proposal_limit') unknownResult = true;
       }
     }catch(err){
-      banner.textContent = 'Błąd połączenia. Spróbuj ponownie.';
+      console.error('Nie udało się ustalić wyniku złożenia wniosku.', err);
+      unknownResult = true;
+      banner.textContent = 'Nie znamy wyniku wysłania. Wniosek mógł zostać zapisany i czekać na potwierdzenie. Sprawdź pocztę i folder spam; nie składaj go ponownie.';
       banner.className = 'modal-banner show error';
     }finally{
-      proposalAuth.reset();
-      btn.disabled = false; btn.textContent = 'Złóż wniosek';
+      btn.disabled = unknownResult || completed;
+      if (unknownResult) btn.textContent = 'Sprawdź pocztę przed ponowieniem';
+      else if (completed) btn.textContent = 'Sprawdź e-mail';
+      else updateProposalSubmitLabel();
+      if (!unknownResult && !completed) {
+        document.querySelectorAll('#proposalModal .qr-auth-method, #proposalModal input, #proposalModal textarea').forEach(field => { field.disabled = false; });
+      }
+      if (unknownResult || completed) {
+        document.querySelectorAll('#proposalModal .qr-auth-method, #proposalModal input, #proposalModal textarea').forEach(field => { field.disabled = true; });
+      }
     }
+  }
+
+  document.getElementById('proposalSubmitBtn').addEventListener('click', () => {
+    const banner = document.getElementById('proposalBanner');
+    banner.className = 'modal-banner';
+    const payload = {
+      tytul: document.getElementById('proposalTytul').value.trim(),
+      tresc: document.getElementById('proposalText').value.trim(),
+      uzasadnienie: document.getElementById('proposalJustification').value.trim()
+    };
+    if (payload.tytul.length < 5) { banner.textContent = 'Tytuł jest za krótki.'; banner.className='modal-banner show error'; return; }
+    if (payload.tresc.length < 10) { banner.textContent = 'Treść wniosku jest za krótka.'; banner.className='modal-banner show error'; return; }
+    if (payload.uzasadnienie.length < 10) { banner.textContent = 'Uzasadnienie jest za krótkie.'; banner.className='modal-banner show error'; return; }
+    if (proposalAuth.isQrMode()) {
+      proposalQrPayload = payload;
+      proposalAuth.startScan();
+      return;
+    }
+    const credentials = proposalAuth.credentials();
+    if (!credentials || !credentials.login || !/^\d{6}$/.test(credentials.pin)) { banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.'; banner.className='modal-banner show error'; return; }
+    submitProposal(payload, credentials);
   });
 
   let dialogFocusRelease = null;
@@ -1056,6 +1275,6 @@
   loadProposals(true);
   setInterval(() => loadProposals(false), REFRESH_MS);
 </script>
-<script src="js/i18n.js?v=20261022-2"></script>
+<script src="js/i18n.js?v=20261022-8"></script>
 </body>
 </html>
