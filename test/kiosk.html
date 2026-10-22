@@ -420,12 +420,13 @@
       </div>
     </div>
 
+    <div id="rewardAuth"></div>
     <div class="row">
-      <div>
+      <div id="rewardLoginField">
         <label for="login">Login</label>
         <input id="login" class="auth-input" autocomplete="username">
       </div>
-      <div>
+      <div id="rewardPinField">
         <label for="pin">PIN</label>
         <input id="pin" class="auth-input" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password">
       </div>
@@ -448,6 +449,8 @@
 <script src="js/feedback.js?v=20260930-2"></script>
 <script src="js/shared.js?v=20261001-1"></script>
 <script src="js/pin-reset.js?v=20260930-1"></script>
+<script src="js/vendor/jsQR-1.4.0.js"></script>
+<script src="js/qr-auth.js?v=20261022-1"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
@@ -462,6 +465,7 @@
   let statusDialogRelease = null;
   const loginInput = document.getElementById('login');
   const pinInput = document.getElementById('pin');
+  const rewardAuth = window.KBKQrAuth.create({mountId:'rewardAuth',pinFieldIds:['rewardLoginField','rewardPinField'],loginInputId:'login',pinInputId:'pin'});
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
   let productCache = null;
   let productCacheTs = 0;
@@ -496,6 +500,7 @@
     var messages = {
       invalid_request: 'Sprawdź login, PIN i wybrane produkty.',
       wrong_pin: 'Nieprawidłowy login lub PIN.',
+      invalid_qr: 'Nie udało się uwierzytelnić kodu QR z paszportu.',
       user_not_found: 'Nie udało się zweryfikować konta.',
       invalid_total: 'Nie udało się obliczyć wartości zamówienia.',
       insufficient_funds: 'Brak wystarczającego salda dla tego zamówienia.',
@@ -524,7 +529,7 @@
     if (event.target === statusModal) closeStatusModal();
   });
   function resetOrderForm() {
-    loginInput.value = ''; pinInput.value = '';
+    rewardAuth.reset();
     productsEl.querySelectorAll('.qty-value').forEach(function (f) { f.value = '0'; });
   }
   function escapeHtml(value) {
@@ -606,30 +611,29 @@
     var items = Array.from(productsEl.querySelectorAll('.qty-value'))
       .map(function (input) { return { name: input.dataset.name, quantity: Number(input.value) }; })
       .filter(function (item) { return item.quantity > 0; });
-    var login = loginInput.value.trim().toLowerCase();
-    var pin = pinInput.value.trim();
-    if (!login || !/^\d{6}$/.test(pin) || items.length === 0) {
-      pinInput.value = '';
-      showMessage('Podaj login, 6-cyfrowy PIN i wybierz produkt.', 'error');
+    var credentials = rewardAuth.credentials();
+    if (!credentials || (credentials.pin !== undefined && (!credentials.login || !/^\d{6}$/.test(credentials.pin))) || items.length === 0) {
+      showMessage('Wybierz metodę uwierzytelnienia, podaj wymagane dane i wybierz produkt.', 'error');
       return;
     }
     var submitBtn = document.getElementById('submit');
     submitBtn.disabled = true; submitBtn.textContent = 'Przetwarzanie…';
+    window.KBKQrAuth.stopAll();
     showProcessingStatus('Wysyłanie zamówienia…');
     fetch(APP_CONFIG.webAppUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'claimRewards', login: login, pin: pin, items: items, currency: selectedCurrency })
+      body: JSON.stringify(Object.assign({ action: 'claimRewards', items: items, currency: selectedCurrency }, credentials))
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        pinInput.value = '';
+        rewardAuth.reset();
         if (data && data.ok) resetOrderForm();
         showProcessingStatus('');
-        if (pinReset.isLocked(data)) pinReset.open(login);
+        if (pinReset.isLocked(data) && credentials.login) pinReset.open(credentials.login);
         else showMessage(data && data.ok ? 'Zamówienie przekazano do zatwierdzenia.' : claimErrorMessage(data && data.error), data && data.ok ? 'ok' : 'error');
       })
-      .catch(function () { pinInput.value = ''; showProcessingStatus(''); showMessage('Nie udało się połączyć z backendem.', 'error'); })
+      .catch(function () { rewardAuth.reset(); showProcessingStatus(''); showMessage('Nie udało się połączyć z backendem.', 'error'); })
       .finally(function () { submitBtn.disabled = false; submitBtn.textContent = 'Wyślij zamówienie'; });
   });
   updateCurrencyButtons();
@@ -637,6 +641,6 @@
     productsEl.innerHTML = '<div class="product"><span class="product-name">Nie udało się wczytać produktów.</span></div>';
   });
 </script>
-<script src="js/i18n.js?v=20261022-1"></script>
+<script src="js/i18n.js?v=20261022-2"></script>
 </body>
 </html>

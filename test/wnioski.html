@@ -537,10 +537,13 @@
     <button type="button" class="za" data-choice="za" aria-pressed="false">Za</button>
     <button type="button" class="przeciw" data-choice="przeciw" aria-pressed="false">Przeciw</button>
   </div>
+  <div id="voteAuth"></div>
+  <div id="votePinFields">
   <label for="voteLogin">Login</label>
   <input type="text" id="voteLogin" autocomplete="off" style="text-transform:lowercase;">
   <label for="votePin">PIN</label>
   <input type="password" id="votePin" maxlength="6" inputmode="numeric">
+  </div>
   <div class="modal-banner" id="voteBanner"></div>
   <div class="modal-actions">
     <button class="cancel" data-close>Anuluj</button>
@@ -557,10 +560,13 @@
   <textarea id="proposalText" placeholder="Co dokładnie proponujesz?"></textarea>
   <label for="proposalJustification">Uzasadnienie</label>
   <textarea id="proposalJustification" placeholder="Dlaczego to warto zrobić?"></textarea>
+  <div id="proposalAuth"></div>
+  <div id="proposalPinFields">
   <label for="proposalLogin">Login</label>
   <input type="text" id="proposalLogin" autocomplete="off" style="text-transform:lowercase;">
   <label for="proposalPin">PIN</label>
   <input type="password" id="proposalPin" maxlength="6" inputmode="numeric">
+  </div>
   <div class="modal-banner" id="proposalBanner"></div>
   <div class="modal-actions">
     <button class="cancel" data-close>Anuluj</button>
@@ -572,9 +578,13 @@
 <script src="js/feedback.js?v=20260930-2"></script>
 <script src="js/shared.js?v=20261001-1"></script>
 <script src="js/pin-reset.js?v=20260930-1"></script>
+<script src="js/vendor/jsQR-1.4.0.js"></script>
+<script src="js/qr-auth.js?v=20261022-1"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
+  const voteAuth = window.KBKQrAuth.create({mountId:'voteAuth',pinFieldIds:['votePinFields'],loginInputId:'voteLogin',pinInputId:'votePin'});
+  const proposalAuth = window.KBKQrAuth.create({mountId:'proposalAuth',pinFieldIds:['proposalPinFields'],loginInputId:'proposalLogin',pinInputId:'proposalPin'});
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
   const safeText = shared.safeText;
@@ -880,6 +890,7 @@
     });
     document.getElementById('voteLogin').value = '';
     document.getElementById('votePin').value = '';
+    voteAuth.reset();
     document.getElementById('voteBanner').className = 'modal-banner';
     openModal('voteModal');
   }
@@ -901,6 +912,7 @@
       invalid_content: 'Treść wniosku jest za krótka.',
       invalid_justification: 'Uzasadnienie jest za krótkie.',
       wrong_pin: 'Nieprawidłowy login lub PIN.',
+      invalid_qr: 'Nie udało się uwierzytelnić kodu QR z paszportu.',
       user_not_found: 'Nie udało się zweryfikować konta.',
       insufficient_rcr: 'Potrzebujesz co najmniej 1 RCR salda, aby wykonać tę czynność.',
       proposal_limit: 'Masz już wniosek oczekujący lub aktywny.',
@@ -918,15 +930,14 @@
     const banner = document.getElementById('voteBanner');
     banner.className = 'modal-banner';
     if (!currentVoteChoice) { banner.textContent = 'Wybierz "za" albo "przeciw".'; banner.className = 'modal-banner show error'; return; }
-    const login = document.getElementById('voteLogin').value.trim().toLowerCase();
-    const pin = document.getElementById('votePin').value.trim();
-    if (!login || !/^\d{6}$/.test(pin)) { banner.textContent = 'Podaj login i 6-cyfrowy PIN.'; banner.className = 'modal-banner show error'; return; }
+    const credentials = voteAuth.credentials();
+    if (!credentials || (credentials.pin !== undefined && (!credentials.login || !/^\d{6}$/.test(credentials.pin)))) { banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.'; banner.className = 'modal-banner show error'; return; }
     const btn = document.getElementById('voteSubmitBtn');
     btn.disabled = true; btn.textContent = 'Wysyłanie…';
     try{
       const res = await fetch(APP_CONFIG.webAppUrl, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ action:'castVote', login, pin, wniosekId: currentDetailId, glos: currentVoteChoice })
+        body: JSON.stringify(Object.assign({ action:'castVote', wniosekId: currentDetailId, glos: currentVoteChoice }, credentials))
       });
       const data = await res.json();
       if (data.ok) {
@@ -934,7 +945,7 @@
         banner.className = 'modal-banner show ok';
       } else if (pinReset.isLocked(data)) {
         closeModals();
-        pinReset.open(login);
+        pinReset.open(credentials.login);
       } else {
         banner.textContent = proposalErrorMessage(data.error, 'Nie udało się oddać głosu. Spróbuj ponownie później.');
         banner.className = 'modal-banner show error';
@@ -943,6 +954,7 @@
       banner.textContent = 'Błąd połączenia. Spróbuj ponownie.';
       banner.className = 'modal-banner show error';
     }finally{
+      voteAuth.reset();
       btn.disabled = false; btn.textContent = 'Wyślij głos';
     }
   });
@@ -953,6 +965,7 @@
     document.getElementById('proposalJustification').value = '';
     document.getElementById('proposalLogin').value = '';
     document.getElementById('proposalPin').value = '';
+    proposalAuth.reset();
     document.getElementById('proposalBanner').className = 'modal-banner';
     openModal('proposalModal');
   });
@@ -963,25 +976,24 @@
     const tytul = document.getElementById('proposalTytul').value.trim();
     const tresc = document.getElementById('proposalText').value.trim();
     const uzasadnienie = document.getElementById('proposalJustification').value.trim();
-    const login = document.getElementById('proposalLogin').value.trim().toLowerCase();
-    const pin = document.getElementById('proposalPin').value.trim();
     if (tytul.length < 5) { banner.textContent = 'Tytuł jest za krótki.'; banner.className='modal-banner show error'; return; }
     if (tresc.length < 10) { banner.textContent = 'Treść wniosku jest za krótka.'; banner.className='modal-banner show error'; return; }
     if (uzasadnienie.length < 10) { banner.textContent = 'Uzasadnienie jest za krótkie.'; banner.className='modal-banner show error'; return; }
-    if (!login || !/^\d{6}$/.test(pin)) { banner.textContent = 'Podaj login i 6-cyfrowy PIN.'; banner.className='modal-banner show error'; return; }
+    const credentials = proposalAuth.credentials();
+    if (!credentials || (credentials.pin !== undefined && (!credentials.login || !/^\d{6}$/.test(credentials.pin)))) { banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.'; banner.className='modal-banner show error'; return; }
     const btn = document.getElementById('proposalSubmitBtn');
     btn.disabled = true; btn.textContent = 'Wysyłanie…';
     try{
       const res = await fetch(APP_CONFIG.webAppUrl, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ action:'submitProposal', login, pin, tytul, tresc, uzasadnienie })
+        body: JSON.stringify(Object.assign({ action:'submitProposal', tytul, tresc, uzasadnienie }, credentials))
       });
       const data = await res.json();
       if (data.ok) {
         closeModals();
       } else if (pinReset.isLocked(data)) {
         closeModals();
-        pinReset.open(login);
+        pinReset.open(credentials.login);
       } else {
         banner.textContent = proposalErrorMessage(data.error, 'Nie udało się złożyć wniosku. Spróbuj ponownie później.');
         banner.className = 'modal-banner show error';
@@ -990,6 +1002,7 @@
       banner.textContent = 'Błąd połączenia. Spróbuj ponownie.';
       banner.className = 'modal-banner show error';
     }finally{
+      proposalAuth.reset();
       btn.disabled = false; btn.textContent = 'Złóż wniosek';
     }
   });
@@ -1022,6 +1035,7 @@
     });
   }
   function closeModals(){
+    window.KBKQrAuth.resetAll();
     document.getElementById('scrim').classList.remove('open');
     document.querySelectorAll('.modal').forEach(m => {
       m.classList.remove('open');
@@ -1042,6 +1056,6 @@
   loadProposals(true);
   setInterval(() => loadProposals(false), REFRESH_MS);
 </script>
-<script src="js/i18n.js?v=20261022-1"></script>
+<script src="js/i18n.js?v=20261022-2"></script>
 </body>
 </html>

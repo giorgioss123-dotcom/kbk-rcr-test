@@ -36,7 +36,12 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 - dane `CENNIK`, `WNIOSKI` i `TRANSAKCJE` są widoczne tylko w zakresie przewidzianym dla użytkownika;
 - działają widoki mobilne oraz linki do `confirm.html`;
 - formularz rejestracji zapisuje telefon i wymaga zgody RODO z działającym linkiem do polityki prywatności;
+- wnioski, głosowanie i ryneczek pozwalają wybrać logowanie PIN-em albo skanowanie QR paszportu kamerą (wymagane HTTPS i zgoda na kamerę);
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
+
+Kod QR paszportu jest samodzielnym sekretem uwierzytelniającym do tych operacji. Każda osoba
+posiadająca jego kopię może działać jako właściciel; nie należy udostępniać ani fotografować kodu.
+Dekoder `jsQR` jest dołączony lokalnie w `js/vendor/`, a obraz z kamery jest przetwarzany w przeglądarce.
 
 ## 5. Opublikuj
 
