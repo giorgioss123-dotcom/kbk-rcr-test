@@ -121,6 +121,7 @@
   }
     .checkbox-row.required { margin-top: 18px; }
     .checkbox-row.required label a { color: var(--teal-deep); text-decoration: underline; }
+    .required-marker { color: var(--neg); font-size: 1.15em; font-weight: 700; }
 
   /* NAV */
   .nav {
@@ -417,7 +418,7 @@
 
     <form id="migrationForm" class="hidden">
       <label for="migrationLogin">Nazwa użytkownika</label>
-      <input type="text" id="migrationLogin" required autocomplete="off">
+      <input type="text" id="migrationLogin" list="loginSuggestions" required autocomplete="off">
       <label for="migrationEmail">E-mail</label>
       <input type="email" id="migrationEmail" required>
       <p class="hint">Podaj nam swoją nazwę użytkownika i email, żebyśmy mogli zweryfikować Twoją tożsamość</p>
@@ -429,7 +430,7 @@
       <input type="text" name="website" class="honeypot" tabindex="-1" autocomplete="off">
 
       <label for="login">Login</label>
-      <input type="text" id="login" required autocomplete="off">
+      <input type="text" id="login" list="loginSuggestions" required autocomplete="off">
       <div class="hint" id="loginHint"></div>
       <button type="button" class="secondary-btn availability-btn" id="checkLoginBtn">Sprawdź dostępność</button>
 
@@ -452,7 +453,7 @@
         <div class="checkbox-row required">
           <input type="checkbox" id="zgodaRODO" required>
           <label for="zgodaRODO">
-            <strong>Wymagane:</strong> Wyrażam zgodę na przetwarzanie moich danych osobowych (imię, nazwisko, e-mail, adres, telefon) oraz kontakt w sprawach związanych z byciem członkiem społeczności Królestwa Bez Kresu.
+            <span class="required-marker" aria-hidden="true">*</span> <strong>Wymagane:</strong> Wyrażam zgodę na przetwarzanie moich danych osobowych (imię, nazwisko, e-mail, adres, telefon) oraz kontakt w sprawach związanych z byciem członkiem społeczności Królestwa Bez Kresu.
             <a href="resources/polityka-prywatnosci.pdf" target="_blank" rel="noopener">Polityka prywatności</a>
           </label>
         </div>
@@ -495,6 +496,8 @@
     </div>
   </div>
 </div>
+
+<datalist id="loginSuggestions"></datalist>
 
 <script src="public-config.js?v=20261001-3"></script>
 <script src="js/feedback.js?v=20261001-3"></script>
@@ -554,7 +557,9 @@
   })();
 
   const loginInput = document.getElementById('login');
+  const migrationLoginInput = document.getElementById('migrationLogin');
   const loginHint = document.getElementById('loginHint');
+  const loginSuggestions = document.getElementById('loginSuggestions');
   const pinInput = document.getElementById('pin');
   const pinRepeatInput = document.getElementById('pinRepeat');
   const pinHint = document.getElementById('pinHint');
@@ -620,6 +625,27 @@
       });
   });
 
+  function populateLoginSuggestions(logins) {
+    if (!loginSuggestions) return;
+    loginSuggestions.innerHTML = '';
+    (logins || []).forEach(function (login) {
+      var option = document.createElement('option');
+      option.value = login;
+      loginSuggestions.appendChild(option);
+    });
+  }
+
+  function loadLoginSuggestions() {
+    fetch(APP_CONFIG.webAppUrl + '?action=listLogins')
+      .then(function (response) { return response.json(); })
+      .then(function (result) {
+        if (result && result.ok) populateLoginSuggestions(result.logins || []);
+      })
+      .catch(function () {
+        populateLoginSuggestions([]);
+      });
+  }
+
   function updateConsentState() {
     const hasAddress = addressInput.value.trim().length > 0;
     const hasPhone = phoneInput.value.trim().length > 0;
@@ -642,6 +668,7 @@
   addressInput.addEventListener('input', updateConsentState);
   phoneInput.addEventListener('input', updateConsentState);
   updateConsentState();
+  loadLoginSuggestions();
 
   loginInput.addEventListener('input', function () {
     const cursorPos = loginInput.selectionStart;
@@ -785,5 +812,6 @@
     });
   });
 </script>
+<script src="js/i18n.js?v=20261022-1"></script>
 </body>
 </html>

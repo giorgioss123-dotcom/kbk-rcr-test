@@ -547,7 +547,7 @@
     productsEl.innerHTML = products.map(function (product, index) {
       var qty = currentQuantities[index] || 0;
       var displayCost = Number(product.cost);
-      return '<div class="product"><span class="product-name">' + escapeHtml(product.name) + ' · <span class="product-cost">' + displayCost + ' RCR</span></span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
+      return '<div class="product"><span class="product-name"><span class="catalogue-product-title">' + escapeHtml(product.name) + '</span> · <span class="product-cost">' + displayCost + ' RCR</span></span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
     }).join('');
   }
   function loadProducts(forceReload) {
@@ -637,5 +637,6 @@
     productsEl.innerHTML = '<div class="product"><span class="product-name">Nie udało się wczytać produktów.</span></div>';
   });
 </script>
+<script src="js/i18n.js?v=20261022-1"></script>
 </body>
 </html>

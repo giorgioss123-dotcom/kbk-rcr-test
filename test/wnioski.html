@@ -623,10 +623,13 @@
   function getTransakcjeSheetId() {
     return Promise.resolve(PUBLIC_SHEET_IDS.transakcjeFileId);
   }
+  function displayLocale() {
+    return new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en-GB' : 'pl-PL';
+  }
 
   function fmtDate(iso){
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('pl-PL');
+    return new Date(iso).toLocaleDateString(displayLocale());
   }
   function formatRemainingTime(endIso){
     if (!endIso) return '—';
@@ -686,7 +689,7 @@
     const now = Date.now();
     if (!forceReload && proposalsCache && (now - proposalsCacheTs) < PROPOSALS_CACHE_MS) {
       proposals = proposalsCache; render();
-      document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
+      document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString(displayLocale());
       return;
     }
     document.getElementById('syncLabel').textContent = 'wczytywanie…';
@@ -742,7 +745,7 @@
       proposals = rows;
       proposalsCache = proposals; proposalsCacheTs = Date.now();
       render();
-      document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString('pl-PL');
+      document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString(displayLocale());
     }catch(err){
       console.error(err);
       proposals = [];
@@ -1039,5 +1042,6 @@
   loadProposals(true);
   setInterval(() => loadProposals(false), REFRESH_MS);
 </script>
+<script src="js/i18n.js?v=20261022-1"></script>
 </body>
 </html>

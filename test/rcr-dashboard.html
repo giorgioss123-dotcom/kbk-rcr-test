@@ -152,6 +152,29 @@
   }
   .toggle-row input { accent-color: var(--white); }
 
+  .currency-block { margin-bottom: 20px; }
+  .currency-row {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .currency-label {
+    color: var(--muted); font-size: 0.84rem; font-weight: 600;
+  }
+  .currency-segment {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px; border: 1px solid var(--line-2);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .currency-option {
+    appearance: none; border: 0; background: transparent;
+    color: var(--muted); padding: 9px 14px;
+    font-family: 'Archivo', sans-serif; font-size: 0.78rem; font-weight: 700;
+    cursor: pointer; transition: background 0.18s ease, color 0.18s ease;
+    white-space: nowrap;
+  }
+  .currency-option:hover:not(.active) { background: rgba(255, 255, 255, 0.08); }
+  .currency-option.active { background: var(--white); color: var(--teal-deep); }
+  .currency-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
   .sync {
     display: flex; align-items: center; gap: 10px;
     color: var(--muted-dim); font-size: 0.72rem;
@@ -175,6 +198,8 @@
     background: transparent;
     transition: background 0.12s ease;
   }
+  .list.transfer-mode .row { grid-template-columns: 44px 1fr 140px; }
+  .list.transfer-mode .pct { display: none; }
   .row:hover { background: rgba(255, 255, 255, 0.05); }
   .row:focus-visible { outline: 2px solid var(--white); outline-offset: -2px; }
 
@@ -528,13 +553,23 @@
   <header>
     <div class="title-block">
       <h1>RCR — bilans</h1>
-      <p>Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.</p>
+      <p id="dashboardSubtitle">Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.</p>
     </div>
     <div class="stat">
       <div class="num" id="totalRcr">—</div>
       <div class="lbl" id="totalUsers">wczytywanie…</div>
     </div>
   </header>
+
+  <div class="currency-block">
+    <div class="currency-row">
+      <span class="currency-label">Chcę widzieć rycary:</span>
+      <div class="currency-segment" role="tablist" aria-label="Wybór rodzaju rycarów">
+        <button type="button" class="currency-option active" data-currency="RCR" role="tab" aria-selected="true">depozytowe (RCR)</button>
+        <button type="button" class="currency-option" data-currency="RCRT" role="tab" aria-selected="false">transferowe (RCRT)</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toolbar">
     <input class="search" id="searchInput" type="text" placeholder="Szukaj po loginie…" autocomplete="off">
@@ -560,8 +595,8 @@
     <div class="eyebrow" id="drawerEyebrow">transakcje</div>
     <h2 id="drawerLogin">—</h2>
     <div class="summary">
-      <div><span>saldo RCR</span><strong id="drawerBalance">—</strong></div>
-      <div><span>siła głosu</span><strong id="drawerPower">—</strong></div>
+      <div><span id="drawerBalanceLabel">saldo RCR</span><strong id="drawerBalance">—</strong></div>
+      <div id="drawerPowerSummary"><span>siła głosu</span><strong id="drawerPower">—</strong></div>
       <div><span>liczba transakcji</span><strong id="drawerCount">—</strong></div>
     </div>
   </div>
@@ -582,16 +617,16 @@
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const SHEET_ID = PUBLIC_SHEET_IDS.transakcjeFileId;
   const ARCHIVE_SHEET_ID = PUBLIC_SHEET_IDS.transakcjeArchiveFileId;
-  const ARCHIVE_SHEET_NAME = 'RCR';
   const REFRESH_MS = 5 * 60 * 1000;
   const JSONP_TIMEOUT_MS = 15000;
 
   let saldaRows = [];
-  let rcrRows = [];
-  let archiveRows = [];
-  let archiveLoaded = false;
+  let transactionRows = { RCR: [], RCRT: [] };
+  let archiveRows = { RCR: [], RCRT: [] };
+  let archiveLoaded = { RCR: false, RCRT: true };
   let refreshTimer = null;
   let showInactive = false;
+  let selectedCurrency = 'RCR';
 
   function parseNum(v){
     if (v === undefined || v === null) return 0;
@@ -634,35 +669,37 @@
     return isNaN(t) ? 0 : t;
   }
 
-  async function loadArchiveOnce(){
+  async function loadArchiveOnce(currency){
     try{
-      const table = await loadSheetJSONP(ARCHIVE_SHEET_ID, ARCHIVE_SHEET_NAME);
+      const table = await loadSheetJSONP(ARCHIVE_SHEET_ID, currency);
       const objs = tableToObjects(table);
-      archiveRows = objs
+      archiveRows[currency] = objs
         .map(o => ({
           login: strFromCell(o['Login']).trim(),
-          rcr: numFromCell(o['RCR']),
+          rcr: numFromCell(o[currency]),
           tytul: strFromCell(o['Tytuł']) || strFromCell(o['Opis']) || '(bez tytułu)',
           data: strFromCell(o['Data']),
           source: 'archiwum'
         }))
         .filter(r => r.login !== '');
     }catch(err){
-      console.error('Nie udało się wczytać archiwum:', err);
-      archiveRows = [];
+      console.error('Nie udało się wczytać archiwum ' + currency + ':', err);
+      archiveRows[currency] = [];
     }
-    archiveLoaded = true;
+    archiveLoaded[currency] = true;
   }
 
   async function loadAll(isManual){
     setSyncState('loading', isManual ? 'odświeżanie…' : 'wczytywanie…');
     try{
-      const [saldaTable, rcrTable] = await Promise.all([
+      const [saldaTable, rcrTable, rcrtTable] = await Promise.all([
         loadSheetJSONP(SHEET_ID, 'SALDA', isManual),
-        loadSheetJSONP(SHEET_ID, 'RCR', isManual)
+        loadSheetJSONP(SHEET_ID, 'RCR', isManual),
+        loadSheetJSONP(SHEET_ID, 'RCRT', isManual)
       ]);
       const saldaObjs = tableToObjects(saldaTable);
       const rcrObjs = tableToObjects(rcrTable);
+      const rcrtObjs = tableToObjects(rcrtTable);
 
       saldaRows = saldaObjs
         .map(o => {
@@ -676,13 +713,22 @@
             aktywny: active
           };
         })
-        .filter(r => r.login !== '')
-        .sort((a,b) => b.rcr - a.rcr);
+        .filter(r => r.login !== '');
 
-      rcrRows = rcrObjs
+      transactionRows.RCR = rcrObjs
         .map(o => ({
           login: strFromCell(o['Login']).trim(),
           rcr: numFromCell(o['RCR']),
+          tytul: strFromCell(o['Tytuł']) || '(bez tytułu)',
+          operacja: strFromCell(o['Operacja']),
+          data: strFromCell(o['Data']),
+          source: 'bieżące'
+        }))
+        .filter(r => r.login !== '');
+      transactionRows.RCRT = rcrtObjs
+        .map(o => ({
+          login: strFromCell(o['Login']).trim(),
+          rcr: numFromCell(o['RCRT']),
           tytul: strFromCell(o['Tytuł']) || '(bez tytułu)',
           operacja: strFromCell(o['Operacja']),
           data: strFromCell(o['Data']),
@@ -734,22 +780,27 @@
 
   function renderList(filter){
     const q = (filter || document.getElementById('searchInput').value || '').toLowerCase().trim();
-    const rows = saldaRows.filter(r => (showInactive || r.aktywny) && r.login.toLowerCase().includes(q));
-    const total = rows.reduce((s, r) => s + r.rcr, 0);
+    const balanceKey = selectedCurrency.toLowerCase();
+    const rows = saldaRows
+      .filter(r => (showInactive || r.aktywny) && r.login.toLowerCase().includes(q))
+      .sort((a, b) => b[balanceKey] - a[balanceKey]);
+    const total = rows.reduce((s, r) => s + r[balanceKey], 0);
     const label = showInactive ? 'uczestników' : 'aktywnych';
 
-    document.getElementById('totalRcr').textContent = Math.round(total).toLocaleString('pl-PL');
+    document.getElementById('totalRcr').textContent = Math.round(total).toLocaleString('pl-PL') + ' ' + selectedCurrency;
     document.getElementById('totalUsers').textContent = rows.length + ' ' + label;
 
-    const maxRcr = rows.length ? Math.max(...rows.map(r => r.rcr), 1) : 1;
     const container = document.getElementById('listContainer');
+    container.classList.toggle('transfer-mode', selectedCurrency === 'RCRT');
     if(rows.length === 0){
       container.innerHTML = '<div class="empty">Brak wyników dla podanego loginu.</div>';
       return;
     }
+    const maxBalance = Math.max(...rows.map(r => r[balanceKey]), 1);
 
     container.innerHTML = rows.map((r, i) => {
-      const width = maxRcr > 0 ? Math.max(2, (r.rcr / maxRcr) * 100) : 0;
+      const balance = r[balanceKey];
+      const width = maxBalance > 0 ? Math.max(2, (balance / maxBalance) * 100) : 0;
       const displayPct = showInactive ? (r.pctTotal || 0) : (r.aktywny ? (r.pctActive || 0) : (r.pctTotal || 0));
       const stateTag = r.aktywny ? '' : '<span class="state-tag inactive">nieaktywny</span>';
       return `
@@ -762,8 +813,8 @@
           </div>
           <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
         </div>
-        <div class="rcr">${Math.round(r.rcr).toLocaleString('pl-PL')} RCR</div>
-        <div class="pct">${(displayPct || 0).toFixed(2)}%</div>
+        <div class="rcr">${Math.round(balance).toLocaleString('pl-PL')} ${selectedCurrency}</div>
+        <div class="pct">${selectedCurrency === 'RCR' ? (displayPct || 0).toFixed(2) + '%' : ''}</div>
       </div>`;
     }).join('');
 
@@ -906,8 +957,9 @@
   }
 
   function openDrawer(login){
+    const currency = selectedCurrency;
     const user = saldaRows.find(r => r.login === login);
-    const txs = [...rcrRows, ...archiveRows]
+    const txs = [...transactionRows[currency], ...archiveRows[currency]]
       .filter(r => r.login === login)
       .sort((a, b) => parseDateSort(b.data) - parseDateSort(a.data));
     const txsAsc = [...txs].reverse();
@@ -917,7 +969,9 @@
       : 0;
 
     document.getElementById('drawerLogin').textContent = login;
-    document.getElementById('drawerBalance').textContent = user ? Math.round(user.rcr).toLocaleString('pl-PL') : '—';
+    document.getElementById('drawerBalanceLabel').textContent = 'saldo ' + currency;
+    document.getElementById('drawerBalance').textContent = user ? Math.round(user[currency.toLowerCase()]).toLocaleString('pl-PL') : '—';
+    document.getElementById('drawerPowerSummary').hidden = currency === 'RCRT';
     document.getElementById('drawerPower').textContent = user ? drawerPct.toFixed(2) + '%' : '—';
     document.getElementById('drawerCount').textContent = txs.length;
     document.getElementById('drawerEyebrow').textContent = 'transakcje';
@@ -927,7 +981,7 @@
 
     if (txs.length === 0){
       chartCatArea.innerHTML = '';
-      txListArea.innerHTML = archiveLoaded
+      txListArea.innerHTML = archiveLoaded[currency]
         ? '<div class="tx-empty">Brak zarejestrowanych transakcji.</div>'
         : '<div class="tx-empty">Wczytywanie transakcji archiwalnych…</div>';
     } else {
@@ -960,7 +1014,7 @@
         <div class="tx">
           <div class="tx-top">
             <div class="tx-title">${escapeHtml(t.tytul)}</div>
-            <div class="tx-amount ${pos ? 'pos' : 'neg'}">${pos ? '+' : ''}${Math.round(t.rcr).toLocaleString('pl-PL')}</div>
+            <div class="tx-amount ${pos ? 'pos' : 'neg'}">${pos ? '+' : ''}${Math.round(t.rcr).toLocaleString('pl-PL')} ${currency}</div>
           </div>
           <div class="tx-meta">
             <span>${escapeHtml(t.data)}</span>
@@ -989,10 +1043,30 @@
     showInactive = this.checked;
     renderList();
   });
+  document.querySelectorAll('.currency-option').forEach(button => {
+    button.addEventListener('click', () => {
+      selectedCurrency = button.dataset.currency;
+      document.querySelectorAll('.currency-option').forEach(option => {
+        const active = option === button;
+        option.classList.toggle('active', active);
+        option.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      document.querySelector('.title-block h1').textContent = selectedCurrency + ' — bilans';
+      document.title = selectedCurrency + ' — bilans społeczności · KBK';
+      document.getElementById('dashboardSubtitle').textContent = selectedCurrency === 'RCR'
+        ? 'Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.'
+        : 'Ranking posiadaczy RCRT. Kliknij w osobę, żeby zobaczyć jej transakcje.';
+      renderList();
+      if (document.getElementById('drawer').classList.contains('open')) {
+        openDrawer(document.getElementById('drawerLogin').textContent);
+      }
+    });
+  });
 
-  loadArchiveOnce();
+  loadArchiveOnce('RCR');
   loadAll(false);
   refreshTimer = setInterval(() => loadAll(false), REFRESH_MS);
 </script>
+<script src="js/i18n.js?v=20261022-1"></script>
 </body>
 </html>

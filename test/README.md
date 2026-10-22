@@ -23,7 +23,13 @@ Następnie otwórz `http://localhost:8000/frontend/`.
 
 Nie otwieraj stron przez `file://`, ponieważ przeglądarka może zablokować żądania JSONP i zasoby zależne od ścieżki.
 
-## 3. Sprawdź konfigurację
+## 3. Wersja angielska
+
+Otwórz publiczną stronę z parametrem `?lang=en`, np. `http://localhost:8000/frontend/index.html?lang=en`. Przełącznik w nawigacji zmienia język i zachowuje go podczas przechodzenia między widokami. Domyślnie używany jest język polski (`?lang=pl`).
+
+Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji angielskiej.
+
+## 4. Sprawdź konfigurację
 
 - `index.html` ładuje się bez błędów w konsoli;
 - formularze rejestracji, logowania i głosowania wskazują właściwy Web App;
@@ -32,7 +38,7 @@ Nie otwieraj stron przez `file://`, ponieważ przeglądarka może zablokować ż
 - formularz rejestracji zapisuje telefon i wymaga zgody RODO z działającym linkiem do polityki prywatności;
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
 
-## 4. Opublikuj
+## 5. Opublikuj
 
 Opublikuj zawartość katalogu `frontend/` na wybranym hostingu statycznym. Po publikacji zaktualizuj `PUBLIC_SITE_URL` w projekcie `public-backend`, jeśli potwierdzenia mają kierować na `confirm.html` hostowanej strony.
 
