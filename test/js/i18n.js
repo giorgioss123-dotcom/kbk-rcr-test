@@ -95,9 +95,8 @@
     'Plik jest za duży. Maksymalnie 3 MB.': 'The file is too large. Maximum size is 3 MB.',
     'Nie udało się potwierdzić konta. Spróbuj ponownie później.': 'Could not confirm the account. Please try again later.',
 
-    'Strefa / społeczność': 'Community / area',
-    'Sprawy wspólne': 'Community matters',
-    'Wybierz moduł, żeby korzystać z codziennych narzędzi społeczności Królestwa Bez Kresu.': 'Choose a module to use everyday tools for the Kingdom Without Limit community.',
+    'Strefa społeczności': 'Community area',
+    'Tutaj możesz skorzystać z narzędzi dostępnych dla społeczności - odebrać nagrody za rycary, złożyć wniosek lub sprawdzić stan swojego konta rycarowego. Jeśli nie masz jeszcze konta w nowym systemie - wybierz opcję rejestracji.': 'Here you can use the tools available to the community: claim rewards with Ricars, submit a proposal, or check your Ricar account balance. If you do not have an account in the new system yet, choose the registration option.',
     'Wnioski': 'Proposals',
     'Złóż wniosek, poznaj propozycje innych osób i zagłosuj w sprawach społeczności.': 'Submit a proposal, explore other people’s proposals, and vote on community matters.',
     'Złóż wniosek lub zagłosuj': 'Submit a proposal or vote',
