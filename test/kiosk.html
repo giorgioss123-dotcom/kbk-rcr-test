@@ -540,11 +540,6 @@
   const safeText = shared.safeText;
   const PRODUCT_CACHE_MS = 300000;
   const UNKNOWN_ORDER_STATUS_MESSAGE = 'Nie udało się potwierdzić statusu zamówienia. Podejdź do dyżurnego, który sprawdzi, czy zamówienie trafiło do poczekalni. Jeśli go tam nie ma, możesz spróbować zamówić ponownie.';
-  try {
-    sessionStorage.removeItem('kbk_pending_kiosk_order_v1');
-  } catch (error) {
-    console.error('Nie udało się usunąć starego zapisu zamówienia z pamięci sesji.', error);
-  }
   const productsEl = document.getElementById('products');
   const processingStatus = document.getElementById('processing-status');
   const statusModal = document.getElementById('status-modal');
@@ -631,20 +626,6 @@
     submitOrder(order.items, order.currency, {qrHash: qrHash});
   }
 
-  function createRequestId() {
-    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
-    if (!window.crypto || typeof window.crypto.getRandomValues !== 'function') {
-      throw new Error('Ta przeglądarka nie może bezpiecznie utworzyć identyfikatora zamówienia.');
-    }
-    var bytes = new Uint8Array(16);
-    window.crypto.getRandomValues(bytes);
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    var hex = Array.from(bytes, function (byte) { return byte.toString(16).padStart(2, '0'); });
-    return hex.slice(0, 4).join('') + '-' + hex.slice(4, 6).join('') + '-' +
-      hex.slice(6, 8).join('') + '-' + hex.slice(8, 10).join('') + '-' + hex.slice(10).join('');
-  }
-
   function updateCurrencyButtons() {
     document.querySelectorAll('.currency-option').forEach(function (button) {
       const active = button.dataset.currency === selectedCurrency;
@@ -678,7 +659,6 @@
       user_not_found: 'Nie udało się zweryfikować konta.',
       invalid_total: 'Nie udało się obliczyć wartości zamówienia.',
       insufficient_funds: 'Brak wystarczającego salda dla tego zamówienia.',
-      request_id_conflict: 'Nie można bezpiecznie sprawdzić tego zamówienia. Skontaktuj się z dyżurnym.',
       server_error: 'Nie udało się wysłać zamówienia. Spróbuj ponownie później.'
     };
     return Object.prototype.hasOwnProperty.call(messages, error)
@@ -793,15 +773,6 @@
   });
   async function submitOrder(items, currency, credentials) {
     if (orderInProgress) return;
-    var requestId;
-    try {
-      requestId = createRequestId();
-    } catch (error) {
-      console.error('Nie udało się utworzyć identyfikatora zamówienia.', error);
-      rewardAuth.clearStatus();
-      showMessage(error.message, 'error');
-      return;
-    }
     orderInProgress = true;
     setOrderControlsDisabled(true);
     rewardAuth.setDisabled(true);
@@ -815,7 +786,7 @@
         var response = await fetch(APP_CONFIG.webAppUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(Object.assign({ action: 'claimRewards', items: items, currency: currency, requestId: requestId }, credentials))
+          body: JSON.stringify(Object.assign({ action: 'claimRewards', items: items, currency: currency }, credentials))
         });
         if (!response.ok) throw new Error('Nieoczekiwany status odpowiedzi: ' + response.status);
         data = await response.json();
