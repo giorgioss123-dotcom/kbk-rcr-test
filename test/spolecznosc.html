@@ -31,14 +31,13 @@
 
   .community-header {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 28px;
-    align-items: end;
+    align-items: start;
     padding-bottom: 24px;
     border-bottom: 2px solid var(--white);
   }
 
-  .eyebrow,
   h1 {
     margin: 12px 0 12px;
     color: var(--white);
@@ -51,12 +50,57 @@
     text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.28);
   }
 
-  .intro {
-    max-width: 56ch;
+  .community-intro-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.95fr);
+    align-items: center;
+    gap: 24px;
+  }
+
+  .intro,
+  .registration-prompt p {
     margin: 0;
     color: var(--muted);
     font-size: 1rem;
     line-height: 1.7;
+  }
+
+  .registration-prompt {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding-left: 20px;
+    border-left: 1px solid var(--line-2);
+  }
+
+  .registration-prompt p {
+    font-size: 0.9rem;
+  }
+
+  .registration-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 11px 15px;
+    border: 1px solid var(--gold);
+    background: var(--gold);
+    color: var(--teal-deep);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .registration-action:hover {
+    border-color: var(--white);
+    background: var(--white);
   }
 
   .home-link,
@@ -100,13 +144,6 @@
     color: var(--teal-deep);
   }
 
-  .module-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    margin-top: 36px;
-  }
-
   .module-card {
     display: flex;
     flex-direction: column;
@@ -115,12 +152,6 @@
     border: 1px solid var(--line-2);
     background: rgba(0, 0, 0, 0.14);
     transition: background 0.2s, border-color 0.2s, transform 0.2s;
-  }
-
-  .module-card:hover {
-    background: rgba(0, 0, 0, 0.24);
-    border-color: var(--white);
-    transform: translateY(-3px);
   }
 
   .module-card h2 {
@@ -135,11 +166,57 @@
   }
 
   .module-card p {
-    max-width: 38ch;
+    max-width: 52ch;
     margin: 0;
     color: var(--muted);
     font-size: 0.94rem;
     line-height: 1.65;
+  }
+
+  .marketplace-card {
+    position: relative;
+    min-height: 250px;
+    margin-top: 16px;
+    padding: clamp(26px, 5vw, 48px);
+    overflow: hidden;
+    border-color: rgba(212, 169, 95, 0.8);
+    background: linear-gradient(115deg, rgba(212, 169, 95, 0.2), rgba(0, 0, 0, 0.12) 72%);
+  }
+
+  .marketplace-card:hover {
+    background: linear-gradient(115deg, rgba(212, 169, 95, 0.28), rgba(0, 0, 0, 0.22) 72%);
+    border-color: var(--gold);
+    transform: translateY(-3px);
+  }
+
+  .marketplace-card h2 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+  }
+
+  .marketplace-card p {
+    max-width: 56ch;
+  }
+
+  .tools-heading {
+    margin: 34px 0 14px;
+    color: var(--white);
+    font-family: 'Anton', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .module-card:hover {
+    background: rgba(0, 0, 0, 0.24);
+    border-color: var(--white);
+    transform: translateY(-3px);
   }
 
   .module-action {
@@ -165,16 +242,48 @@
 
   .module-card:hover .module-action::after { transform: translateX(5px); }
 
-  @media (max-width: 720px) {
+  .module-card:focus-visible,
+  .registration-action:focus-visible,
+  .home-link:focus-visible,
+  .nav-back:focus-visible {
+    outline: 3px solid var(--white);
+    outline-offset: 4px;
+  }
+
+  @media (max-width: 960px) {
     .community-wrap { padding: 52px 20px 80px; }
     .community-header { grid-template-columns: 1fr; gap: 16px; }
     .home-link { justify-self: start; }
-    .module-grid { grid-template-columns: 1fr; }
+    .community-intro-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .tools-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .community-intro-row { grid-template-columns: 1fr; gap: 16px; }
+    .registration-prompt {
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding: 14px 0 0;
+      border-top: 1px solid var(--line-2);
+      border-left: 0;
+    }
   }
 
   @media (max-width: 480px) {
-    .module-card { min-height: 220px; padding: 24px 22px 21px; }
+    .community-wrap { padding-top: 38px; }
+    .registration-prompt { grid-template-columns: 1fr; }
+    .registration-action { justify-self: start; }
+    .module-card { min-height: 190px; padding: 24px 22px 21px; }
+    .marketplace-card { min-height: 230px; }
+    .module-action { padding-top: 22px; }
     .nav-back { padding: 7px 11px; font-size: 0.64rem; letter-spacing: 0.12em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-link,
+    .nav-back,
+    .module-card,
+    .module-action::after,
+    .registration-action { transition: none; }
   }
 </style>
 </head>
@@ -205,36 +314,39 @@
   <header class="community-header">
     <div>
       <h1>Strefa społeczności</h1>
-      <p class="intro">Tutaj możesz skorzystać z narzędzi dostępnych dla społeczności - odebrać nagrody za rycary, złożyć wniosek lub sprawdzić stan swojego konta rycarowego. Jeśli nie masz jeszcze konta w nowym systemie - wybierz opcję rejestracji.</p>
+      <div class="community-intro-row">
+        <p class="intro">Wymieniaj rycary na nagrody, sprawdzaj saldo i bierz udział w sprawach społeczności.</p>
+        <div class="registration-prompt">
+          <p>Utwórz konto rycarowe i potwierdź adres e-mail, aby dołączyć do systemu KBK.</p>
+          <a href="rejestracja.html" class="registration-action">Załóż konto</a>
+        </div>
+      </div>
     </div>
     <a href="index.html" class="home-link">← strona główna KBK</a>
   </header>
 
-  <div class="module-grid">
-    <a href="wnioski.html" class="module-card">
-      <h2>Wnioski</h2>
-      <p>Złóż wniosek, poznaj propozycje innych osób i zagłosuj w sprawach społeczności.</p>
-      <span class="module-action">Złóż wniosek lub zagłosuj</span>
-    </a>
+  <a href="kiosk.html" class="module-card marketplace-card">
+    <h2>Ryneczek</h2>
+    <p>Wymień swoje rycary na nagrody dostępne w aktualnym katalogu.</p>
+    <span class="module-action">Otwórz ryneczek</span>
+  </a>
 
-    <a href="rejestracja.html" class="module-card">
-      <h2>Rejestracja</h2>
-      <p>Zarejestruj się, żeby stworzyć konto rycarowe i dołączyć do systemu KBK.</p>
-      <span class="module-action">Zarejestruj się</span>
-    </a>
+  <section aria-labelledby="otherToolsTitle">
+    <h2 class="tools-heading" id="otherToolsTitle">Pozostałe narzędzia</h2>
+    <div class="tools-grid">
+      <a href="rcr-dashboard.html" class="module-card">
+        <h2>Statystyki</h2>
+        <p>Zobacz stan kont rycarowych i przejrzyj historię transakcji społeczności.</p>
+        <span class="module-action">Zobacz statystyki</span>
+      </a>
 
-    <a href="kiosk.html" class="module-card">
-      <h2>Ryneczek</h2>
-      <p>Wymień swoje rycary na nagrody dostępne w aktualnym katalogu.</p>
-      <span class="module-action">Otwórz ryneczek</span>
-    </a>
-
-    <a href="rcr-dashboard.html" class="module-card">
-      <h2>Statystyki</h2>
-      <p>Zobacz stan kont rycarowych i przejrzyj historię transakcji społeczności.</p>
-      <span class="module-action">Zobacz statystyki</span>
-    </a>
-  </div>
+      <a href="wnioski.html" class="module-card">
+        <h2>Wnioski</h2>
+        <p>Złóż wniosek, poznaj propozycje innych osób i zagłosuj w sprawach społeczności.</p>
+        <span class="module-action">Złóż wniosek lub zagłosuj</span>
+      </a>
+    </div>
+  </section>
 </main>
 
 <script src="public-config.js"></script>
