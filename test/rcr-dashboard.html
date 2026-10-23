@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RCR — bilans społeczności · KBK</title>
+<title>RCR - bilans społeczności · KBK</title>
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -552,11 +552,11 @@
 <div class="wrap">
   <header>
     <div class="title-block">
-      <h1>RCR — bilans</h1>
+      <h1>RCR - bilans</h1>
       <p id="dashboardSubtitle">Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.</p>
     </div>
     <div class="stat">
-      <div class="num" id="totalRcr">—</div>
+      <div class="num" id="totalRcr">-</div>
       <div class="lbl" id="totalUsers">wczytywanie…</div>
     </div>
   </header>
@@ -593,11 +593,11 @@
   <div class="drawer-head">
     <button class="drawer-close" id="drawerClose" aria-label="Zamknij">✕</button>
     <div class="eyebrow" id="drawerEyebrow">transakcje</div>
-    <h2 id="drawerLogin">—</h2>
+    <h2 id="drawerLogin">-</h2>
     <div class="summary">
-      <div><span id="drawerBalanceLabel">saldo RCR</span><strong id="drawerBalance">—</strong></div>
-      <div id="drawerPowerSummary"><span>siła głosu</span><strong id="drawerPower">—</strong></div>
-      <div><span>liczba transakcji</span><strong id="drawerCount">—</strong></div>
+      <div><span id="drawerBalanceLabel">saldo RCR</span><strong id="drawerBalance">-</strong></div>
+      <div id="drawerPowerSummary"><span>siła głosu</span><strong id="drawerPower">-</strong></div>
+      <div><span>liczba transakcji</span><strong id="drawerCount">-</strong></div>
     </div>
   </div>
   <div class="drawer-body">
@@ -970,9 +970,9 @@
 
     document.getElementById('drawerLogin').textContent = login;
     document.getElementById('drawerBalanceLabel').textContent = 'saldo ' + currency;
-    document.getElementById('drawerBalance').textContent = user ? Math.round(user[currency.toLowerCase()]).toLocaleString('pl-PL') : '—';
+    document.getElementById('drawerBalance').textContent = user ? Math.round(user[currency.toLowerCase()]).toLocaleString('pl-PL') : '-';
     document.getElementById('drawerPowerSummary').hidden = currency === 'RCRT';
-    document.getElementById('drawerPower').textContent = user ? drawerPct.toFixed(2) + '%' : '—';
+    document.getElementById('drawerPower').textContent = user ? drawerPct.toFixed(2) + '%' : '-';
     document.getElementById('drawerCount').textContent = txs.length;
     document.getElementById('drawerEyebrow').textContent = 'transakcje';
 
@@ -1051,8 +1051,8 @@
         option.classList.toggle('active', active);
         option.setAttribute('aria-selected', active ? 'true' : 'false');
       });
-      document.querySelector('.title-block h1').textContent = selectedCurrency + ' — bilans';
-      document.title = selectedCurrency + ' — bilans społeczności · KBK';
+      document.querySelector('.title-block h1').textContent = selectedCurrency + ' - bilans';
+      document.title = selectedCurrency + ' - bilans społeczności · KBK';
       document.getElementById('dashboardSubtitle').textContent = selectedCurrency === 'RCR'
         ? 'Ranking posiadaczy RCR i siły głosu. Kliknij w osobę, żeby zobaczyć jej transakcje.'
         : 'Ranking posiadaczy RCRT. Kliknij w osobę, żeby zobaczyć jej transakcje.';

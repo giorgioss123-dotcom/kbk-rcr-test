@@ -1,4 +1,4 @@
-# frontend — setup
+# frontend - setup
 
 Statyczny frontend KBK: strony HTML, wspólny CSS i JavaScript. Logika biznesowa pozostaje w `public-backend`, `internal-scripts` i arkuszach.
 

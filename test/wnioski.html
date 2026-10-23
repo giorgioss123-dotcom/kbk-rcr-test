@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wnioski — KBK</title>
+<title>Wnioski - KBK</title>
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -741,7 +741,7 @@
       'vote-ok': ['Twój głos został potwierdzony. Dziękujemy za udział!', 'ok'],
       'vote-invalid': ['Link jest nieprawidłowy albo wygasł. Oddaj głos ponownie.', 'error'],
       'vote-notfound': ['Ten wniosek już nie istnieje.', 'error'],
-      'vote-ended': ['Głosowanie na ten wniosek zostało już zakończone — Twój głos nie mógł zostać uwzględniony.', 'error'],
+      'vote-ended': ['Głosowanie na ten wniosek zostało już zakończone - Twój głos nie mógł zostać uwzględniony.', 'error'],
       'vote-error': ['Wystąpił błąd. Spróbuj ponownie później.', 'error']
     };
     const key = confirmed + '-' + status;
@@ -767,11 +767,11 @@
   }
 
   function fmtDate(iso){
-    if (!iso) return '—';
+    if (!iso) return '-';
     return new Date(iso).toLocaleDateString(displayLocale());
   }
   function formatRemainingTime(endIso){
-    if (!endIso) return '—';
+    if (!endIso) return '-';
     const diffMs = new Date(endIso).getTime() - Date.now();
     if (diffMs <= 0) return 'zakończone';
     const totalMinutes = Math.max(0, Math.floor(diffMs / 60000));
