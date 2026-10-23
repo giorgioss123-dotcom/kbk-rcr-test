@@ -125,7 +125,10 @@
     'Nie udało się potwierdzić konta. Spróbuj ponownie później.': 'Could not confirm the account. Please try again later.',
 
     'Strefa społeczności': 'Community area',
-    'Tutaj możesz skorzystać z narzędzi dostępnych dla społeczności - odebrać nagrody za rycary, złożyć wniosek lub sprawdzić stan swojego konta rycarowego. Jeśli nie masz jeszcze konta w nowym systemie - wybierz opcję rejestracji.': 'Here you can use the tools available to the community: claim rewards with Ricars, submit a proposal, or check your Ricar account balance. If you do not have an account in the new system yet, choose the registration option.',
+    'Wymieniaj rycary na nagrody, sprawdzaj saldo i bierz udział w sprawach społeczności.': 'Exchange Ricars for rewards, check your balance, and take part in community matters.',
+    'Utwórz konto rycarowe i potwierdź adres e-mail, aby dołączyć do systemu KBK.': 'Create a Ricar account and confirm your email address to join the KBK system.',
+    'Załóż konto': 'Create an account',
+    'Pozostałe narzędzia': 'Other tools',
     'Wnioski': 'Proposals',
     'Złóż wniosek, poznaj propozycje innych osób i zagłosuj w sprawach społeczności.': 'Submit a proposal, explore other people’s proposals, and vote on community matters.',
     'Złóż wniosek lub zagłosuj': 'Submit a proposal or vote',

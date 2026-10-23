@@ -83,7 +83,8 @@
 
   const styles = document.createElement('style');
   styles.textContent = [
-    '.kbk-feedback-fab{position:fixed;right:20px;bottom:20px;z-index:1200;padding:12px 18px;border:none;border-radius:999px;background:#d4a95f;color:#0c3038;font-weight:700;box-shadow:0 10px 24px rgba(0,0,0,.25);cursor:pointer;letter-spacing:.04em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;}',
+    '.kbk-feedback-fab{position:fixed;right:20px;bottom:20px;z-index:1200;padding:12px 18px;border:none;border-radius:999px;background:#d4a95f;color:#0c3038;font-weight:700;box-shadow:0 10px 24px rgba(0,0,0,.25);cursor:pointer;letter-spacing:.04em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;transition:transform .2s ease,opacity .2s ease;}',
+    '.kbk-feedback-fab.is-hidden{transform:translateY(calc(100% + 24px));opacity:0;pointer-events:none;}',
     '.kbk-feedback-fab:hover{filter:brightness(1.05)}',
     '.kbk-feedback-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(12,48,56,.72);z-index:1300;}',
     '.kbk-feedback-modal.open{display:flex;}',
@@ -104,7 +105,8 @@
     '.kbk-feedback-attachment{margin-top:14px;padding:12px;border:1px dashed rgba(12,48,56,.35);background:rgba(255,255,255,.3);}',
     '.kbk-feedback-attachment .preview{max-width:100%;max-height:220px;display:none;margin-top:12px;border:1px solid rgba(12,48,56,.15);object-fit:contain;background:#fff;}',
     '.kbk-feedback-attachment .preview.show{display:block;}',
-    '@media (max-width:560px){.kbk-feedback-card{padding:22px 18px 18px}.kbk-feedback-card .row{grid-template-columns:1fr}.kbk-feedback-fab{right:14px;bottom:14px;padding:11px 16px}}'
+    '@media (max-width:560px){.kbk-feedback-card{padding:22px 18px 18px}.kbk-feedback-card .row{grid-template-columns:1fr}.kbk-feedback-fab{right:14px;bottom:calc(env(safe-area-inset-bottom) + 14px);padding:10px 14px;font-size:.72rem}}',
+    '@media (prefers-reduced-motion:reduce){.kbk-feedback-fab{transition:none}}'
   ].join('');
   document.head.appendChild(styles);
 
@@ -171,6 +173,8 @@
   const banner = modal.querySelector('#kbkFeedbackBanner');
   const cancelButton = modal.querySelector('#kbkFeedbackCancel');
   let closeDialogFocus = null;
+  let lastScrollY = window.scrollY;
+  let scrollFramePending = false;
 
   function close() {
     modal.classList.remove('open');
@@ -194,6 +198,22 @@
       initialFocus: '#kbkFeedbackCategory',
       onEscape: close
     });
+  }
+
+  function updateButtonOnScroll() {
+    if (window.innerWidth > 560) {
+      button.classList.remove('is-hidden');
+      lastScrollY = window.scrollY;
+      return;
+    }
+    if (document.activeElement !== button) {
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollY;
+      if (currentScrollY <= 120 || !scrollingDown) button.classList.remove('is-hidden');
+      else button.classList.add('is-hidden');
+      lastScrollY = currentScrollY;
+    }
+    scrollFramePending = false;
   }
 
   function readAttachmentDataUrl(file) {
@@ -235,6 +255,13 @@
   });
 
   button.addEventListener('click', open);
+  button.addEventListener('focus', function () { button.classList.remove('is-hidden'); });
+  window.addEventListener('scroll', function () {
+    if (scrollFramePending) return;
+    scrollFramePending = true;
+    window.requestAnimationFrame(updateButtonOnScroll);
+  }, {passive: true});
+  window.addEventListener('resize', updateButtonOnScroll);
   cancelButton.addEventListener('click', close);
   modal.addEventListener('click', function (event) {
     if (event.target === modal) close();
