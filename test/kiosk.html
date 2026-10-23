@@ -121,11 +121,10 @@
   }
   .currency-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    flex-direction: column;
     justify-content: flex-start;
-    gap: 14px;
-    flex-wrap: wrap;
-    row-gap: 8px;
+    gap: 10px;
   }
   .currency-label {
     display: inline-block;
@@ -138,10 +137,13 @@
     color: var(--teal-deep);
   }
   .currency-segment {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 4px;
     padding: 5px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 56px;
     border-radius: 999px;
     border: 1px solid var(--paper-line);
     background: rgba(255, 255, 255, 0.45);
@@ -149,11 +151,16 @@
   }
   .currency-option {
     appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 0;
     background: transparent;
     color: var(--teal-deep);
-    padding: 10px 16px;
-    min-width: 146px;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    padding: 0 8px;
     font-family: 'Archivo', sans-serif;
     font-size: 0.82rem;
     font-weight: 700;
@@ -184,15 +191,19 @@
   }
   #rewardAuth .qr-auth-method-row {
     display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
     margin: 0 0 16px;
   }
   #rewardAuth .qr-auth-methods {
-    display: inline-flex;
+    display: flex;
+    align-items: center;
     gap: 4px;
     flex-wrap: nowrap;
+    box-sizing: border-box;
+    width: 100%;
+    height: 56px;
     margin: 0;
     padding: 5px;
     border: 1px solid var(--paper-line);
@@ -201,16 +212,20 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 8px 20px rgba(12, 48, 56, 0.08);
   }
   #rewardAuth .qr-auth-method {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 1 1 0;
     min-width: 0;
+    height: 100%;
     border: 0;
     border-radius: 999px;
     background: transparent;
     color: var(--teal-deep);
-    padding: 10px 16px;
+    padding: 0 8px;
     font: 700 0.82rem 'Archivo', sans-serif;
     letter-spacing: 0.02em;
-    white-space: normal;
+    white-space: nowrap;
     text-align: center;
   }
   #rewardAuth .qr-auth-method:hover:not(.active) {
@@ -380,57 +395,11 @@
     text-transform: uppercase;
   }
   .status-modal-close:hover { background: transparent; color: var(--teal-deep); }
-  @media (max-width: 700px) {
-    .currency-row {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .currency-segment {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .currency-option {
-      min-width: 0;
-      flex: 1 1 0;
-      padding: 10px;
-      font-size: 0.74rem;
-    }
-    #rewardAuth .qr-auth-method-row {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 10px;
-    }
-    #rewardAuth .qr-auth-methods {
-      width: 100%;
-    }
-  }
   @media (max-width: 560px) {
     main { padding: 32px 24px 28px; }
     .wrap { padding: 40px 16px 60px; }
-    .currency-row {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .currency-segment {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .currency-option {
-      min-width: 0;
-      flex: 1 1 0;
-      padding: 10px 10px;
-      font-size: 0.74rem;
-    }
-    #rewardAuth .qr-auth-method-row {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 10px;
-    }
-    #rewardAuth .qr-auth-methods {
-      width: 100%;
-    }
+    .currency-option,
+    #rewardAuth .qr-auth-method { font-size: 0.74rem; }
     .product { align-items: center; gap: 8px; }
     .qty-button { width: 36px; height: 36px; font-size: 20px; }
     input.qty-value {
@@ -448,6 +417,10 @@
       font-size: 0.64rem;
       letter-spacing: 0.12em;
     }
+  }
+
+  @media (max-width: 360px) {
+    .currency-option { padding: 0 4px; font-size: 0.64rem; }
   }
 
   @media (max-width: 380px) {
