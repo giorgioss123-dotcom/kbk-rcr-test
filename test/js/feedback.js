@@ -283,7 +283,7 @@
       return;
     }
     if (description.length < 10) {
-      banner.textContent = 'Opis zgłoszenia jest za krótki - minimum 10 znaków.';
+      banner.textContent = 'Opis zgłoszenia jest za krótki — minimum 10 znaków.';
       banner.className = 'kbk-feedback-banner show error';
       descriptionInput.focus();
       return;

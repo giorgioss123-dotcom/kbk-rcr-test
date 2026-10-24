@@ -267,7 +267,10 @@
         return mode === 'qr';
       },
       startScan: function () {
-        if (mode === 'qr') startCamera();
+        if (mode === 'qr') {
+          scanner.hidden = false;
+          startCamera();
+        }
       },
       reset: function () {
         setMode('pin');
