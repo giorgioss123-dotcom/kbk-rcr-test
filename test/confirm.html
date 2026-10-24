@@ -205,7 +205,7 @@
       <span>System KBK</span>
     </div>
     <span class="icon" id="icon">…</span>
-    <h1>Potwierdzanie</h1>
+    <h1 id="confirmationTitle">Potwierdzanie</h1>
     <p id="message">Trwa weryfikacja Twojego linku potwierdzającego…</p>
     <div class="state" id="state">Przetwarzanie</div>
     <a class="return-btn" id="returnButton" href="index.html">Powrót na stronę główną</a>
@@ -221,7 +221,7 @@
   function confirmationMessage(type, status, ok) {
     const messages = {
       register: {
-        ok: 'Rejestracja została potwierdzona. Możesz się zalogować.',
+        ok: 'Rejestracja została potwierdzona. Możesz teraz korzystać z funkcji dla społeczności',
         invalid: 'Link aktywacyjny jest nieprawidłowy lub wygasł.',
         conflict: 'Konto lub adres e-mail są już zajęte.',
         error: 'Nie udało się potwierdzić rejestracji. Spróbuj ponownie później.'
@@ -257,6 +257,7 @@
     const state = document.getElementById('state');
     const icon = document.getElementById('icon');
     const returnButton = document.getElementById('returnButton');
+    if (ok) document.getElementById('confirmationTitle').textContent = 'Potwierdzono';
     box.textContent = message;
     state.textContent = ok ? 'Potwierdzono' : 'Błąd';
     state.classList.toggle('success', ok);
