@@ -278,9 +278,9 @@
 
   /* ── KLUCZOWA POPRAWKA: użyj input.qty-value, żeby wygrać specyficznością ── */
   input.qty-value {
-    width: 44px;
-    min-width: 44px;
-    max-width: 44px;
+    width: 52px;
+    min-width: 52px;
+    max-width: 52px;
     height: 38px;
     text-align: center;
     border: 1px solid var(--paper-line);
@@ -290,7 +290,7 @@
     font-family: 'IBM Plex Mono', monospace;
     font-size: 15px;
     color: var(--paper-ink);
-    user-select: none; cursor: default;
+    cursor: text;
     flex-shrink: 0;
   }
 
@@ -403,7 +403,7 @@
     .product { align-items: center; gap: 8px; }
     .qty-button { width: 36px; height: 36px; font-size: 20px; }
     input.qty-value {
-      width: 40px; min-width: 40px; max-width: 40px;
+      width: 52px; min-width: 52px; max-width: 52px;
       height: 36px; font-size: 14px;
     }
   }
@@ -562,7 +562,7 @@
   }
 
   function setOrderControlsDisabled(disabled) {
-    document.querySelectorAll('.currency-option, .qty-button').forEach(function (control) {
+    document.querySelectorAll('.currency-option, .qty-button, .qty-value').forEach(function (control) {
       control.disabled = disabled;
     });
   }
@@ -686,7 +686,7 @@
     productsEl.innerHTML = products.map(function (product, index) {
       var qty = currentQuantities[index] || 0;
       var displayCost = Number(product.cost);
-      return '<div class="product"><span class="product-name"><span class="catalogue-product-title">' + escapeHtml(product.name) + '</span> · <span class="product-cost">' + displayCost + ' RCR</span></span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" readonly inputmode="numeric" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
+      return '<div class="product"><span class="product-name"><span class="catalogue-product-title">' + escapeHtml(product.name) + '</span> · <span class="product-cost">' + displayCost + ' RCR</span></span><div class="qty-control"><button type="button" class="qty-button" data-action="decrement" data-index="' + index + '" aria-label="Zmniejsz">−</button><input class="qty-value" type="text" value="' + qty + '" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="Liczba sztuk: ' + escapeHtml(product.name) + '" data-index="' + index + '" data-name="' + escapeHtml(product.name) + '"><button type="button" class="qty-button" data-action="increment" data-index="' + index + '" aria-label="Zwiększ">+</button></div></div>';
     }).join('');
     updateSubmitLabel();
   }
@@ -721,7 +721,7 @@
   function clampQuantity(value) {
     var numeric = Number(value);
     if (!Number.isFinite(numeric)) return 0;
-    return Math.min(9, Math.max(0, Math.round(numeric)));
+    return Math.min(999, Math.max(0, Math.round(numeric)));
   }
 
   document.querySelectorAll('.currency-option').forEach(function (button) {
@@ -742,6 +742,13 @@
     var current = clampQuantity(input.value);
     var nextValue = button.dataset.action === 'increment' ? current + 1 : current - 1;
     input.value = String(clampQuantity(nextValue));
+    updateSubmitLabel();
+  });
+  productsEl.addEventListener('input', function (event) {
+    var input = event.target.closest('.qty-value');
+    if (!input) return;
+    var match = input.value.trim().match(/^-?\d+/);
+    input.value = match ? String(clampQuantity(match[0])) : '';
     updateSubmitLabel();
   });
   async function submitOrder(items, currency, credentials) {
@@ -794,7 +801,7 @@
 
   document.getElementById('submit').addEventListener('click', function () {
     var items = Array.from(productsEl.querySelectorAll('.qty-value'))
-      .map(function (input) { return { name: input.dataset.name, quantity: Number(input.value) }; })
+      .map(function (input) { return { name: input.dataset.name, quantity: clampQuantity(input.value) }; })
       .filter(function (item) { return item.quantity > 0; });
     if (items.length === 0) {
       showMessage(rewardAuth.isQrMode()
