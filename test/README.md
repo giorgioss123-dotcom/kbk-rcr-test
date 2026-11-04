@@ -40,6 +40,8 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 - po odczytaniu QR kamera się wyłącza; ryneczek, głosowanie i składanie wniosku wysyłają wybraną operację od razu po skanie (głosowanie i wniosek nadal wymagają późniejszego potwierdzenia linkiem e-mailowym);
 - przy nieznanym wyniku zamówienia ryneczek informuje o konieczności sprawdzenia poczekalni przez dyżurnego; formularz nie blokuje kolejnych prób, a każde ponowne wysłanie jest nowym zamówieniem;
 - wnioski i głosy po niejednoznacznym wyniku jasno informują o możliwym zapisie, blokują ponowne wysłanie w tym formularzu i kierują do sprawdzenia poczty oraz folderu spam;
+- szczegóły opublikowanych wniosków pokazują link do posta na Hive, a po zamknięciu głosowania również link do komentarza z wynikiem;
+- karty wniosków pozwalają skopiować link do konkretnego wniosku; otwarcie linku automatycznie pokazuje jego szczegóły;
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
 
 Kod QR paszportu jest samodzielnym sekretem uwierzytelniającym do tych operacji. Każda osoba

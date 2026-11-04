@@ -151,6 +151,12 @@
   .confirm-banner.show { display: block; }
   .confirm-banner.ok    { background: var(--pos-bg); color: var(--pos); border-color: rgba(124,192,142,0.4); }
   .confirm-banner.error { background: var(--neg-bg); color: var(--neg); border-color: rgba(209,104,122,0.4); }
+  .share-notice {
+    display: none; margin: -10px 0 20px;
+    color: var(--pos); font-size: 0.82rem;
+  }
+  .share-notice.show { display: block; }
+  .share-notice.error { color: #ffd1d5; }
 
   .section-title {
     font-family: 'IBM Plex Mono', monospace;
@@ -233,8 +239,23 @@
     text-transform: uppercase;
   }
   #detailModal .turnout { color: var(--paper-muted); }
-  .card-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
-  .inline-vote {
+  #detailHiveLinks {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 16px;
+  }
+  #detailHiveLinks a {
+    border: 1px solid var(--paper-line);
+    color: var(--teal-deep);
+    padding: 8px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  #detailHiveLinks a:hover { background: var(--teal-deep); color: var(--white); }
+  .card-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+  .inline-vote, .share-proposal {
     background: transparent;
     border: 1px solid var(--white);
     color: var(--white);
@@ -245,7 +266,7 @@
     cursor: pointer;
     transition: background 0.18s, color 0.18s;
   }
-  .inline-vote:hover { background: var(--white); color: var(--teal-deep); }
+  .inline-vote:hover, .share-proposal:hover { background: var(--white); color: var(--teal-deep); }
 
   .empty {
     color: var(--muted-dim); padding: 30px 0;
@@ -560,6 +581,7 @@
 
   <div class="sync" id="syncLabel">wczytywanie…</div>
   <div class="confirm-banner" id="confirmBanner"></div>
+  <div class="share-notice" id="shareNotice" role="status" aria-live="polite"></div>
 
   <div id="proposalsContainer">
     <div class="section-title">Aktywne</div>
@@ -584,6 +606,10 @@
   <div class="vote-bar" id="detailBar"><div class="za"></div><div class="przeciw"></div></div>
   <div class="vote-stats" id="detailStats"></div>
   <div class="turnout" id="detailTurnout"></div>
+  <div class="card-actions">
+    <button class="share-proposal" id="detailShareButton" type="button">Udostępnij wniosek</button>
+  </div>
+  <div id="detailHiveLinks"></div>
   <div id="votesListSection" style="margin-top:16px;"></div>
   <div id="voteSection" style="margin-top:20px;"></div>
 </div>
@@ -727,6 +753,7 @@
   let proposals = [];
   let proposalsCache = null;
   let proposalsCacheTs = 0;
+  let linkedProposalHandled = false;
 
   (function handleConfirmRedirect(){
     const params = new URLSearchParams(window.location.search);
@@ -798,9 +825,9 @@
     const safeStatus = safeText(p.status, '');
     const safeTextContent = safeText(p.tresc, '');
     const excerpt = safeTextContent.length > 140 ? safeTextContent.slice(0, 140) + '…' : safeTextContent;
-    const voteButton = safeStatus === 'Aktywny'
-      ? `<div class="card-actions"><button class="inline-vote" type="button" data-vote-id="${safeText(p.id, '')}">Zagłosuj</button></div>`
-      : '';
+    const actions = `<div class="card-actions">${safeStatus === 'Aktywny'
+      ? `<button class="inline-vote" type="button" data-vote-id="${escapeHtml(p.id)}">Zagłosuj</button>`
+      : '<span></span>'}<button class="share-proposal" type="button" data-share-proposal="${escapeHtml(p.id)}">Udostępnij</button></div>`;
     const remainingText = safeStatus === 'Aktywny'
       ? `Pozostało: ${formatRemainingTime(safeText(p.dataWygasniecia, ''))}`
       : `Zakończono: ${fmtDate(safeText(p.dataWygasniecia, ''))}`;
@@ -821,13 +848,14 @@
         <span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span>
       </div>
       <div class="turnout">frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów)</div>
-      ${voteButton}
+      ${actions}
     </div>`;
   }
   async function loadProposals(forceReload){
     const now = Date.now();
     if (!forceReload && proposalsCache && (now - proposalsCacheTs) < PROPOSALS_CACHE_MS) {
       proposals = proposalsCache; render();
+      openLinkedProposal();
       document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString(displayLocale());
       return;
     }
@@ -860,6 +888,8 @@
         const autor = strFromCell(lookupCell(row, ['LOGIN_AUTORA', 'LOGIN', 'login', 'Login']));
         const dataZlozenia = strFromCell(lookupCell(row, ['DATA_ZŁOŻENIA', 'DATA_ZLOZENIA', 'data_zlozenia', 'Data złożenia']));
         const dataWygasniecia = strFromCell(lookupCell(row, ['DATA_WYGAŚNIĘCIA', 'DATA_WYGASNIECIA', 'data_wygasniecia', 'Data wygasnięcia']));
+        const hivePostLink = strFromCell(lookupCell(row, ['LINK_HIVE', 'link_hive']));
+        const hiveResultLink = strFromCell(lookupCell(row, ['LINK_KOMENTARZ_HIVE', 'link_komentarz_hive']));
         const suma = za + przeciw;
         const item = {
           id: id,
@@ -869,6 +899,8 @@
           autor: autor,
           dataZlozenia: dataZlozenia,
           dataWygasniecia: dataWygasniecia,
+          hivePostLink: hivePostLink,
+          hiveResultLink: hiveResultLink,
           status: status,
           glosowZa: za,
           glosowPrzeciw: przeciw,
@@ -884,6 +916,7 @@
       proposals = rows;
       proposalsCache = proposals; proposalsCacheTs = Date.now();
       render();
+      openLinkedProposal();
       document.getElementById('syncLabel').textContent = 'zsynchronizowano ' + new Date().toLocaleTimeString(displayLocale());
     }catch(err){
       console.error(err);
@@ -907,6 +940,13 @@
   }
 
   document.getElementById('proposalsContainer').addEventListener('click', (e) => {
+    const shareButton = e.target.closest('[data-share-proposal]');
+    if (shareButton) {
+      e.preventDefault();
+      e.stopPropagation();
+      shareProposal(shareButton.dataset.shareProposal);
+      return;
+    }
     const voteBtn = e.target.closest('.inline-vote');
     if (voteBtn) {
       e.stopPropagation();
@@ -916,6 +956,72 @@
     const card = e.target.closest('.card');
     if (card) openDetail(proposals[Number(card.dataset.proposalIndex)]);
   });
+
+  function proposalShareLink(id) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('proposal');
+    url.searchParams.set('proposal', String(id));
+    url.hash = '';
+    return url.href;
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    let copied = false;
+    try { copied = document.execCommand('copy'); }
+    finally { input.remove(); }
+    return copied ? Promise.resolve() : Promise.reject(new Error('Schowek jest niedostępny.'));
+  }
+
+  function showShareNotice(message, isError) {
+    const notice = document.getElementById('shareNotice');
+    notice.textContent = message;
+    notice.className = 'share-notice show' + (isError ? ' error' : '');
+  }
+
+  function shareProposal(id) {
+    const link = proposalShareLink(id);
+    Promise.resolve().then(function () { return copyText(link); }).then(function () {
+      showShareNotice('Link do wniosku został skopiowany do schowka.', false);
+    }).catch(function (error) {
+      console.error('Nie udało się skopiować linku do wniosku.', error);
+      showShareNotice('Nie udało się skopiować linku. Skopiuj go ręcznie: ' + link, true);
+    });
+  }
+
+  function openLinkedProposal() {
+    if (linkedProposalHandled) return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get('proposal');
+    if (!requestedId) {
+      linkedProposalHandled = true;
+      return;
+    }
+    if (!/^\d+$/.test(requestedId)) {
+      linkedProposalHandled = true;
+      showShareNotice('Link do wniosku jest nieprawidłowy.', true);
+      return;
+    }
+    const proposal = proposals.find(function (item) {
+      return String(item.id).trim() === requestedId;
+    });
+    if (!proposal) {
+      linkedProposalHandled = true;
+      showShareNotice('Nie znaleziono wskazanego wniosku. Być może został usunięty.', true);
+      return;
+    }
+    linkedProposalHandled = true;
+    openDetail(proposal);
+  }
 
   function openDetail(p){
     if (!p) return;
@@ -934,6 +1040,17 @@
       `<span class="za-label">za ${Math.round(Number(p.glosowZa) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentZa) || 0).toFixed(1)}%)</span><span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span>`;
     document.getElementById('detailTurnout').textContent =
       `frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów)` + (safeText(p.dataWygasniecia, '') ? ` · koniec: ${fmtDate(safeText(p.dataWygasniecia, ''))}` : '');
+    document.getElementById('detailShareButton').onclick = function () {
+      shareProposal(p.id);
+    };
+    const hiveLinks = [
+      { url: safeHiveUrl(p.hivePostLink, false), label: 'Otwórz post na Hive' },
+      { url: safeHiveUrl(p.hiveResultLink, true), label: 'Zobacz wynik na Hive' }
+    ].filter(function (link) { return link.url; });
+    document.getElementById('detailHiveLinks').innerHTML = hiveLinks.map(function (link) {
+      return '<a href="' + link.url + '" target="_blank" rel="noopener noreferrer">' +
+        link.label + '</a>';
+    }).join('');
 
     const votesListSection = document.getElementById('votesListSection');
     const hasVotes = (p.glosowZa + p.glosowPrzeciw) > 0;
@@ -951,6 +1068,14 @@
     } else { voteSection.innerHTML = ''; }
 
     openModal('detailModal');
+  }
+
+  function safeHiveUrl(value, allowCommentFragment) {
+    const url = safeText(value, '').trim();
+    const pattern = allowCommentFragment
+      ? /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+(?:#@[a-z0-9.-]+\/[a-z0-9-]+)?$/i
+      : /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+$/i;
+    return pattern.test(url) ? url : '';
   }
 
   function renderVotesTable(tableEl, votes) {
