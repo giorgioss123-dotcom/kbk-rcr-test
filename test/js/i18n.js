@@ -348,7 +348,7 @@
     'frekwencja:': 'turnout:',
     'aktywnych rycarów': 'active Ricars',
     'koniec:': 'ends:',
-    'Zobacz listę głosów': 'View votes',
+    'Pokaż głosy': 'View votes',
     'Brak potwierdzonych głosów.': 'No confirmed votes.',
     'Nie udało się wczytać listy głosów.': 'Could not load the vote list.',
     'zakończone': 'ended',

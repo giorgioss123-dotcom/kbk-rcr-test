@@ -232,21 +232,17 @@
     text-transform: uppercase;
   }
   #detailModal .turnout { color: var(--paper-muted); }
-  #detailHiveLinks {
-    display: flex; flex-wrap: wrap; gap: 10px;
-    margin: 0;
-  }
-  #detailHiveLinks a {
-    border: 1px solid var(--paper-line);
+  .detail-badges { display: flex; align-items: center; gap: 8px; }
+  #detailBadge, #detailHiveLinks { flex: 0 0 auto; }
+  #detailHiveLinks a.badge {
+    background: rgba(26,90,107,0.07);
+    border: 1px solid rgba(26,90,107,0.24);
     color: var(--teal-deep);
-    padding: 8px 12px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.68rem; font-weight: 500;
-    letter-spacing: 0.08em; text-transform: uppercase;
     text-decoration: none;
     transition: background 0.15s, color 0.15s;
   }
-  #detailHiveLinks a:hover { background: var(--teal-deep); color: var(--white); }
+  #detailHiveLinks a.badge:hover { background: var(--teal-deep); color: var(--white); }
+  #detailHiveLinks a.badge:focus-visible { outline: 2px solid var(--teal-deep); outline-offset: 3px; }
   .card-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
   .inline-vote, .share-proposal {
     background: transparent;
@@ -304,7 +300,29 @@
     background: var(--teal-deep);
     color: var(--white);
   }
-  #detailModal .card-actions { justify-content: flex-start; align-items: center; flex-wrap: wrap; }
+  #detailModal .card-actions { justify-content: space-between; align-items: center; flex-wrap: nowrap; }
+  #detailModal .detail-actions-left {
+    display: flex; align-items: center; min-width: 0;
+  }
+  #detailModal #openVoteBtn {
+    background: var(--teal-deep);
+    border-color: var(--teal-deep);
+    color: var(--white);
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+  }
+  #detailModal #openVoteBtn:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--white);
+  }
+  #detailModal #openVoteBtn:focus-visible,
+  #detailModal .votes-toggle:focus-visible,
+  #detailModal .share-proposal:focus-visible {
+    outline: 2px solid var(--teal-deep);
+    outline-offset: 3px;
+  }
+  #detailModal .votes-toggle { white-space: nowrap; }
+  #detailModal #detailShareButton { flex-shrink: 0; }
   .share-confirm-scrim {
     position: fixed; inset: 0; z-index: 40;
     background: rgba(6, 10, 8, 0.72);
@@ -586,6 +604,14 @@
       font-size: 0.64rem;
       letter-spacing: 0.12em;
     }
+    #detailModal .card-actions { gap: 8px; }
+    #detailModal .detail-actions-left { gap: 6px; }
+    #detailModal .votes-toggle,
+    #detailModal #detailShareButton {
+      padding: 8px 9px;
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+    }
   }
 
   @media (max-width: 380px) {
@@ -646,7 +672,10 @@
   <div class="card-meta" id="detailAuthor"></div>
   <div class="card-meta secondary" id="detailRemaining"></div>
   <h2 id="detailTitle" tabindex="-1"></h2>
-  <div id="detailBadge"></div>
+  <div class="detail-badges">
+    <div id="detailBadge"></div>
+    <div id="detailHiveLinks"></div>
+  </div>
   <div class="block-label">Treść</div>
   <p class="block-text" id="detailText"></p>
   <div class="block-label">Uzasadnienie</div>
@@ -654,11 +683,13 @@
   <div class="vote-bar" id="detailBar"><div class="za"></div><div class="przeciw"></div></div>
   <div class="vote-stats" id="detailStats"></div>
   <div class="turnout" id="detailTurnout"></div>
-  <div class="card-actions">
+  <div class="card-actions detail-actions">
+    <div class="detail-actions-left">
+      <div id="votesListAction"></div>
+    </div>
     <button class="share-proposal" id="detailShareButton" type="button">Udostępnij wniosek</button>
-    <div id="detailHiveLinks"></div>
   </div>
-  <div id="votesListSection" style="margin-top:16px;"></div>
+  <div id="votesListSection" style="margin-top:12px;"></div>
   <div id="voteSection" style="margin-top:20px;"></div>
 </div>
 
@@ -1144,14 +1175,16 @@
     };
     const hivePostUrl = safeHiveUrl(p.hivePostLink);
     document.getElementById('detailHiveLinks').innerHTML = hivePostUrl
-      ? '<a href="' + hivePostUrl + '" target="_blank" rel="noopener noreferrer">Otwórz post na Hive</a>'
+      ? '<a class="badge hive-link" href="' + hivePostUrl + '" target="_blank" rel="noopener noreferrer">Otwórz post na Hive</a>'
       : '';
 
+    const votesListAction = document.getElementById('votesListAction');
     const votesListSection = document.getElementById('votesListSection');
     const hasVotes = p.sumaGlosow > 0;
-    votesListSection.innerHTML = hasVotes
-      ? '<button class="votes-toggle" id="showVotesBtn">Zobacz listę głosów</button><div id="votesTable"></div>'
+    votesListAction.innerHTML = hasVotes
+      ? '<button class="votes-toggle" id="showVotesBtn">Pokaż głosy</button>'
       : '';
+    votesListSection.innerHTML = hasVotes ? '<div id="votesTable"></div>' : '';
     if (hasVotes) {
       document.getElementById('showVotesBtn').addEventListener('click', () => loadVotesList(p.id));
     }
@@ -1221,7 +1254,7 @@
     }catch(err){
       console.error(err);
       table.innerHTML = '<div style="font-size:0.85rem;color:#a44650;padding:10px 0;">Nie udało się wczytać listy głosów.</div>';
-      btn.textContent = 'Zobacz listę głosów'; btn.disabled = false;
+      btn.textContent = 'Pokaż głosy'; btn.disabled = false;
     }
   }
 
