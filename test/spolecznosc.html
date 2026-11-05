@@ -26,7 +26,178 @@
     z-index: 2;
     max-width: var(--maxw);
     margin: 0 auto;
-    padding: 68px 24px 120px;
+    padding: 28px 24px 120px;
+  }
+
+  .nav-actions {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin-left: auto;
+  }
+
+  .activity-menu-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+  }
+
+  .activity-menu-toggle:hover,
+  .activity-menu-toggle[aria-expanded="true"] {
+    background: rgba(212, 169, 95, 0.14);
+    color: var(--gold);
+  }
+
+  .activity-menu-toggle:focus-visible {
+    outline: 2px solid var(--white);
+    outline-offset: 1px;
+  }
+
+  .activity-popover a:focus-visible {
+    outline: 3px solid var(--white);
+    outline-offset: 3px;
+  }
+
+  .activity-indicator {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+  }
+
+  .activity-bell {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+  }
+
+  .activity-summary-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--teal-deep);
+    font-size: 0.66rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+
+  .activity-indicator .activity-summary-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .activity-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 2;
+    width: min(360px, calc(100vw - 48px));
+    padding: 12px;
+    border: 1px solid rgba(212, 169, 95, 0.75);
+    background: #0c3038;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .activity-popover[hidden] { display: none; }
+
+  .activity-heading {
+    margin: 0 0 8px;
+    padding: 2px 4px 8px;
+    border-bottom: 1px solid var(--line);
+    color: var(--gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+
+  .activity-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    color: var(--white);
+    text-decoration: none;
+    transition: border-color 0.18s, background 0.18s;
+  }
+
+  .activity-link:hover {
+    border-color: var(--gold);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .activity-label {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .activity-value,
+  .module-count strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    min-height: 32px;
+    padding: 4px 9px;
+    border: 1px solid var(--gold);
+    background: var(--gold);
+    color: var(--teal-deep);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .activity-status {
+    margin: 0;
+    padding: 8px 4px 2px;
+    color: var(--muted-dim);
+    font-size: 0.75rem;
+  }
+
+  .activity-status.error { color: #ffe2a8; }
+
+  .activity-status:empty { display: none; }
+
+  .activity-link[data-state="error"] .activity-value,
+  .module-count[data-state="error"] strong {
+    border-color: var(--line-2);
+    background: transparent;
+    color: var(--muted);
   }
 
   .community-header {
@@ -144,6 +315,8 @@
     color: var(--teal-deep);
   }
 
+  .nav-actions .kbk-language-switch { margin-left: 0; }
+
   .module-card {
     display: grid;
     grid-template-columns: minmax(150px, 0.7fr) minmax(0, 1.6fr) auto;
@@ -154,6 +327,33 @@
     border: 1px solid var(--line-2);
     background: rgba(0, 0, 0, 0.14);
     transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+
+  .module-card.has-activity {
+    grid-template-columns: minmax(150px, 0.7fr) minmax(0, 1.5fr) minmax(150px, auto) auto;
+  }
+
+  .module-count {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  .module-count-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .module-count strong {
+    min-width: 30px;
+    min-height: 27px;
+    padding: 3px 7px;
+    font-size: 0.72rem;
   }
 
   .module-card h2 {
@@ -220,14 +420,28 @@
   }
 
   @media (max-width: 960px) {
-    .community-wrap { padding: 52px 20px 80px; }
+    .community-wrap { padding: 24px 20px 80px; }
     .community-header { grid-template-columns: 1fr; gap: 16px; }
     .home-link { justify-self: start; }
     .community-intro-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .module-card.has-activity {
+      grid-template-columns: minmax(130px, 0.7fr) minmax(0, 1.4fr) minmax(145px, auto) auto;
+      gap: 12px 16px;
+    }
   }
 
   @media (max-width: 640px) {
     .community-intro-row { grid-template-columns: 1fr; gap: 16px; }
+    .module-card,
+    .module-card.has-activity {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto;
+      min-height: 0;
+    }
+    .module-card h2 { grid-column: 1 / -1; }
+    .module-card p { grid-column: 1 / -1; }
+    .module-count { grid-column: 1; }
+    .module-card .module-action { grid-column: 2; justify-self: end; }
     .registration-prompt {
       grid-template-columns: minmax(0, 1fr) auto;
       padding: 14px 0 0;
@@ -237,25 +451,49 @@
   }
 
   @media (max-width: 480px) {
-    .community-wrap { padding-top: 38px; }
+    .community-wrap { padding-top: 24px; }
     .registration-prompt { grid-template-columns: 1fr; }
     .registration-action { justify-self: start; }
     .module-card {
       grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-rows: auto 1fr auto;
-      min-height: 160px;
+      grid-template-rows: auto auto auto auto;
+      min-height: 0;
       padding: 16px;
       gap: 8px 12px;
     }
     .module-card h2 { grid-column: 1 / -1; }
     .module-card p { grid-column: 1 / -1; }
+    .module-count { grid-column: 1 / -1; }
     .module-action { grid-column: 1 / -1; }
-    .nav-back { padding: 7px 11px; font-size: 0.64rem; letter-spacing: 0.12em; }
+    .nav-actions { gap: 4px; }
+    .nav-back { padding: 7px 6px; font-size: 0.64rem; letter-spacing: 0.1em; }
+    .nav-actions .kbk-language-switch { padding-right: 6px; padding-left: 6px; }
+    .activity-menu-toggle {
+      width: 44px;
+      height: 44px;
+      min-height: 44px;
+      flex: 0 0 44px;
+      padding: 0;
+      border-radius: 50%;
+    }
+    .activity-toggle-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .home-link,
     .nav-back,
+    .activity-menu-toggle,
+    .activity-link,
     .module-card,
     .module-action::after,
     .registration-action { transition: none; }
@@ -281,7 +519,35 @@
       <img class="brand-logo" src="resources/1MNIEJSZA%20NIESK_Obszar%20roboczy%201%20kopia.png" alt="KBK">
       KBK
     </a>
-    <a href="index.html" class="nav-back">← główna KBK</a>
+    <div class="nav-actions">
+      <button class="activity-menu-toggle" id="activityMenuToggle" type="button" aria-expanded="false" aria-controls="activityPopover">
+        <span class="activity-indicator">
+          <svg class="activity-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+            <path d="M10 21h4"></path>
+          </svg>
+          <span class="activity-summary-count" id="activitySummaryCount" aria-live="polite">…</span>
+        </span>
+        <span class="activity-toggle-label">Aktywność</span>
+      </button>
+      <a href="index.html" class="nav-back">← główna KBK</a>
+      <section class="activity-popover" id="activityPopover" aria-labelledby="activityHeading" hidden>
+        <h2 class="activity-heading" id="activityHeading">Aktywność w społeczności</h2>
+        <a class="activity-link" href="wnioski.html" data-activity="proposals">
+          <span class="activity-label">Aktywne wnioski</span>
+          <strong class="activity-value" id="activityProposalCount">…</strong>
+        </a>
+        <a class="activity-link" href="tablica.html" data-activity="polls">
+          <span class="activity-label">Otwarte ankiety</span>
+          <strong class="activity-value" id="activityPollCount">…</strong>
+        </a>
+        <a class="activity-link" href="tablica.html" data-activity="posts">
+          <span class="activity-label">Posty z aktywnością (3 dni)</span>
+          <strong class="activity-value" id="activityPostCount">…</strong>
+        </a>
+        <p class="activity-status" id="activityStatus" role="status"></p>
+      </section>
+    </div>
   </div>
 </nav>
 
@@ -312,16 +578,37 @@
       <span class="module-action">Zobacz statystyki</span>
     </a>
 
-    <a href="wnioski.html" class="module-card">
+    <a href="wnioski.html" class="module-card has-activity">
       <h2>Wnioski</h2>
       <p>Złóż wniosek, poznaj propozycje innych osób i zagłosuj w sprawach społeczności.</p>
+      <span class="module-count" data-module-count="proposals">
+        <span class="module-count-item"><span>Aktywne:</span><strong>…</strong></span>
+      </span>
       <span class="module-action">Złóż wniosek lub zagłosuj</span>
+    </a>
+
+    <a href="tablica.html" class="module-card has-activity">
+      <h2>Tablica</h2>
+      <p>Publikuj posty, komentuj i bierz udział w ankietach społeczności.</p>
+      <span class="module-count" data-module-count="board">
+        <span class="module-count-item"><span>Aktywne ankiety:</span><strong>…</strong></span>
+        <span class="module-count-item"><span>Posty (3 dni):</span><strong>…</strong></span>
+      </span>
+      <span class="module-action">Otwórz Tablicę</span>
+    </a>
+
+    <a href="konto.html" class="module-card">
+      <h2>Zarządzanie kontem</h2>
+      <p>Zmień PIN, dane kontaktowe i dobrowolne zgody albo unieważnij kod QR.</p>
+      <span class="module-action">Zarządzaj kontem</span>
     </a>
   </div>
 </main>
 
 <script src="public-config.js"></script>
+<script src="js/shared.js"></script>
 <script src="js/feedback.js?v=20260930-2"></script>
-<script src="js/i18n.js?v=20261022-1"></script>
+<script src="js/community.js?v=20261105-2"></script>
+<script src="js/i18n.js?v=20261105-2"></script>
 </body>
 </html>

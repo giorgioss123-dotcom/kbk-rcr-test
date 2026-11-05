@@ -6,10 +6,21 @@ Statyczny frontend KBK: strony HTML, wspólny CSS i JavaScript. Logika biznesowa
 
 1. Otwórz `public-config.js`.
 2. W `KBK_APP_CONFIG.webAppUrl` wpisz URL wdrożonego publicznego Web App.
-3. W `KBK_PUBLIC_SHEET_IDS` wpisz publiczne ID arkuszy `CENNIK`, `WNIOSKI` i `TRANSAKCJE`.
+3. W `KBK_PUBLIC_SHEET_IDS` wpisz publiczne ID arkuszy `CENNIK`, `WNIOSKI`, `TRANSAKCJE`
+   i `Tablica` (`tablicaFileId`).
 4. Upewnij się, że arkusze przeznaczone do odczytu publicznego nie zawierają danych wrażliwych.
 
 Nie umieszczaj w tym katalogu PIN-ów, haseł, tokenów ani ID arkuszy prywatnych.
+
+Przy pierwszym uruchomieniu modułu Tablica uruchom jednorazowo `initializeTablica()` w
+projekcie `public-backend`. Funkcja tworzy arkusz `Tablica`, zakładki i nagłówki, ustawia
+publiczny odczyt oraz zapisuje jego ID w Script Properties jako `TABLICA_FILE_ID`. Następnie
+skopiuj ID pliku do konfiguracji frontendu. Nie uruchamiaj inicjalizatora ponownie po ustawieniu
+tej właściwości.
+
+W już istniejącym pliku `Tablica` dodaj na końcu kolumnę `Przypięty` w zakładkach `Posty` i
+`Ankiety`. Ustaw `NIE` przy dotychczasowych wpisach, a `TAK` przy tych, które mają być przypięte.
+Nowe wpisy otrzymują `NIE` automatycznie.
 
 ## 2. Uruchom lokalnie
 
@@ -36,12 +47,18 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 - dane `CENNIK`, `WNIOSKI` i `TRANSAKCJE` są widoczne tylko w zakresie przewidzianym dla użytkownika;
 - działają widoki mobilne oraz linki do `confirm.html`;
 - formularz rejestracji zapisuje telefon i wymaga zgody RODO z działającym linkiem do polityki prywatności;
+- strona `konto.html` jest dostępna ze strefy społeczności i odwzorowuje przepływ rejestracji: lista operacji, osobny formularz dla każdej akcji oraz przycisk powrotu do listy; użytkownik podaje login, a zmiana PIN-u, danych kontaktowych/dobrowolnych zgód lub unieważnienie QR wymaga kliknięcia linku wysłanego na obecny adres e-mail konta;
+- po potwierdzeniu aktualizacji profilu zmieniają się tylko dane kontaktowe i zgody dobrowolne; login, e-mail i obowiązkowa zgoda RODO pozostają bez zmian;
+- po potwierdzeniu unieważnienia QR stary kod przestaje działać, a po nowy paszport użytkownik kontaktuje się z administracją;
 - wnioski, głosowanie i ryneczek pozwalają wybrać logowanie PIN-em albo skanowanie QR paszportu kamerą (wymagane HTTPS i zgoda na kamerę);
 - po odczytaniu QR kamera się wyłącza; ryneczek, głosowanie i składanie wniosku wysyłają wybraną operację od razu po skanie (głosowanie i wniosek nadal wymagają późniejszego potwierdzenia linkiem e-mailowym);
 - przy nieznanym wyniku zamówienia ryneczek informuje o konieczności sprawdzenia poczekalni przez dyżurnego; formularz nie blokuje kolejnych prób, a każde ponowne wysłanie jest nowym zamówieniem;
 - wnioski i głosy po niejednoznacznym wyniku jasno informują o możliwym zapisie, blokują ponowne wysłanie w tym formularzu i kierują do sprawdzenia poczty oraz folderu spam;
-- szczegóły opublikowanych wniosków pokazują link do posta na Hive, a po zamknięciu głosowania również link do komentarza z wynikiem;
+- szczegóły opublikowanych wniosków pokazują link do posta na Hive;
 - karty wniosków pozwalają skopiować link do konkretnego wniosku; otwarcie linku automatycznie pokazuje jego szczegóły;
+- strefa społeczności pokazuje w menu na pasku nawigacji aktywne wnioski, otwarte ankiety i posty z aktywnością w ostatnich 3 dniach; liczba przy dzwonku oznacza liczbę kategorii z aktywnością, a w razie problemu z odczytem danych wyświetlany jest stan niedostępny zamiast fałszywego zera;
+- Tablica odczytuje publiczne zakładki `Posty`, `Komentarze`, `Ankiety` i `Głosy`; publikowanie, dopisywanie odpowiedzi do otwartych ankiet i głosowanie wymagają PIN-u lub kodu QR;
+- wpisy z wartością `TAK` w kolumnie `Przypięty` są wyświetlane nad pozostałymi, niezależnie od sortowania, z delikatnym oznaczeniem i separatorem;
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
 
 Kod QR paszportu jest samodzielnym sekretem uwierzytelniającym do tych operacji. Każda osoba

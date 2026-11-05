@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablica — KBK</title>
+<link rel="stylesheet" href="styles/common.css">
+<style>
+  :root {
+    --teal: #1a5a6b; --teal-dark: #13454f; --teal-deep: #0c3038;
+    --white: #fff; --paper: #f4eee0; --paper-ink: #1a252a; --paper-muted: #7a6f4d;
+    --paper-line: rgba(12,48,56,.18); --line: rgba(255,255,255,.18); --line-2: rgba(255,255,255,.32);
+    --muted: rgba(255,255,255,.82); --muted-dim: rgba(255,255,255,.58);
+    --gold: #d4a95f; --pos: #7cc08e; --neg: #d1687a; --maxw: 900px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; overflow-x: hidden; }
+  body {
+    min-height: 100vh; color: var(--white); font: 16px/1.6 'Archivo', system-ui, sans-serif;
+    background: radial-gradient(ellipse at 15% -10%, rgba(43,132,153,.38), transparent 55%),
+      radial-gradient(ellipse at 100% 100%, rgba(12,48,56,.75), transparent 60%), #13454f fixed;
+  }
+  .wrap { width: min(var(--maxw), 100%); margin: 0 auto; padding: 54px 24px 100px; }
+  header { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px; padding-bottom:22px; border-bottom:2px solid var(--white); }
+  h1 { margin:0 0 8px; font:400 clamp(2rem,5vw,3rem)/1 Anton,sans-serif; text-transform:uppercase; }
+  header p { margin:0; max-width:58ch; color:var(--muted); }
+  .nav-back { color:var(--muted); border:1px solid var(--line-2); padding:8px 14px; text-decoration:none; font:500 .7rem 'IBM Plex Mono',monospace; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
+  .nav-back:hover { background:var(--white); color:var(--teal-deep); }
+  .toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin:26px 0 18px; }
+  .switches,.create-actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .switches button,.create-actions button,.action-button {
+    border:1px solid var(--line-2); padding:10px 16px; background:transparent; color:var(--white);
+    font:500 .7rem 'IBM Plex Mono',monospace; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
+  }
+  .switches button.active,.create-actions button { background:var(--white); color:var(--teal-deep); border-color:var(--white); }
+  .switches button:hover,.create-actions button:hover,.action-button:hover { background:var(--gold); border-color:var(--gold); color:var(--teal-deep); }
+  .notice { min-height:24px; margin:8px 0 18px; color:var(--muted); font-size:.86rem; }
+  .notice.error { color:#ffc0c7; }
+  .notice.ok { color:#a6e5b7; }
+  .entry { margin:0 0 16px; padding:22px 24px; color:var(--paper-ink); background:var(--paper); border:1px solid rgba(0,0,0,.12); box-shadow:5px 5px 0 rgba(0,0,0,.16); }
+  .entry-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+  .entry h2 { margin:0 0 8px; color:var(--teal-deep); font:400 1.45rem/1.2 Anton,sans-serif; text-transform:uppercase; }
+  .meta { color:var(--paper-muted); font:500 .68rem 'IBM Plex Mono',monospace; letter-spacing:.04em; }
+  .entry-content { margin:14px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+  .tag { padding:3px 8px; border:1px solid var(--paper-line); border-radius:999px; color:var(--teal-deep); font-size:.72rem; }
+  .entry-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .entry-actions button,.comment-toggle {
+    border:1px solid rgba(12,48,56,.34); padding:7px 11px; background:transparent; color:var(--teal-deep);
+    font:500 .64rem 'IBM Plex Mono',monospace; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+  }
+  .entry-actions button:hover,.comment-toggle:hover { background:var(--teal-deep); color:var(--paper); }
+  .comments { margin-top:18px; padding-top:16px; border-top:1px solid var(--paper-line); }
+  .comment { padding:12px 0; border-bottom:1px solid var(--paper-line); }
+  .comment:last-of-type { border-bottom:0; }
+  .comment p { margin:6px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .comment .entry-actions { margin-top:8px; }
+  .poll-options { display:grid; gap:10px; margin:18px 0; }
+  .poll-option { padding:12px; border:1px solid var(--paper-line); }
+  .poll-option-head { display:flex; justify-content:space-between; gap:10px; font-weight:700; }
+  .poll-bar { height:6px; margin:8px 0; background:rgba(12,48,56,.1); }
+  .poll-bar span { display:block; height:100%; background:var(--teal); }
+  .voter-list { color:var(--paper-muted); font-size:.76rem; overflow-wrap:anywhere; }
+  .empty { padding:26px 20px; border:1px solid var(--line-2); color:var(--muted); text-align:center; }
+  .scrim { position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(6,29,35,.78); backdrop-filter:blur(7px); }
+  .scrim.open { display:flex; }
+  .dialog { position:relative; width:min(620px,100%); max-height:calc(100vh - 36px); overflow-y:auto; padding:30px; background:var(--paper); color:var(--paper-ink); box-shadow:10px 10px 0 rgba(0,0,0,.28); }
+  .dialog h2 { margin:0 36px 20px 0; color:var(--teal-deep); font:400 1.6rem/1.15 Anton,sans-serif; text-transform:uppercase; }
+  .close { position:absolute; top:14px; right:16px; border:0; background:none; color:var(--teal-deep); font-size:1.4rem; cursor:pointer; }
+  .close:disabled { opacity:.5; cursor:default; }
+  .field { display:grid; gap:6px; margin:0 0 15px; }
+  .field label,.field-label { color:var(--paper-muted); font:500 .62rem 'IBM Plex Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
+  .field input,.field textarea,.field select { width:100%; padding:11px 12px; border:1px solid var(--paper-line); border-radius:0; background:#fffdf7; color:var(--paper-ink); font:inherit; }
+  .field textarea { min-height:100px; resize:vertical; }
+  .field textarea.options-input { min-height:140px; }
+  .field input:focus,.field textarea:focus,.field select:focus { outline:2px solid rgba(26,90,107,.35); }
+  #boardAuth .qr-auth-method-label { font-weight:700; }
+  #boardAuth .qr-auth-method-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:8px 0 12px; }
+  #boardAuth .qr-auth-method-label { margin:0; color:var(--teal-deep); font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; }
+  #boardAuth .qr-auth-methods { display:inline-flex; flex-wrap:nowrap; gap:4px; margin:0; padding:4px; border:1px solid var(--paper-line); border-radius:999px; background:rgba(255,255,255,.55); }
+  #boardAuth .qr-auth-method { flex:1 1 0; min-width:90px; border:0; border-radius:999px; padding:8px 12px; background:transparent; color:var(--teal-deep); font:700 .76rem 'Archivo',sans-serif; text-align:center; }
+  #boardAuth .qr-auth-method.active { background:var(--teal-deep); color:var(--paper); }
+  #boardPinFields { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #boardPinFields[hidden] { display:none; }
+  #boardPinFields .field { margin:0; }
+  .dialog-message { min-height:24px; margin:14px 0 0; font-size:.85rem; }
+  .dialog-message.error { color:#a44650; }
+  .dialog-message.ok { color:#31553f; }
+  .dialog-message[hidden] { display:none; }
+  .dialog-actions { display:flex; gap:10px; margin-top:22px; }
+  .dialog-actions button { flex:1; padding:12px; border:1px solid var(--teal-deep); background:var(--teal-deep); color:var(--paper); font:500 .68rem 'IBM Plex Mono',monospace; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+  .dialog-actions button.cancel { background:transparent; color:var(--teal-deep); }
+  .dialog-actions button:disabled { opacity:.55; cursor:default; }
+  @media(max-width:640px) {
+    .wrap { padding:38px 16px 80px; }
+    .entry { padding:18px; }
+    .dialog { padding:25px 20px; }
+    #boardAuth .qr-auth-method-row { align-items:flex-start; flex-direction:column; gap:8px; }
+    #boardAuth .qr-auth-methods { width:100%; }
+  }
+  @media(max-width:400px) { #boardPinFields { grid-template-columns:1fr; gap:0; } }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-brand"><img class="brand-logo" src="resources/1MNIEJSZA%20NIESK_Obszar%20roboczy%201%20kopia.png" alt="KBK">KBK</a>
+    <a href="spolecznosc.html" class="nav-back">← strefa społeczności</a>
+  </div>
+</nav>
+<main class="wrap">
+  <header>
+    <div><h1>Tablica</h1><p>Publikuj posty i ankiety, komentuj oraz głosuj na odpowiedzi.</p></div>
+  </header>
+  <div class="toolbar">
+    <div class="switches" role="tablist" aria-label="Rodzaj wpisów">
+      <button type="button" class="active" data-view="posts" aria-pressed="true">Posty</button>
+      <button type="button" data-view="polls" aria-pressed="false">Ankiety</button>
+    </div>
+    <div class="create-actions">
+      <button type="button" id="newPost">Nowy post</button>
+      <button type="button" id="newPoll">Nowa ankieta</button>
+    </div>
+  </div>
+  <div id="boardNotice" class="notice" role="status" aria-live="polite"></div>
+  <section id="postsView" aria-label="Posty"></section>
+  <section id="pollsView" aria-label="Ankiety" hidden></section>
+</main>
+
+<div class="scrim" id="boardScrim">
+  <section class="dialog" id="boardDialog" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="dialogTitle">
+    <button type="button" class="close" id="dialogClose" aria-label="Zamknij">×</button>
+    <h2 id="dialogTitle"></h2>
+    <div id="operationFields"></div>
+    <div id="boardAuth"></div>
+    <div id="boardPinFields">
+      <div class="field"><label for="boardLogin">Login</label><input id="boardLogin" autocomplete="username" style="text-transform:lowercase"></div>
+      <div class="field"><label for="boardPin">PIN</label><input id="boardPin" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password"></div>
+    </div>
+    <p id="dialogMessage" class="dialog-message" role="status" aria-live="polite"></p>
+    <div class="dialog-actions">
+      <button type="button" class="cancel" id="dialogCancel">Anuluj</button>
+      <button type="button" id="dialogSubmit">Opublikuj</button>
+    </div>
+  </section>
+</div>
+
+<script src="public-config.js"></script>
+<script src="js/shared.js?v=20261001-1"></script>
+<script src="js/pin-reset.js?v=20260930-1"></script>
+<script src="js/vendor/jsQR-1.4.0.js"></script>
+<script src="js/qr-auth.js?v=20261023-8"></script>
+<script src="js/board.js?v=20261023-6"></script>
+<script src="js/feedback.js?v=20260930-2"></script>
+<script src="js/i18n.js?v=20261023-4"></script>
+</body>
+</html>

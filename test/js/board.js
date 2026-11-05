@@ -12,8 +12,10 @@
   var polls = [];
   var votes = [];
   var pendingOperation = null;
+  var boardLoadFailed = false;
 
   var filter = { type: 'all', tags: [] };
+  var tagFiltersOpen = false;
   var sort = { field: 'activity', dir: 'desc' };
 
   var boardView = document.getElementById('boardEntries');
@@ -29,10 +31,6 @@
   var cancelButton = document.getElementById('dialogCancel');
   var closeDialogFocus = null;
   var closeDetailFocus = null;
-
-  var PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
 
   var auth = window.KBKQrAuth.create({
     mountId: 'boardAuth',
@@ -130,6 +128,7 @@
   }
 
   function loadBoard() {
+    boardLoadFailed = false;
     setNotice('Wczytywanie Tablicy…');
     return Promise.all([
       getRows('Posty'), getRows('Komentarze'), getRows('Ankiety'), getRows('Głosy')
@@ -141,6 +140,7 @@
       renderEntries();
       setNotice('');
     }).catch(function (error) {
+      boardLoadFailed = true;
       console.error('Nie udało się wczytać Tablicy.', error);
       setNotice(error.message || 'Nie udało się wczytać Tablicy.', 'error');
       boardView.innerHTML = '<div class="empty">Nie udało się wczytać wpisów.</div>';
@@ -153,6 +153,7 @@
   function commentId(row) { return cellText(row, ['ID_KOMENTARZA', 'ID komentarza']); }
   function pollId(row) { return cellText(row, ['ID_ANKIETY', 'ID ankiety']); }
   function loginOf(row) { return cellText(row, ['LOGIN_AUTORA', 'LOGIN', 'NAZWA_UŻYTKOWNIKA']); }
+  function isPinned(row) { return cellText(row, ['Przypięty']).trim().toUpperCase() === 'TAK'; }
 
   function pollAnswers(poll) {
     try {
@@ -162,6 +163,15 @@
       console.error('Nieprawidłowy format odpowiedzi ankiety.', error);
       return [];
     }
+  }
+
+  function isMultipleChoicePoll(poll) {
+    var type = cellText(poll, ['TYP']);
+    return type === 'multiple' || type.indexOf('multiple_') === 0;
+  }
+
+  function allowsPollAnswers(poll) {
+    return /_open$/.test(cellText(poll, ['TYP']));
   }
 
   function pollVotes(id) {
@@ -201,7 +211,8 @@
         type: 'post', row: post, id: postId(post),
         tags: parseTags(cellText(post, ['TAGI'])),
         createdAt: dateValue(cellValue(post, ['DATA_UTWORZENIA'])).getTime(),
-        activityAt: postActivity(post)
+        activityAt: postActivity(post),
+        pinned: isPinned(post)
       });
     });
     polls.forEach(function (poll) {
@@ -209,7 +220,8 @@
         type: 'poll', row: poll, id: pollId(poll),
         tags: parseTags(cellText(poll, ['TAGI'])),
         createdAt: dateValue(cellValue(poll, ['DATA_UTWORZENIA'])).getTime(),
-        activityAt: pollActivity(poll)
+        activityAt: pollActivity(poll),
+        pinned: isPinned(poll)
       });
     });
     return all;
@@ -230,6 +242,7 @@
   }
 
   function compareEntries(a, b) {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     var av = sort.field === 'created' ? a.createdAt : a.activityAt;
     var bv = sort.field === 'created' ? b.createdAt : b.activityAt;
     return sort.dir === 'asc' ? av - bv : bv - av;
@@ -246,14 +259,91 @@
         '</div>';
       return;
     }
-    boardView.innerHTML = visible.map(function (e) {
-      return e.type === 'post' ? renderPostCard(e.row) : renderPollCard(e.row);
+    var pinned = visible.filter(function (entry) { return entry.pinned; });
+    var regular = visible.filter(function (entry) { return !entry.pinned; });
+    boardView.innerHTML = pinned.concat(regular).map(function (e, index) {
+      var html = e.type === 'post' ? renderPostCard(e.row) : renderPollCard(e.row);
+      if (pinned.length && index === pinned.length) {
+        return '<div class="entries-separator">' + (isEnglish ? 'Other entries' : 'Pozostałe wpisy') + '</div>' + html;
+      }
+      return html;
     }).join('');
+  }
+
+  function shareLink(type, id) {
+    var url = new URL(window.location.href);
+    url.searchParams.delete('post');
+    url.searchParams.delete('poll');
+    url.searchParams.set(type === 'post' ? 'post' : 'poll', id);
+    url.hash = '';
+    return url.href;
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    var input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    var copied = false;
+    try { copied = document.execCommand('copy'); }
+    finally { input.remove(); }
+    return copied ? Promise.resolve() : Promise.reject(new Error('Schowek jest niedostępny.'));
+  }
+
+  function shareEntry(type, id) {
+    var link = shareLink(type, id);
+    Promise.resolve().then(function () { return copyText(link); }).then(function () {
+      setNotice(isEnglish ? 'Link copied to clipboard.' : 'Link został skopiowany do schowka.', 'ok');
+    }).catch(function (error) {
+      console.error('Nie udało się skopiować linku do wpisu.', error);
+      setNotice(isEnglish
+        ? 'Could not copy the link. Copy it from the address bar: ' + link
+        : 'Nie udało się skopiować linku. Skopiuj go z paska adresu: ' + link, 'error');
+    });
+  }
+
+  function shareButtonHtml(type, id) {
+    return '<button type="button" class="share-link-button" data-action="share-entry" ' +
+      'data-share-type="' + esc(type) + '" data-share-id="' + esc(id) + '">' +
+      (isEnglish ? 'Share' : 'Udostępnij') + '</button>';
+  }
+
+  function openLinkedEntry() {
+    var params = new URLSearchParams(window.location.search);
+    var post = params.get('post');
+    var poll = params.get('poll');
+    if (!post && !poll) return;
+    if (boardLoadFailed) return;
+    if (post && poll) {
+      setNotice(isEnglish
+        ? 'The link is invalid: it contains both a post and a poll.'
+        : 'Link jest nieprawidłowy: zawiera jednocześnie post i ankietę.', 'error');
+      return;
+    }
+    var type = post ? 'post' : 'poll';
+    var entry = findEntry(type, post || poll);
+    if (entry) {
+      openDetail(entry);
+      return;
+    }
+    setNotice(isEnglish
+      ? 'The requested entry was not found. It may have been removed.'
+      : 'Nie znaleziono wskazanego wpisu. Być może został usunięty.', 'error');
   }
 
   function renderTagFilterChips() {
     var tagFilterEl = document.getElementById('tagFilter');
     var tagFilterRow = document.getElementById('tagFilterRow');
+    var tagFilterToggle = document.getElementById('tagFilterToggle');
+    var tagFilterToggleLabel = document.getElementById('tagFilterToggleLabel');
+    var activeTagFilters = document.getElementById('activeTagFilters');
+    var tagFilterClear = document.getElementById('tagFilterClear');
     if (!tagFilterEl) return;
     var seen = {}, tags = [];
     getAllEntries().forEach(function (e) {
@@ -264,16 +354,45 @@
     });
     tags.sort(function (a, b) { return a.localeCompare(b, 'pl'); });
     if (tagFilterRow) tagFilterRow.hidden = tags.length === 0;
+    if (tags.length === 0) tagFiltersOpen = false;
+    tagFilterEl.hidden = !tagFiltersOpen;
+    if (tagFilterToggle) tagFilterToggle.setAttribute('aria-expanded', String(tagFiltersOpen));
+    if (tagFilterToggleLabel) {
+      tagFilterToggleLabel.textContent = filter.tags.length
+        ? (isEnglish ? 'Tags · ' : 'Tagi · ') + filter.tags.length
+        : (isEnglish ? 'Choose tags' : 'Wybierz tagi');
+    }
     tagFilterEl.innerHTML = tags.map(function (tag) {
       var active = filter.tags.indexOf(tag.toLowerCase()) !== -1;
       return '<button type="button" class="tag-chip' + (active ? ' active' : '') +
         '" data-tag="' + esc(tag) + '" aria-pressed="' + (active ? 'true' : 'false') + '">#' +
         esc(tag) + '</button>';
     }).join('');
+    if (activeTagFilters) {
+      activeTagFilters.innerHTML = filter.tags.map(function (tag) {
+        var label = '#' + tag;
+        return '<button type="button" class="active-tag-chip" data-remove-tag="' + esc(tag) +
+          '" aria-label="' + esc(isEnglish ? 'Remove filter ' + label : 'Usuń filtr ' + label) +
+          '">' + esc(label) + '<span aria-hidden="true">×</span></button>';
+      }).join('');
+      activeTagFilters.setAttribute('aria-label', isEnglish ? 'Active tag filters' : 'Aktywne filtry tagów');
+    }
+    if (tagFilterClear) {
+      tagFilterClear.hidden = filter.tags.length === 0;
+      tagFilterClear.textContent = isEnglish ? 'Clear' : 'Wyczyść';
+    }
+  }
+
+  function pinnedIconHtml() {
+    return '<span class="pin-indicator" role="img" aria-label="' +
+      (isEnglish ? 'Pinned' : 'Przypięty') + '" title="' + (isEnglish ? 'Pinned' : 'Przypięty') + '">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 9V4l1-1V2H7v1l1 1v5l-2 2v2h5v9h2v-9h5v-2l-2-2z"/></svg>' +
+      '</span>';
   }
 
   function renderPostCard(post) {
     var id = postId(post);
+    var pinned = isPinned(post);
     var title = cellText(post, ['TYTUŁ', 'TYTUL']);
     var content = cellText(post, ['TREŚĆ', 'TRESC']);
     var author = loginOf(post);
@@ -282,14 +401,13 @@
     if (commentCount > 0) {
       meta += ' · <span>' + commentCount + ' ' + commentCountLabel(commentCount) + '</span>';
     }
-    return '<article class="card" role="button" tabindex="0" ' +
-      'data-entry-type="post" data-post-id="' + esc(id) + '" ' +
-      'aria-label="' + esc(title) + ' — otwórz szczegóły">' +
+    return '<article class="card' + (pinned ? ' is-pinned' : '') + '" data-entry-type="post" data-post-id="' + esc(id) + '">' +
       '<div class="card-top"><div>' +
-      '<div class="card-kind">post</div>' +
-      '<h3 class="card-title">' + esc(title) + '</h3>' +
+      '<div class="card-kind-row"><div class="card-kind">post</div>' + (pinned ? pinnedIconHtml() : '') + '</div>' +
+      '<h3 class="card-title"><button type="button" class="card-open">' + esc(title) + '</button></h3>' +
       '<div class="card-meta">' + meta + '</div>' +
-      '</div></div>' +
+      '</div><button type="button" class="card-share" data-share-type="post" data-share-id="' +
+      esc(id) + '">' + (isEnglish ? 'Share' : 'Udostępnij') + '</button></div>' +
       (content ? '<p class="card-excerpt">' + esc(content) + '</p>' : '') +
       '<div class="tags">' + tagsHtml(cellText(post, ['TAGI'])) + '</div>' +
       '</article>';
@@ -297,6 +415,7 @@
 
   function renderPollCard(poll) {
     var id = pollId(poll);
+    var pinned = isPinned(poll);
     var title = cellText(poll, ['TYTUŁ', 'TYTUL']);
     var question = cellText(poll, ['PYTANIE']);
     var author = loginOf(poll);
@@ -307,14 +426,15 @@
       meta += ' · <span>' + voterCount + ' ' + voteCountLabel(voterCount) + '</span>';
     }
     var badge = closed ? '<span class="card-badge closed">zakończona</span>' : '';
-    return '<article class="card' + (closed ? ' is-closed' : '') + '" role="button" tabindex="0" ' +
-      'data-entry-type="poll" data-poll-id="' + esc(id) + '" ' +
-      'aria-label="' + esc(title) + ' — otwórz szczegóły">' +
+    return '<article class="card' + (closed ? ' is-closed' : '') + (pinned ? ' is-pinned' : '') +
+      '" data-entry-type="poll" data-poll-id="' + esc(id) + '">' +
       '<div class="card-top"><div>' +
-      '<div class="card-kind poll">ankieta</div>' +
-      '<h3 class="card-title">' + esc(title) + '</h3>' +
+      '<div class="card-kind-row"><div class="card-kind poll">ankieta</div>' + (pinned ? pinnedIconHtml() : '') + '</div>' +
+      '<h3 class="card-title"><button type="button" class="card-open">' + esc(title) + '</button></h3>' +
       '<div class="card-meta">' + meta + '</div>' +
-      '</div>' + badge + '</div>' +
+      '</div><div class="card-tools">' + badge +
+      '<button type="button" class="card-share" data-share-type="poll" data-share-id="' +
+      esc(id) + '">' + (isEnglish ? 'Share' : 'Udostępnij') + '</button></div></div>' +
       (question ? '<p class="card-excerpt">' + esc(question) + '</p>' : '') +
       '<div class="tags">' + tagsHtml(cellText(poll, ['TAGI'])) + '</div>' +
       '</article>';
@@ -340,10 +460,7 @@
         ? ' · <span class="detail-edited">edytowano ' +
           esc(dateLabel(cellValue(post, ['OSTATNIA_AKTYWNOŚĆ']))) + '</span>'
         : '') +
-      '</span>' +
-      '<button type="button" class="icon-btn" data-action="edit-post" ' +
-      'data-post-id="' + esc(id) + '" aria-label="Edytuj post" title="Edytuj post">' +
-      PENCIL_SVG + '</button>';
+      '</span>' + shareButtonHtml('post', id);
 
     document.getElementById('detailMeta').innerHTML = metaHtml;
     document.getElementById('detailTitle').textContent = title;
@@ -377,9 +494,6 @@
         '<span>' + esc(dateLabel(cellValue(comment, ['DATA_DODANIA']))) + '</span>' +
         (edited ? '<span>· edytowano ' +
           esc(dateLabel(cellValue(comment, ['OSTATNIA_AKTYWNOŚĆ']))) + '</span>' : '') +
-        '<button type="button" class="icon-btn" data-action="edit-comment" ' +
-        'data-comment-id="' + esc(commentId(comment)) + '" ' +
-        'aria-label="Edytuj komentarz" title="Edytuj komentarz">' + PENCIL_SVG + '</button>' +
         '</div>' +
         '<p class="comment-text">' + esc(cellText(comment, ['TREŚĆ', 'TRESC'])) + '</p>' +
         '</div>';
@@ -401,7 +515,8 @@
     var closeCell = cellValue(poll, ['DATA_ZAMKNIĘCIA', 'DATA_ZAMKNIECIA']);
     var hasCloseDate = dateValue(closeCell).getTime() > 0;
     var weighted = String(cellText(poll, ['SPOSÓB_LICZENIA', 'SPOSOB_LICZENIA'])).toUpperCase() === 'RCR';
-    var pollType = cellText(poll, ['TYP']) === 'multiple' ? 'multiple' : 'single';
+    var multipleChoice = isMultipleChoicePoll(poll);
+    var allowsNewAnswers = allowsPollAnswers(poll);
 
     document.getElementById('detailKind').textContent = 'ANKIETA';
     document.getElementById('detailMeta').innerHTML =
@@ -410,7 +525,7 @@
       (hasCloseDate
         ? ' · ' + (closed ? 'zakończona ' : 'termin: ') + esc(dateLabel(closeCell))
         : '') +
-      '</span>';
+      '</span>' + shareButtonHtml('poll', id);
 
     document.getElementById('detailTitle').textContent = title;
     document.getElementById('detailBadge').innerHTML = closed
@@ -423,7 +538,8 @@
     pollInfo.hidden = false;
     pollInfo.innerHTML =
       '<div class="detail-info">' +
-      '<span>' + (pollType === 'multiple' ? 'Wielokrotny wybór' : 'Jednokrotny wybór') + '</span>' +
+      '<span>' + (multipleChoice ? 'Wielokrotny wybór' : 'Jednokrotny wybór') + '</span>' +
+      ' · <span>' + (allowsNewAnswers ? 'Ankieta otwarta' : 'Ankieta zamknięta') + '</span>' +
       ' · <span>' + (weighted ? 'Głosy ważone RCR' : 'Głosy bez wagi') + '</span>' +
       '</div>';
 
@@ -478,9 +594,16 @@
         '</div>';
     }).join('');
 
-    document.getElementById('detailTopActions').innerHTML = !closed
-      ? '<button type="button" data-action="vote" data-poll-id="' + esc(id) + '">Oddaj / zmień głos</button>'
-      : '';
+    var actions = [];
+    if (!closed && allowsNewAnswers && answers.length < 20) {
+      actions.push('<button type="button" data-action="add-poll-answer" data-poll-id="' +
+        esc(id) + '">Dodaj odpowiedź</button>');
+    }
+    if (!closed) {
+      actions.push('<button type="button" data-action="vote" data-poll-id="' +
+        esc(id) + '">Oddaj / zmień głos</button>');
+    }
+    document.getElementById('detailTopActions').innerHTML = actions.join('');
 
     document.getElementById('detailCommentsSection').hidden = true;
     document.getElementById('detailComments').innerHTML = '';
@@ -534,19 +657,15 @@
   // ---------- event delegation (list) --------------------------------
 
   boardView.addEventListener('click', function (event) {
+    var shareButton = event.target.closest('[data-share-type][data-share-id]');
+    if (shareButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      shareEntry(shareButton.dataset.shareType, shareButton.dataset.shareId);
+      return;
+    }
     var card = event.target.closest('.card[data-entry-type]');
     if (!card) return;
-    var type = card.dataset.entryType;
-    var id = type === 'post' ? card.dataset.postId : card.dataset.pollId;
-    var entry = findEntry(type, id);
-    if (entry) openDetail(entry);
-  });
-
-  boardView.addEventListener('keydown', function (event) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    var card = event.target.closest('.card[data-entry-type]');
-    if (!card) return;
-    event.preventDefault();
     var type = card.dataset.entryType;
     var id = type === 'post' ? card.dataset.postId : card.dataset.pollId;
     var entry = findEntry(type, id);
@@ -575,26 +694,16 @@
     if (!button) return;
     var action = button.dataset.action;
 
-    if (action === 'edit-post') {
-      var post = posts.find(function (p) { return postId(p) === button.dataset.postId; });
-      if (!post) return;
-      var payload = { postId: postId(post), post: post };
-      closeDetail();
-      openOperation('edit-post', payload);
+    if (action === 'share-entry') {
+      shareEntry(button.dataset.shareType, button.dataset.shareId);
     } else if (action === 'add-comment') {
       var postIdVal = button.dataset.postId;
       closeDetail();
       openOperation('comment', { postId: postIdVal });
-    } else if (action === 'edit-comment') {
-      var comment = comments.find(function (c) { return commentId(c) === button.dataset.commentId; });
-      if (!comment) return;
-      var cPayload = {
-        commentId: commentId(comment),
-        postId: cellText(comment, ['ID_POSTA']),
-        comment: comment
-      };
+    } else if (action === 'add-poll-answer') {
+      var answerPollId = button.dataset.pollId;
       closeDetail();
-      openOperation('edit-comment', cPayload);
+      openOperation('add-poll-answer', { pollId: answerPollId });
     } else if (action === 'vote') {
       var poll = polls.find(function (p) { return pollId(p) === button.dataset.pollId; });
       if (!poll) return;
@@ -654,6 +763,33 @@
     });
   }
 
+  var tagFilterToggle = document.getElementById('tagFilterToggle');
+  if (tagFilterToggle) {
+    tagFilterToggle.addEventListener('click', function () {
+      tagFiltersOpen = !tagFiltersOpen;
+      renderTagFilterChips();
+    });
+  }
+
+  var activeTagFilters = document.getElementById('activeTagFilters');
+  if (activeTagFilters) {
+    activeTagFilters.addEventListener('click', function (event) {
+      var chip = event.target.closest('[data-remove-tag]');
+      if (!chip) return;
+      var index = filter.tags.indexOf(chip.dataset.removeTag);
+      if (index !== -1) filter.tags.splice(index, 1);
+      renderEntries();
+    });
+  }
+
+  var tagFilterClear = document.getElementById('tagFilterClear');
+  if (tagFilterClear) {
+    tagFilterClear.addEventListener('click', function () {
+      filter.tags = [];
+      renderEntries();
+    });
+  }
+
   // ---------- operation dialog ----------------------------------------
 
   function updateSubmitLabel() {
@@ -661,10 +797,9 @@
     if (!auth.isQrMode()) { submitButton.textContent = pendingOperation.submitLabel; return; }
     var verbs = {
       'create-post': 'publish the post',
-      'edit-post': 'save the changes',
       comment: 'add the comment',
-      'edit-comment': 'save the comment',
       'create-poll': 'publish the poll',
+      'add-poll-answer': 'add an answer',
       vote: 'submit the vote'
     };
     submitButton.textContent = isEnglish
@@ -686,41 +821,44 @@
     pendingOperation = {type: type, payload: payload, verb: '', submitLabel: ''};
     var fields = '';
 
-    if (type === 'create-post' || type === 'edit-post') {
-      pendingOperation.verb = type === 'edit-post' ? 'zapisz zmiany' : 'opublikuj post';
-      pendingOperation.submitLabel = type === 'edit-post' ? 'Zapisz zmiany' : 'Opublikuj post';
-      var existingPost = payload.post || {};
-      dialogTitle.textContent = type === 'edit-post' ? 'Edytuj post' : 'Nowy post';
+    if (type === 'create-post') {
+      pendingOperation.verb = 'opublikuj post';
+      pendingOperation.submitLabel = 'Opublikuj post';
+      dialogTitle.textContent = 'Nowy post';
       fields =
-        '<div class="field"><label for="postTitle">Tytuł</label><input id="postTitle" maxlength="200" required value="' + esc(cellText(existingPost, ['TYTUŁ', 'TYTUL'])) + '"></div>' +
-        '<div class="field"><label for="postContent">Treść</label><textarea id="postContent" required maxlength="10000">' + esc(cellText(existingPost, ['TREŚĆ', 'TRESC'])) + '</textarea></div>' +
-        '<div class="field"><label for="postTags">Tagi (rozdzielone przecinkiem)</label><input id="postTags" maxlength="1000" value="' + esc(cellText(existingPost, ['TAGI'])) + '"></div>';
-    } else if (type === 'comment' || type === 'edit-comment') {
-      pendingOperation.verb = type === 'edit-comment' ? 'zapisz komentarz' : 'dodaj komentarz';
-      pendingOperation.submitLabel = type === 'edit-comment' ? 'Zapisz komentarz' : 'Dodaj komentarz';
-      var existingComment = payload.comment || {};
-      dialogTitle.textContent = type === 'edit-comment' ? 'Edytuj komentarz' : 'Nowy komentarz';
-      fields = '<div class="field"><label for="commentContent">Treść komentarza</label><textarea id="commentContent" maxlength="5000" required>' +
-        esc(cellText(existingComment, ['TREŚĆ', 'TRESC'])) + '</textarea></div>';
+        '<div class="field"><label for="postTitle">Tytuł</label><input id="postTitle" maxlength="200" required></div>' +
+        '<div class="field"><label for="postContent">Treść</label><textarea id="postContent" required maxlength="10000"></textarea></div>' +
+        '<div class="field"><label for="postTags">Tagi (rozdzielone przecinkiem)</label><input id="postTags" maxlength="1000"></div>';
+    } else if (type === 'comment') {
+      pendingOperation.verb = 'dodaj komentarz';
+      pendingOperation.submitLabel = 'Dodaj komentarz';
+      dialogTitle.textContent = 'Nowy komentarz';
+      fields = '<div class="field"><label for="commentContent">Treść komentarza</label><textarea id="commentContent" maxlength="5000" required></textarea></div>';
     } else if (type === 'create-poll') {
       pendingOperation.verb = 'opublikuj ankietę';
       pendingOperation.submitLabel = 'Opublikuj ankietę';
       dialogTitle.textContent = 'Nowa ankieta';
       fields =
-        '<div class="field"><label for="pollType">Typ ankiety</label><select id="pollType"><option value="single">Jednokrotnego wyboru</option><option value="multiple">Wielokrotnego wyboru</option></select></div>' +
+        '<div class="field"><label for="pollType">Typ ankiety</label><select id="pollType"><option value="single_closed">Jednokrotnego wyboru — zamknięta</option><option value="single_open">Jednokrotnego wyboru — otwarta</option><option value="multiple_closed">Wielokrotnego wyboru — zamknięta</option><option value="multiple_open">Wielokrotnego wyboru — otwarta</option></select></div>' +
         '<div class="field"><label for="pollWeighted">Sposób liczenia głosów</label><select id="pollWeighted"><option value="false">Bez wagi</option><option value="true">Ważone RCR</option></select></div>' +
         '<div class="field"><label for="pollDays">Czas głosowania (dni, 1–60)</label><input id="pollDays" type="number" min="1" max="60" value="7" required></div>' +
         '<div class="field"><label for="pollTitle">Tytuł ankiety</label><input id="pollTitle" maxlength="200" required></div>' +
         '<div class="field"><label for="pollQuestion">Treść pytania</label><textarea id="pollQuestion" maxlength="5000" required></textarea></div>' +
         '<div class="field"><label for="pollAnswers">Odpowiedzi (każda w osobnym wierszu, 2–20)</label><textarea class="options-input" id="pollAnswers" required></textarea></div>' +
         '<div class="field"><label for="pollTags">Tagi (rozdzielone przecinkiem)</label><input id="pollTags" maxlength="1000"></div>';
+    } else if (type === 'add-poll-answer') {
+      pendingOperation.verb = 'dodaj odpowiedź';
+      pendingOperation.submitLabel = 'Dodaj odpowiedź';
+      dialogTitle.textContent = 'Dodaj odpowiedź do ankiety';
+      fields = '<div class="field"><label for="pollAnswer">Nowa odpowiedź</label><input id="pollAnswer" maxlength="200" required></div>' +
+        '<p class="meta">Dodanie odpowiedzi nie oddaje głosu.</p>';
     } else if (type === 'vote') {
       pendingOperation.verb = 'zapisz głos';
       pendingOperation.submitLabel = 'Zapisz głos';
       var poll = payload.poll;
       var choices = pollAnswers(poll);
       dialogTitle.textContent = 'Głosuj: ' + cellText(poll, ['TYTUŁ', 'TYTUL']);
-      var inputType = cellText(poll, ['TYP']) === 'multiple' ? 'checkbox' : 'radio';
+      var inputType = isMultipleChoicePoll(poll) ? 'checkbox' : 'radio';
       fields = '<p>' + esc(cellText(poll, ['PYTANIE'])) + '</p>' +
         (String(cellText(poll, ['SPOSÓB_LICZENIA'])).toUpperCase() === 'RCR'
           ? '<p class="meta">Każda zaznaczona odpowiedź otrzyma pełną wagę Twojego salda RCR.</p>' : '') +
@@ -758,12 +896,12 @@
     ['postId', 'commentId', 'pollId'].forEach(function (key) {
       if (pendingOperation.payload[key]) payload[key] = pendingOperation.payload[key];
     });
-    if (pendingOperation.type === 'create-post' || pendingOperation.type === 'edit-post') {
+    if (pendingOperation.type === 'create-post') {
       payload.title = document.getElementById('postTitle').value.trim();
       payload.content = document.getElementById('postContent').value.trim();
       payload.tags = document.getElementById('postTags').value.trim();
       if (!payload.title || !payload.content) throw new Error('Tytuł i treść posta są wymagane.');
-    } else if (pendingOperation.type === 'comment' || pendingOperation.type === 'edit-comment') {
+    } else if (pendingOperation.type === 'comment') {
       payload.content = document.getElementById('commentContent').value.trim();
       if (!payload.content) throw new Error('Treść komentarza jest wymagana.');
     } else if (pendingOperation.type === 'create-poll') {
@@ -782,15 +920,19 @@
       if (payload.answers.length < 2 || payload.answers.length > 20) {
         throw new Error('Ankieta musi mieć od 2 do 20 odpowiedzi.');
       }
-      if (new Set(payload.answers).size !== payload.answers.length) {
+      if (new Set(payload.answers.map(function (answer) { return answer.toLowerCase(); })).size !==
+          payload.answers.length) {
         throw new Error('Odpowiedzi nie mogą się powtarzać.');
       }
+    } else if (pendingOperation.type === 'add-poll-answer') {
+      payload.answer = document.getElementById('pollAnswer').value.trim();
+      if (!payload.answer) throw new Error('Treść odpowiedzi jest wymagana.');
     } else if (pendingOperation.type === 'vote') {
       payload.answers = Array.from(
         operationFields.querySelectorAll('input[name="pollChoice"]:checked')
       ).map(function (i) { return i.value; });
       if (!payload.answers.length) throw new Error('Wybierz co najmniej jedną odpowiedź.');
-      if (cellText(pendingOperation.payload.poll, ['TYP']) !== 'multiple' && payload.answers.length !== 1) {
+      if (!isMultipleChoicePoll(pendingOperation.payload.poll) && payload.answers.length !== 1) {
         throw new Error('Wybierz jedną odpowiedź.');
       }
     }
@@ -819,10 +961,9 @@
   function apiAction(operation, credentials) {
     var actionByType = {
       'create-post': 'createBoardPost',
-      'edit-post': 'editBoardPost',
       comment: 'addBoardComment',
-      'edit-comment': 'editBoardComment',
       'create-poll': 'createBoardPoll',
+      'add-poll-answer': 'addBoardPollAnswer',
       vote: 'castBoardVote'
     };
     return fetch(config.webAppUrl, {
@@ -851,11 +992,11 @@
       if (data && data.ok) {
         showDialogMessage(data.message || 'Zapisano.', 'ok');
         var reopen = null;
-        if (operation.type === 'comment' ||
-            operation.type === 'edit-comment' ||
-            operation.type === 'edit-post') {
+        if (operation.type === 'comment') {
           reopen = { type: 'post', id: payload.postId };
         } else if (operation.type === 'vote') {
+          reopen = { type: 'poll', id: payload.pollId };
+        } else if (operation.type === 'add-poll-answer') {
           reopen = { type: 'poll', id: payload.pollId };
         }
         setTimeout(function () {
@@ -918,5 +1059,5 @@
     else if (boardDialog.classList.contains('open')) closeDialog();
   });
 
-  loadBoard();
+  loadBoard().then(openLinkedEntry);
 })();
