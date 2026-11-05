@@ -207,6 +207,8 @@
   function getAllEntries() {
     var all = [];
     posts.forEach(function (post) {
+      if (!postId(post) || !cellText(post, ['TYTUŁ', 'TYTUL']) ||
+          !cellText(post, ['TREŚĆ', 'TRESC'])) return;
       all.push({
         type: 'post', row: post, id: postId(post),
         tags: parseTags(cellText(post, ['TAGI'])),
@@ -216,6 +218,8 @@
       });
     });
     polls.forEach(function (poll) {
+      if (!pollId(poll) || !cellText(poll, ['TYTUŁ', 'TYTUL']) ||
+          !cellText(poll, ['PYTANIE'])) return;
       all.push({
         type: 'poll', row: poll, id: pollId(poll),
         tags: parseTags(cellText(poll, ['TAGI'])),
@@ -252,10 +256,15 @@
 
   function renderEntries() {
     renderTagFilterChips();
-    var visible = getAllEntries().filter(entryMatchesFilter).sort(compareEntries);
+    var entries = getAllEntries();
+    var visible = entries.filter(entryMatchesFilter).sort(compareEntries);
     if (!visible.length) {
       boardView.innerHTML = '<div class="empty">' +
-        (isEnglish ? 'No entries match the criteria.' : 'Brak wpisów spełniających kryteria.') +
+        (entries.length
+          ? (isEnglish ? 'No entries match the criteria.' : 'Brak wpisów spełniających kryteria.')
+          : (isEnglish
+            ? 'There are no entries yet. Be the first to publish a post or poll!'
+            : 'Nie ma tu jeszcze żadnych wpisów. Dodaj pierwszy post lub ankietę!')) +
         '</div>';
       return;
     }
