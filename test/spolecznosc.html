@@ -228,6 +228,11 @@
     gap: 24px;
   }
 
+  .community-intro-copy {
+    display: grid;
+    gap: 10px;
+  }
+
   .intro,
   .registration-prompt p {
     margin: 0;
@@ -235,6 +240,15 @@
     font-size: 1rem;
     line-height: 1.7;
   }
+
+  .intro a {
+    color: var(--white);
+    text-decoration-color: var(--gold);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .intro a:hover { color: var(--gold); }
 
   .registration-prompt {
     display: grid;
@@ -556,7 +570,11 @@
     <div>
       <h1>Strefa społeczności</h1>
       <div class="community-intro-row">
-        <p class="intro">Wymieniaj rycary na nagrody, sprawdzaj saldo i bierz udział w sprawach społeczności.</p>
+        <div class="community-intro-copy">
+          <p class="intro">Wymieniaj rycary na nagrody, sprawdzaj saldo i bierz udział w sprawach społeczności.</p>
+          <p class="intro">Aby otrzymać rycary, wesprzyj działalność Królestwa, wykonując darowiznę przez <a href="https://zrzutka.pl/zhnzyt" target="_blank" rel="noopener">zrzutkę</a> lub terminal, a następnie zgłoś ten fakt dyżurnemu.</p>
+          <p class="intro">Rycary możesz również otrzymać, angażując się w wolontariat.</p>
+        </div>
         <div class="registration-prompt">
           <p>Utwórz konto rycarowe i potwierdź adres e-mail, aby dołączyć do systemu KBK.</p>
           <a href="rejestracja.html" class="registration-action">Załóż konto</a>

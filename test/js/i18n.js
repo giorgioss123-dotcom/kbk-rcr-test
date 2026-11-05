@@ -205,6 +205,11 @@
 
     'Strefa społeczności': 'Community area',
     'Wymieniaj rycary na nagrody, sprawdzaj saldo i bierz udział w sprawach społeczności.': 'Exchange Ricars for rewards, check your balance, and take part in community matters.',
+    'Aby otrzymać rycary, wesprzyj działalność Królestwa, wykonując darowiznę przez': 'To receive Ricars, support the Kingdom’s activities by donating through',
+    'zrzutkę': 'Zrzutka',
+    'lub terminal, a następnie zgłoś ten fakt dyżurnemu.': 'or at the terminal, then report it to the attendant.',
+    'Rycary możesz również otrzymać, angażując się w wolontariat.': 'You can also receive Ricars by volunteering.',
+    'Wesprzyj KBK przez Zrzutkę': 'Support KBK via Zrzutka',
     'Utwórz konto rycarowe i potwierdź adres e-mail, aby dołączyć do systemu KBK.': 'Create a Ricar account and confirm your email address to join the KBK system.',
     'Załóż konto': 'Create an account',
     'Pozostałe narzędzia': 'Other tools',

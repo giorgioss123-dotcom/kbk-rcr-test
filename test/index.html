@@ -149,7 +149,7 @@
 
   /* ═══ HERO ═══ */
   .hero {
-    padding: 44px 24px 40px;
+    padding: 44px 24px 20px;
     text-align: center;
   }
 
@@ -310,6 +310,34 @@
 
   .attendance-item + .attendance-item { border-left: 1px solid var(--line); }
 
+  .support-cta {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .support-cta:hover {
+    border-color: var(--white);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .support-cta .hb-value {
+    width: 100%;
+    font-size: clamp(0.94rem, 2.2vw, 1.4rem);
+    letter-spacing: 0.08em;
+    text-align: center;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .support-cta:focus-visible {
+    outline: 3px solid var(--white);
+    outline-offset: 4px;
+  }
+
   .attendance-label {
     color: var(--muted-dim);
     font-family: 'IBM Plex Mono', monospace;
@@ -343,6 +371,8 @@
     padding: 66px 24px;
     position: relative;
   }
+
+  .hero + .section { padding-top: 42px; }
 
   .section-alt {
     background: rgba(0, 0, 0, 0.16);
@@ -1168,7 +1198,7 @@
   @media (max-width: 720px) {
     body { font-size: 16px; }
 
-    .hero { padding: 34px 20px 32px; }
+    .hero { padding: 34px 20px 12px; }
     .hero-logo { width: 108px; height: 152px; margin-bottom: 30px; transform: scale(1.1); }
 
     .hours-band {
@@ -1194,6 +1224,7 @@
     }
 
     .section { padding: 54px 20px; }
+    .hero + .section { padding-top: 30px; }
     .section-alt { padding: 54px 0; }
     .section-alt > .section-inner { padding: 0 20px; }
 
@@ -1346,6 +1377,10 @@
         <span class="attendance-unit">osób</span>
       </div>
     </div>
+
+    <a class="hours-band support-cta" href="https://zrzutka.pl/zhnzyt" target="_blank" rel="noopener">
+      <span class="hb-value">Wesprzyj KBK przez Zrzutkę</span>
+    </a>
 
   </div>
 </header>
