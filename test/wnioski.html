@@ -151,13 +151,6 @@
   .confirm-banner.show { display: block; }
   .confirm-banner.ok    { background: var(--pos-bg); color: var(--pos); border-color: rgba(124,192,142,0.4); }
   .confirm-banner.error { background: var(--neg-bg); color: var(--neg); border-color: rgba(209,104,122,0.4); }
-  .share-notice {
-    display: none; margin: -10px 0 20px;
-    color: var(--pos); font-size: 0.82rem;
-  }
-  .share-notice.show { display: block; }
-  .share-notice.error { color: #ffd1d5; }
-
   .section-title {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.72rem; text-transform: uppercase;
@@ -241,7 +234,7 @@
   #detailModal .turnout { color: var(--paper-muted); }
   #detailHiveLinks {
     display: flex; flex-wrap: wrap; gap: 10px;
-    margin-top: 16px;
+    margin: 0;
   }
   #detailHiveLinks a {
     border: 1px solid var(--paper-line);
@@ -302,6 +295,58 @@
     height: 3px; background: var(--teal-deep);
   }
   #detailModal { width: min(820px, 94vw); }
+  #detailModal .card-meta { color: var(--paper-muted); }
+  #detailModal .share-proposal {
+    border-color: var(--paper-line);
+    color: var(--teal-deep);
+  }
+  #detailModal .share-proposal:hover {
+    background: var(--teal-deep);
+    color: var(--white);
+  }
+  #detailModal .card-actions { justify-content: flex-start; align-items: center; flex-wrap: wrap; }
+  .share-confirm-scrim {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(6, 10, 8, 0.72);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.18s ease;
+  }
+  .share-confirm-scrim.open { opacity: 1; pointer-events: auto; }
+  .share-confirm-dialog {
+    position: fixed; top: 50%; left: 50%; z-index: 41;
+    transform: translate(-50%, -50%) translateY(8px);
+    width: min(420px, 90vw); max-height: 80vh; overflow-y: auto;
+    padding: 32px; background: var(--paper); color: var(--paper-ink);
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 14px 14px 0 rgba(0,0,0,0.35);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+  .share-confirm-dialog.open {
+    opacity: 1; pointer-events: auto;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  .share-confirm-dialog h2 {
+    margin: 0 0 12px; color: var(--teal-deep);
+    font: 400 1.4rem 'Anton', sans-serif;
+    text-transform: uppercase;
+  }
+  .share-confirm-dialog p { margin: 0 0 16px; }
+  .share-confirm-dialog p.error { color: var(--neg-dk); }
+  .share-confirm-dialog .share-confirm-link {
+    display: block; margin: 0 0 18px; color: var(--teal-deep);
+    overflow-wrap: anywhere; user-select: all;
+    font: 0.78rem 'IBM Plex Mono', monospace;
+  }
+  .share-confirm-dialog button {
+    display: block; width: 100%; padding: 12px;
+    border: 1px solid var(--teal-deep);
+    background: var(--teal-deep); color: var(--paper);
+    font: 500 0.74rem 'IBM Plex Mono', monospace;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .share-confirm-dialog button:hover { background: transparent; color: var(--teal-deep); }
   .modal.open {
     opacity: 1; pointer-events: auto;
     transform: translate(-50%, -50%) translateY(0);
@@ -585,8 +630,6 @@
 
   <div class="sync" id="syncLabel">wczytywanie…</div>
   <div class="confirm-banner" id="confirmBanner"></div>
-  <div class="share-notice" id="shareNotice" role="status" aria-live="polite"></div>
-
   <div id="proposalsContainer">
     <div class="section-title">Aktywne</div>
     <div id="activeList"></div>
@@ -612,8 +655,8 @@
   <div class="turnout" id="detailTurnout"></div>
   <div class="card-actions">
     <button class="share-proposal" id="detailShareButton" type="button">Udostępnij wniosek</button>
+    <div id="detailHiveLinks"></div>
   </div>
-  <div id="detailHiveLinks"></div>
   <div id="votesListSection" style="margin-top:16px;"></div>
   <div id="voteSection" style="margin-top:20px;"></div>
 </div>
@@ -661,6 +704,14 @@
     <button class="cancel" data-close>Anuluj</button>
     <button class="confirm" id="proposalSubmitBtn">Złóż wniosek</button>
   </div>
+</div>
+
+<div class="share-confirm-scrim" id="shareConfirmScrim" aria-hidden="true"></div>
+<div class="share-confirm-dialog" id="shareConfirmDialog" role="alertdialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="shareConfirmTitle" aria-describedby="shareConfirmMessage">
+  <h2 id="shareConfirmTitle">Informacja</h2>
+  <p id="shareConfirmMessage"></p>
+  <span class="share-confirm-link" id="shareConfirmLink" hidden></span>
+  <button type="button" id="shareConfirmOk">OK</button>
 </div>
 
 <script src="public-config.js"></script>
@@ -911,7 +962,6 @@
         const dataZlozenia = strFromCell(lookupCell(row, ['DATA_ZŁOŻENIA', 'DATA_ZLOZENIA', 'data_zlozenia', 'Data złożenia']));
         const dataWygasniecia = strFromCell(lookupCell(row, ['DATA_WYGAŚNIĘCIA', 'DATA_WYGASNIECIA', 'data_wygasniecia', 'Data wygasnięcia']));
         const hivePostLink = strFromCell(lookupCell(row, ['LINK_HIVE', 'link_hive']));
-        const hiveResultLink = strFromCell(lookupCell(row, ['LINK_KOMENTARZ_HIVE', 'link_komentarz_hive']));
         const suma = za + przeciw;
         const sumaGlosow = suma + wstrzymujacych;
         const procentFrekwencji = totalForTurnout > 0 ? (sumaGlosow / totalForTurnout) * 100 : 0;
@@ -924,7 +974,6 @@
           dataZlozenia: dataZlozenia,
           dataWygasniecia: dataWygasniecia,
           hivePostLink: hivePostLink,
-          hiveResultLink: hiveResultLink,
           status: status,
           glosowZa: za,
           glosowPrzeciw: przeciw,
@@ -1008,19 +1057,40 @@
     return copied ? Promise.resolve() : Promise.reject(new Error('Schowek jest niedostępny.'));
   }
 
-  function showShareNotice(message, isError) {
-    const notice = document.getElementById('shareNotice');
-    notice.textContent = message;
-    notice.className = 'share-notice show' + (isError ? ' error' : '');
+  function showShareConfirmation(message, isError, link) {
+    document.getElementById('shareConfirmMessage').textContent = message;
+    document.getElementById('shareConfirmMessage').className = isError ? 'error' : '';
+    const linkElement = document.getElementById('shareConfirmLink');
+    linkElement.textContent = link || '';
+    linkElement.hidden = !link;
+    if (shareConfirmFocusRelease) return;
+
+    document.getElementById('shareConfirmScrim').classList.add('open');
+    const dialog = document.getElementById('shareConfirmDialog');
+    dialog.classList.add('open');
+    shareConfirmFocusRelease = window.KBKDialog.open(dialog, {
+      initialFocus: '#shareConfirmOk',
+      onEscape: closeShareConfirmation
+    });
+  }
+
+  function closeShareConfirmation(restoreFocus) {
+    document.getElementById('shareConfirmScrim').classList.remove('open');
+    document.getElementById('shareConfirmDialog').classList.remove('open');
+    if (shareConfirmFocusRelease) {
+      const releaseFocus = shareConfirmFocusRelease;
+      shareConfirmFocusRelease = null;
+      releaseFocus(restoreFocus !== false);
+    }
   }
 
   function shareProposal(id) {
     const link = proposalShareLink(id);
     Promise.resolve().then(function () { return copyText(link); }).then(function () {
-      showShareNotice('Link do wniosku został skopiowany do schowka.', false);
+      showShareConfirmation('Link do wniosku został skopiowany do schowka.', false);
     }).catch(function (error) {
       console.error('Nie udało się skopiować linku do wniosku.', error);
-      showShareNotice('Nie udało się skopiować linku. Skopiuj go ręcznie: ' + link, true);
+      showShareConfirmation('Nie udało się skopiować linku. Skopiuj go ręcznie:', true, link);
     });
   }
 
@@ -1034,7 +1104,7 @@
     }
     if (!/^\d+$/.test(requestedId)) {
       linkedProposalHandled = true;
-      showShareNotice('Link do wniosku jest nieprawidłowy.', true);
+      showShareConfirmation('Link do wniosku jest nieprawidłowy.', true);
       return;
     }
     const proposal = proposals.find(function (item) {
@@ -1042,7 +1112,7 @@
     });
     if (!proposal) {
       linkedProposalHandled = true;
-      showShareNotice('Nie znaleziono wskazanego wniosku. Być może został usunięty.', true);
+      showShareConfirmation('Nie znaleziono wskazanego wniosku. Być może został usunięty.', true);
       return;
     }
     linkedProposalHandled = true;
@@ -1071,14 +1141,10 @@
     document.getElementById('detailShareButton').onclick = function () {
       shareProposal(p.id);
     };
-    const hiveLinks = [
-      { url: safeHiveUrl(p.hivePostLink, false), label: 'Otwórz post na Hive' },
-      { url: safeHiveUrl(p.hiveResultLink, true), label: 'Zobacz wynik na Hive' }
-    ].filter(function (link) { return link.url; });
-    document.getElementById('detailHiveLinks').innerHTML = hiveLinks.map(function (link) {
-      return '<a href="' + link.url + '" target="_blank" rel="noopener noreferrer">' +
-        link.label + '</a>';
-    }).join('');
+    const hivePostUrl = safeHiveUrl(p.hivePostLink);
+    document.getElementById('detailHiveLinks').innerHTML = hivePostUrl
+      ? '<a href="' + hivePostUrl + '" target="_blank" rel="noopener noreferrer">Otwórz post na Hive</a>'
+      : '';
 
     const votesListSection = document.getElementById('votesListSection');
     const hasVotes = p.sumaGlosow > 0;
@@ -1098,11 +1164,9 @@
     openModal('detailModal');
   }
 
-  function safeHiveUrl(value, allowCommentFragment) {
+  function safeHiveUrl(value) {
     const url = safeText(value, '').trim();
-    const pattern = allowCommentFragment
-      ? /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+(?:#@[a-z0-9.-]+\/[a-z0-9-]+)?$/i
-      : /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+$/i;
+    const pattern = /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+$/i;
     return pattern.test(url) ? url : '';
   }
 
@@ -1381,6 +1445,7 @@
 
   let dialogFocusRelease = null;
   let modalReturnFocus = null;
+  let shareConfirmFocusRelease = null;
   function openModal(id){
     const alreadyOpen = document.querySelector('.modal.open');
     if (!alreadyOpen) modalReturnFocus = document.activeElement;
@@ -1407,6 +1472,7 @@
     });
   }
   function closeModals(){
+    closeShareConfirmation(false);
     window.KBKQrAuth.resetAll();
     document.getElementById('scrim').classList.remove('open');
     document.querySelectorAll('.modal').forEach(m => {
@@ -1423,11 +1489,12 @@
     modalReturnFocus = null;
   }
   document.getElementById('scrim').addEventListener('click', closeModals);
+  document.getElementById('shareConfirmOk').addEventListener('click', () => closeShareConfirmation());
   document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModals));
 
   loadProposals(true);
   setInterval(() => loadProposals(false), REFRESH_MS);
 </script>
-<script src="js/i18n.js?v=20261022-8"></script>
+<script src="js/i18n.js?v=20261105-1"></script>
 </body>
 </html>
