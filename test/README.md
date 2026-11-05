@@ -61,7 +61,7 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 - wnioski i głosy po niejednoznacznym wyniku jasno informują o możliwym zapisie, blokują ponowne wysłanie w tym formularzu i kierują do sprawdzenia poczty oraz folderu spam;
 - szczegóły opublikowanych wniosków pokazują link do posta na Hive;
 - karty wniosków pozwalają skopiować link do konkretnego wniosku; otwarcie linku automatycznie pokazuje jego szczegóły;
-- strefa społeczności pokazuje w menu na pasku nawigacji aktywne wnioski, otwarte ankiety i posty z aktywnością w ostatnich 3 dniach; liczba przy dzwonku oznacza liczbę kategorii z aktywnością, a w razie problemu z odczytem danych wyświetlany jest stan niedostępny zamiast fałszywego zera;
+- strefa społeczności pokazuje w menu na pasku nawigacji aktywne wnioski, otwarte ankiety i posty z aktywnością w ostatnich 3 dniach; liczba przy dzwonku jest sumą tych wpisów, a w razie problemu z odczytem danych wyświetlany jest stan niedostępny zamiast fałszywego zera;
 - Tablica odczytuje publiczne zakładki `Posty`, `Komentarze`, `Ankiety` i `Głosy`; publikowanie postów i komentarzy, dodawanie odpowiedzi do otwartych ankiet oraz głosowanie wymagają PIN-u lub kodu QR; opublikowanych postów i komentarzy nie można edytować;
 - ankiety obsługują typy jednokrotnego i wielokrotnego wyboru, otwarte i zamknięte; ankietę otwartą można opublikować bez odpowiedzi, a zalogowani użytkownicy mogą dopisywać je przed terminem zamknięcia, do limitu 20;
 - wpisy z wartością `TAK` w kolumnie `Przypięty` są wyświetlane nad pozostałymi, niezależnie od sortowania, z delikatnym oznaczeniem i separatorem;

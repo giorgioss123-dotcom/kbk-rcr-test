@@ -33,18 +33,18 @@
   });
 
   function updateSummaryCount() {
-    var categories = ['proposals', 'polls', 'posts'];
-    if (categories.some(function (name) { return !Object.prototype.hasOwnProperty.call(summaryCounts, name); })) {
+    var counts = ['proposals', 'polls', 'posts'];
+    if (counts.some(function (name) { return !Object.prototype.hasOwnProperty.call(summaryCounts, name); })) {
       summaryCount.textContent = '…';
       return;
     }
-    if (categories.some(function (name) { return summaryCounts[name] === null; })) {
+    if (counts.some(function (name) { return summaryCounts[name] === null; })) {
       summaryCount.textContent = '—';
       return;
     }
-    summaryCount.textContent = String(categories.filter(function (name) {
-      return summaryCounts[name] > 0;
-    }).length);
+    summaryCount.textContent = String(counts.reduce(function (total, name) {
+      return total + summaryCounts[name];
+    }, 0));
   }
 
   function cell(row, names) {
