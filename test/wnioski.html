@@ -367,6 +367,9 @@
   .vote-choice button.przeciw.selected {
     background: var(--neg-bg); border-color: var(--neg-dk); color: var(--neg-dk);
   }
+  .vote-choice button.wstrzymuje-sie.selected {
+    background: rgba(212,169,95,0.18); border-color: var(--paper-muted); color: var(--paper-ink);
+  }
 
   #voteAuth .qr-auth-methods,
   #proposalAuth .qr-auth-methods {
@@ -506,6 +509,7 @@
   }
   .votes-row .v-glos.za      { background: var(--pos-bg); color: var(--pos-dk); }
   .votes-row .v-glos.przeciw { background: var(--neg-bg); color: var(--neg-dk); }
+  .votes-row .v-glos.wstrzymuje-sie { background: rgba(212,169,95,0.2); color: var(--paper-ink); }
   .votes-row .v-waga {
     font-family: 'IBM Plex Mono', monospace;
     color: var(--paper-muted);
@@ -620,6 +624,7 @@
   <div class="vote-choice" role="group" aria-label="Wybierz głos">
     <button type="button" class="za" data-choice="za" aria-pressed="false">Za</button>
     <button type="button" class="przeciw" data-choice="przeciw" aria-pressed="false">Przeciw</button>
+    <button type="button" class="wstrzymuje-sie" data-choice="wstrzymuję się" aria-pressed="false">Wstrzymuję się</button>
   </div>
   <div id="voteAuth"></div>
   <div id="votePinFields">
@@ -666,6 +671,7 @@
 <script src="js/qr-auth.js?v=20261022-7"></script>
 <script>
   const APP_CONFIG = window.KBK_APP_CONFIG;
+  const VOTING_QUORUM_PERCENT = 0.20;
   const pinReset = window.KBKPinReset.attach({ webAppUrl: APP_CONFIG.webAppUrl });
   let voteQrPayload = null;
   let proposalQrPayload = null;
@@ -703,7 +709,9 @@
   const lookupCell = shared.lookupCell;
   const strFromCell = shared.strFromCell;
   function updateVoteSubmitLabel() {
-    const choice = currentVoteChoice === 'za' ? 'Za' : currentVoteChoice === 'przeciw' ? 'Przeciw' : '';
+    const choice = currentVoteChoice === 'za' ? 'Za' :
+      currentVoteChoice === 'przeciw' ? 'Przeciw' :
+      currentVoteChoice === 'wstrzymuję się' ? 'Wstrzymuję się' : '';
     document.getElementById('voteSubmitBtn').textContent = voteAuth && voteAuth.isQrMode()
       ? (choice ? 'Zeskanuj kod QR i zagłosuj: ' + choice : 'Zeskanuj kod QR, aby zagłosować')
       : (choice ? 'Wyślij głos: ' + choice : 'Wyślij głos');
@@ -846,8 +854,9 @@
       <div class="vote-stats">
         <span class="za-label">za ${Math.round(Number(p.glosowZa) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentZa) || 0).toFixed(1)}%)</span>
         <span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span>
+        <span>wstrzymuję się ${Math.round(Number(p.glosowWstrzymujacych) || 0).toLocaleString('pl-PL')} RCR</span>
       </div>
-      <div class="turnout">frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów)</div>
+      <div class="turnout">frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów) · wymagane 20%</div>
       ${actions}
     </div>`;
   }
@@ -863,11 +872,14 @@
     try{
       const sheetId = await getWnioskiSheetId();
       const transakcjeSheetId = await getTransakcjeSheetId();
-      const [table, saldaTable] = await Promise.all([
+      const [table, saldaTable, votesTable] = await Promise.all([
         shared.loadSheetJSONP(sheetId, 'WNIOSKI', {
           cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
         }),
         shared.loadSheetJSONP(transakcjeSheetId, 'SALDA', {
+          cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
+        }),
+        shared.loadSheetJSONP(sheetId, 'GŁOSY', {
           cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
         })
       ]);
@@ -875,11 +887,21 @@
         const active = shared.strFromCell(shared.lookupCell(row, ['AKTYWNY', 'aktywny'])).trim().toLowerCase() === 'tak';
         return active ? sum + shared.numFromCell(shared.lookupCell(row, ['RCR', 'rcr'])) : sum;
       }, 0);
+      const abstentionsByProposal = {};
+      shared.tableToObjects(votesTable).forEach(function (row) {
+        const proposalId = shared.strFromCell(shared.lookupCell(row, ['WNIOSEK_ID', 'WNIOSEKID', 'wniosekid', 'wniosekId'])).trim();
+        const choice = shared.strFromCell(shared.lookupCell(row, ['GŁOS', 'GLOS', 'glos', 'Głos'])).trim().toLowerCase();
+        if (proposalId && choice === 'wstrzymuję się') {
+          abstentionsByProposal[proposalId] = (abstentionsByProposal[proposalId] || 0) +
+            shared.numFromCell(shared.lookupCell(row, ['WAGA_RCR', 'WAGA', 'waga', 'waga_rcr']));
+        }
+      });
       const rows = shared.tableToObjects(table).map(function (row) {
         const id = shared.strFromCell(shared.lookupCell(row, ['ID', 'id'])) || '';
         const status = shared.strFromCell(shared.lookupCell(row, ['STATUS', 'status', 'Status'])) || '';
         const za = shared.numFromCell(shared.lookupCell(row, ['GŁOSÓW_ZA', 'GLOSOW_ZA', 'ZA', 'za']));
         const przeciw = shared.numFromCell(shared.lookupCell(row, ['GŁOSÓW_PRZECIW', 'GLOSOW_PRZECIW', 'PRZECIW', 'przeciw']));
+        const wstrzymujacych = abstentionsByProposal[id] || 0;
         const activeRcr = shared.numFromCell(shared.lookupCell(row, ['SUMA_RCR_W_DNIU_WYGAŚNIĘCIA', 'SUMA_RCR', 'suma_rcr', 'RCR']));
         const totalForTurnout = status === 'Aktywny' ? currentTotalRcr : activeRcr;
         const tytul = strFromCell(lookupCell(row, ['TYTUŁ', 'TYTUL', 'tytul', 'Tytuł']));
@@ -891,6 +913,8 @@
         const hivePostLink = strFromCell(lookupCell(row, ['LINK_HIVE', 'link_hive']));
         const hiveResultLink = strFromCell(lookupCell(row, ['LINK_KOMENTARZ_HIVE', 'link_komentarz_hive']));
         const suma = za + przeciw;
+        const sumaGlosow = suma + wstrzymujacych;
+        const procentFrekwencji = totalForTurnout > 0 ? (sumaGlosow / totalForTurnout) * 100 : 0;
         const item = {
           id: id,
           tytul: tytul,
@@ -904,11 +928,13 @@
           status: status,
           glosowZa: za,
           glosowPrzeciw: przeciw,
-          sumaGlosow: suma,
+          glosowWstrzymujacych: wstrzymujacych,
+          sumaGlosow: sumaGlosow,
           mianownikFrekwencji: totalForTurnout,
+          kworumSpelnione: totalForTurnout > 0 && sumaGlosow >= totalForTurnout * VOTING_QUORUM_PERCENT,
           procentZa: suma > 0 ? (za / suma) * 100 : 0,
           procentPrzeciw: suma > 0 ? (przeciw / suma) * 100 : 0,
-          procentFrekwencji: totalForTurnout > 0 ? (suma / totalForTurnout) * 100 : 0
+          procentFrekwencji: procentFrekwencji
         };
         if (!item.id || !status) return null;
         return item;
@@ -1037,9 +1063,11 @@
     document.getElementById('detailBar').innerHTML =
       `<div class="za" style="width:${Number(p.procentZa) || 0}%"></div><div class="przeciw" style="width:${Number(p.procentPrzeciw) || 0}%"></div>`;
     document.getElementById('detailStats').innerHTML =
-      `<span class="za-label">za ${Math.round(Number(p.glosowZa) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentZa) || 0).toFixed(1)}%)</span><span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span>`;
+      `<span class="za-label">za ${Math.round(Number(p.glosowZa) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentZa) || 0).toFixed(1)}%)</span><span class="przeciw-label">przeciw ${Math.round(Number(p.glosowPrzeciw) || 0).toLocaleString('pl-PL')} RCR (${(Number(p.procentPrzeciw) || 0).toFixed(1)}%)</span><span>wstrzymuję się ${Math.round(Number(p.glosowWstrzymujacych) || 0).toLocaleString('pl-PL')} RCR</span>`;
     document.getElementById('detailTurnout').textContent =
-      `frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów)` + (safeText(p.dataWygasniecia, '') ? ` · koniec: ${fmtDate(safeText(p.dataWygasniecia, ''))}` : '');
+      `frekwencja: ${(Number(p.procentFrekwencji) || 0).toFixed(1)}% (${Math.round(Number(p.sumaGlosow) || 0).toLocaleString('pl-PL')}/${Math.round(Number(p.mianownikFrekwencji) || 0).toLocaleString('pl-PL')} aktywnych rycarów) · wymagane 20%` +
+      (p.status !== 'Aktywny' && !p.kworumSpelnione ? ' · frekwencja poniżej wymaganego minimum' : '') +
+      (safeText(p.dataWygasniecia, '') ? ` · koniec: ${fmtDate(safeText(p.dataWygasniecia, ''))}` : '');
     document.getElementById('detailShareButton').onclick = function () {
       shareProposal(p.id);
     };
@@ -1053,7 +1081,7 @@
     }).join('');
 
     const votesListSection = document.getElementById('votesListSection');
-    const hasVotes = (p.glosowZa + p.glosowPrzeciw) > 0;
+    const hasVotes = p.sumaGlosow > 0;
     votesListSection.innerHTML = hasVotes
       ? '<button class="votes-toggle" id="showVotesBtn">Zobacz listę głosów</button><div id="votesTable"></div>'
       : '';
@@ -1086,7 +1114,7 @@
     tableEl.innerHTML = '<div class="votes-table">' + votes.map(v => `
       <div class="votes-row">
         <span class="v-login">${escapeHtml(v.login)}</span>
-        <span class="v-glos ${v.glos}">${v.glos}</span>
+        <span class="v-glos ${v.glos === 'wstrzymuję się' ? 'wstrzymuje-sie' : v.glos}">${v.glos}</span>
         <span class="v-waga">${Math.round(v.waga).toLocaleString('pl-PL')} RCR</span>
         <span class="v-procent">${v.procent.toFixed(1)}%</span>
       </div>`).join('') + '</div>';
@@ -1249,7 +1277,7 @@
   document.getElementById('voteSubmitBtn').addEventListener('click', () => {
     const banner = document.getElementById('voteBanner');
     banner.className = 'modal-banner';
-    if (!currentVoteChoice) { banner.textContent = 'Wybierz "za" albo "przeciw".'; banner.className = 'modal-banner show error'; return; }
+    if (!currentVoteChoice) { banner.textContent = 'Wybierz jedną z trzech opcji głosowania.'; banner.className = 'modal-banner show error'; return; }
     const payload = {wniosekId: currentDetailId, glos: currentVoteChoice};
     if (voteAuth.isQrMode()) {
       voteQrPayload = payload;

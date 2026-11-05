@@ -150,14 +150,18 @@
     'Wybierz głos': 'Choose your vote',
     'Za': 'For',
     'Przeciw': 'Against',
+    'Wstrzymuję się': 'Abstain',
+    'wstrzymuję się': 'abstain',
     'Login': 'Username',
     'PIN': 'PIN',
     'Anuluj': 'Cancel',
     'Wyślij głos': 'Submit vote',
     'Wyślij głos: Za': 'Submit vote: For',
     'Wyślij głos: Przeciw': 'Submit vote: Against',
+    'Wyślij głos: Wstrzymuję się': 'Submit vote: Abstain',
     'Zeskanuj kod QR i zagłosuj: Za': 'Scan QR to vote: For',
     'Zeskanuj kod QR i zagłosuj: Przeciw': 'Scan QR to vote: Against',
+    'Zeskanuj kod QR i zagłosuj: Wstrzymuję się': 'Scan QR to vote: Abstain',
     'Nowy wniosek': 'New proposal',
     'Tytuł': 'Title',
     'Treść': 'Text',
@@ -476,8 +480,8 @@
     if (language === 'en' && /^\d+\s+aktywnych$/i.test(normalized)) return value.replace(/aktywnych/i, 'active users');
     if (language === 'pl' && /^\d+\s+active users$/i.test(normalized)) return value.replace(/active users/i, 'aktywnych');
     const prefixes = language === 'en'
-      ? [['Zgłosił:', 'Submitted by:'], ['Pozostało do zakończenia:', 'Time remaining:'], ['Zakończono:', 'Ended:'], ['zsynchronizowano', 'synced'], ['Głosujesz nad wnioskiem:', 'Vote on proposal:'], ['FREKWENCJA:', 'VOTER TURNOUT:'], ['Zobacz transakcje:', 'View transactions:'], ['Suma zamówienia:', 'Order total:'], ['Sprawdzenie tego samego zamówienia:', 'Checking the same order:'], ['Zamówienie za', 'Order for'], ['Zamów za', 'Order for'], ['Zeskanuj kod QR i zamów za', 'Scan QR code and order for'], ['Zeskanuj QR i zagłosuj:', 'Scan QR to vote:'], ['Zeskanuj QR i złóż wniosek:', 'Scan QR and submit proposal:'], ['Wyślij głos:', 'Submit vote:'], ['Twój głos:', 'Your vote:'], ['Wniosek:', 'Proposal:'], ['za ', 'for '], ['przeciw ', 'against ']]
-      : [['Submitted by:', 'Zgłosił:'], ['Time remaining:', 'Pozostało do zakończenia:'], ['Ended:', 'Zakończono:'], ['synced', 'zsynchronizowano'], ['Vote on proposal:', 'Głosujesz nad wnioskiem:'], ['VOTER TURNOUT:', 'FREKWENCJA:'], ['View transactions:', 'Zobacz transakcje:'], ['Order total:', 'Suma zamówienia:'], ['Checking the same order:', 'Sprawdzenie tego samego zamówienia:'], ['Order for', 'Zamówienie za'], ['Submit vote:', 'Wyślij głos:'], ['Your vote:', 'Twój głos:'], ['Proposal:', 'Wniosek:'], ['Scan QR code and order for', 'Zeskanuj kod QR i zamów za'], ['Scan QR to vote:', 'Zeskanuj QR i zagłosuj:'], ['Scan QR and submit proposal:', 'Zeskanuj QR i złóż wniosek:'], ['for ', 'za '], ['against ', 'przeciw ']];
+      ? [['Zgłosił:', 'Submitted by:'], ['Pozostało do zakończenia:', 'Time remaining:'], ['Zakończono:', 'Ended:'], ['zsynchronizowano', 'synced'], ['Głosujesz nad wnioskiem:', 'Vote on proposal:'], ['FREKWENCJA:', 'VOTER TURNOUT:'], ['Zobacz transakcje:', 'View transactions:'], ['Suma zamówienia:', 'Order total:'], ['Sprawdzenie tego samego zamówienia:', 'Checking the same order:'], ['Zamówienie za', 'Order for'], ['Zamów za', 'Order for'], ['Zeskanuj kod QR i zamów za', 'Scan QR code and order for'], ['Zeskanuj QR i zagłosuj:', 'Scan QR to vote:'], ['Zeskanuj QR i złóż wniosek:', 'Scan QR and submit proposal:'], ['Wyślij głos:', 'Submit vote:'], ['Twój głos:', 'Your vote:'], ['Wniosek:', 'Proposal:'], ['wstrzymuję się ', 'abstain '], ['za ', 'for '], ['przeciw ', 'against ']]
+      : [['Submitted by:', 'Zgłosił:'], ['Time remaining:', 'Pozostało do zakończenia:'], ['Ended:', 'Zakończono:'], ['synced', 'zsynchronizowano'], ['Vote on proposal:', 'Głosujesz nad wnioskiem:'], ['VOTER TURNOUT:', 'FREKWENCJA:'], ['View transactions:', 'Zobacz transakcje:'], ['Order total:', 'Suma zamówienia:'], ['Checking the same order:', 'Sprawdzenie tego samego zamówienia:'], ['Order for', 'Zamówienie za'], ['Submit vote:', 'Wyślij głos:'], ['Your vote:', 'Twój głos:'], ['Proposal:', 'Wniosek:'], ['Scan QR code and order for', 'Zeskanuj kod QR i zamów za'], ['Scan QR to vote:', 'Zeskanuj QR i zagłosuj:'], ['Scan QR and submit proposal:', 'Zeskanuj QR i złóż wniosek:'], ['abstain ', 'wstrzymuję się '], ['for ', 'za '], ['against ', 'przeciw ']];
     const prefix = prefixes.find(function (entry) {
       const sourcePrefix = normalizeText(entry[0]);
       return normalized.toLowerCase().indexOf(sourcePrefix.toLowerCase() + ' ') === 0
@@ -488,6 +492,10 @@
     const translatedPrefix = prefix[1];
     let suffix = normalized.slice(sourcePrefix.length);
     if (language === 'en' && prefix[0] === 'FREKWENCJA:') suffix = suffix.replace(/aktywnych rycarów/gi, 'active Ricars');
+    if (language === 'en' && prefix[0] === 'FREKWENCJA:') {
+      suffix = suffix.replace(/wymagane 20%/gi, '20% required')
+        .replace(/frekwencja poniżej wymaganego minimum/gi, 'turnout below the required minimum');
+    }
     if (language === 'pl' && prefix[0] === 'VOTER TURNOUT:') suffix = suffix.replace(/active Ricars/gi, 'aktywnych rycarów');
     return value.replace(trimmed, translatedPrefix + suffix);
   }
