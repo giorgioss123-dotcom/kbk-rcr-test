@@ -676,7 +676,12 @@
   }
 
   /* Primary actions row (vote) */
-  .detail-dialog .entry-actions.primary-row { margin: 8px 0 0; }
+  .detail-dialog .entry-actions.primary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 8px 0 0;
+  }
   .detail-dialog .entry-actions.primary-row button {
     padding: 11px 18px;
     font-family: 'IBM Plex Mono', monospace;

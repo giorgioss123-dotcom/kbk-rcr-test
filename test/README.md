@@ -4,11 +4,16 @@ Statyczny frontend KBK: strony HTML, wspólny CSS i JavaScript. Logika biznesowa
 
 ## 1. Skonfiguruj źródła danych
 
-1. Otwórz `public-config.js`.
-2. W `KBK_APP_CONFIG.webAppUrl` wpisz URL wdrożonego publicznego Web App.
-3. W `KBK_PUBLIC_SHEET_IDS` wpisz publiczne ID arkuszy `CENNIK`, `WNIOSKI`, `TRANSAKCJE`
-   i `Tablica` (`tablicaFileId`).
-4. Upewnij się, że arkusze przeznaczone do odczytu publicznego nie zawierają danych wrażliwych.
+Przy ręcznym uruchamianiu lub publikacji otwórz `public-config.js` i ustaw
+`KBK_APP_CONFIG.webAppUrl` oraz publiczne ID arkuszy `CENNIK`, `WNIOSKI`, `TRANSAKCJE`
+i `Tablica` (`tablicaFileId`) w `KBK_PUBLIC_SHEET_IDS`.
+
+Przy wdrażaniu przez dispatcher nie edytuj `public-config.js`: plik jest generowany na nowo
+z `publicConfig.webAppUrl` i `publicConfig.sheetIds` danego środowiska w
+`tools/environments.local.json`. Wymagane są tam `cennikFileId`, `wnioskiFileId`,
+`transakcjeFileId` i `tablicaFileId`.
+
+Upewnij się, że arkusze przeznaczone do odczytu publicznego nie zawierają danych wrażliwych.
 
 Nie umieszczaj w tym katalogu PIN-ów, haseł, tokenów ani ID arkuszy prywatnych.
 
@@ -57,7 +62,8 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 - szczegóły opublikowanych wniosków pokazują link do posta na Hive;
 - karty wniosków pozwalają skopiować link do konkretnego wniosku; otwarcie linku automatycznie pokazuje jego szczegóły;
 - strefa społeczności pokazuje w menu na pasku nawigacji aktywne wnioski, otwarte ankiety i posty z aktywnością w ostatnich 3 dniach; liczba przy dzwonku oznacza liczbę kategorii z aktywnością, a w razie problemu z odczytem danych wyświetlany jest stan niedostępny zamiast fałszywego zera;
-- Tablica odczytuje publiczne zakładki `Posty`, `Komentarze`, `Ankiety` i `Głosy`; publikowanie, dopisywanie odpowiedzi do otwartych ankiet i głosowanie wymagają PIN-u lub kodu QR;
+- Tablica odczytuje publiczne zakładki `Posty`, `Komentarze`, `Ankiety` i `Głosy`; publikowanie postów i komentarzy, dodawanie odpowiedzi do otwartych ankiet oraz głosowanie wymagają PIN-u lub kodu QR; opublikowanych postów i komentarzy nie można edytować;
+- ankiety obsługują typy jednokrotnego i wielokrotnego wyboru, otwarte i zamknięte; ankietę otwartą można opublikować bez odpowiedzi, a zalogowani użytkownicy mogą dopisywać je przed terminem zamknięcia, do limitu 20;
 - wpisy z wartością `TAK` w kolumnie `Przypięty` są wyświetlane nad pozostałymi, niezależnie od sortowania, z delikatnym oznaczeniem i separatorem;
 - w konsoli nie ma błędów CORS, JSONP ani `404` dla plików CSS/JS.
 

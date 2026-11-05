@@ -562,7 +562,7 @@
 
     var results = document.getElementById('detailPollResults');
     results.hidden = false;
-    results.innerHTML = stats.map(function (stat) {
+    results.innerHTML = stats.length ? stats.map(function (stat) {
       var primary = weighted ? stat.weight : stat.count;
       var percent = totalPrimary > 0 ? primary / totalPrimary * 100 : 0;
       var percentClamped = Math.max(0, Math.min(100, percent));
@@ -592,14 +592,18 @@
         '</div>' +
         votersBlock +
         '</div>';
-    }).join('');
+    }).join('') : '<p class="detail-empty">' +
+      (allowsNewAnswers
+        ? 'Ta ankieta nie ma jeszcze odpowiedzi. Dodaj pierwszą, aby rozpocząć głosowanie.'
+        : 'Ta ankieta nie ma jeszcze odpowiedzi.') +
+      '</p>';
 
     var actions = [];
     if (!closed && allowsNewAnswers && answers.length < 20) {
       actions.push('<button type="button" data-action="add-poll-answer" data-poll-id="' +
         esc(id) + '">Dodaj odpowiedź</button>');
     }
-    if (!closed) {
+    if (!closed && answers.length) {
       actions.push('<button type="button" data-action="vote" data-poll-id="' +
         esc(id) + '">Oddaj / zmień głos</button>');
     }
@@ -844,7 +848,7 @@
         '<div class="field"><label for="pollDays">Czas głosowania (dni, 1–60)</label><input id="pollDays" type="number" min="1" max="60" value="7" required></div>' +
         '<div class="field"><label for="pollTitle">Tytuł ankiety</label><input id="pollTitle" maxlength="200" required></div>' +
         '<div class="field"><label for="pollQuestion">Treść pytania</label><textarea id="pollQuestion" maxlength="5000" required></textarea></div>' +
-        '<div class="field"><label for="pollAnswers">Odpowiedzi (każda w osobnym wierszu, 2–20)</label><textarea class="options-input" id="pollAnswers" required></textarea></div>' +
+        '<div class="field"><label for="pollAnswers">Odpowiedzi (każda w osobnym wierszu)</label><textarea class="options-input" id="pollAnswers"></textarea><p class="meta" id="pollAnswersHint"></p></div>' +
         '<div class="field"><label for="pollTags">Tagi (rozdzielone przecinkiem)</label><input id="pollTags" maxlength="1000"></div>';
     } else if (type === 'add-poll-answer') {
       pendingOperation.verb = 'dodaj odpowiedź';
@@ -869,6 +873,20 @@
     }
 
     operationFields.innerHTML = fields;
+    if (type === 'create-poll') {
+      var pollType = document.getElementById('pollType');
+      var pollAnswersField = document.getElementById('pollAnswers');
+      var pollAnswersHint = document.getElementById('pollAnswersHint');
+      var updatePollAnswersHint = function () {
+        var openPoll = /_open$/.test(pollType.value);
+        pollAnswersField.required = !openPoll;
+        pollAnswersHint.textContent = openPoll
+          ? 'Opcjonalne dla ankiety otwartej; użytkownicy mogą dodawać odpowiedzi później (maks. 20).'
+          : 'Wymagane: od 2 do 20 odpowiedzi.';
+      };
+      pollType.addEventListener('change', updatePollAnswersHint);
+      updatePollAnswersHint();
+    }
     document.getElementById('boardLogin').value = '';
     document.getElementById('boardPin').value = '';
     dialogMessage.textContent = '';
@@ -917,8 +935,11 @@
         throw new Error('Czas głosowania musi wynosić od 1 do 60 dni.');
       }
       if (!payload.title || !payload.question) throw new Error('Tytuł i treść pytania są wymagane.');
-      if (payload.answers.length < 2 || payload.answers.length > 20) {
-        throw new Error('Ankieta musi mieć od 2 do 20 odpowiedzi.');
+      var openPoll = /_open$/.test(payload.type);
+      if ((!openPoll && payload.answers.length < 2) || payload.answers.length > 20) {
+        throw new Error(openPoll
+          ? 'Ankieta otwarta może mieć maksymalnie 20 odpowiedzi.'
+          : 'Ankieta zamknięta musi mieć od 2 do 20 odpowiedzi.');
       }
       if (new Set(payload.answers.map(function (answer) { return answer.toLowerCase(); })).size !==
           payload.answers.length) {
