@@ -436,105 +436,98 @@
     gap: 12px;
   }
 
-  .events-grid {
+  .luma-banner {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 40px;
+    padding: 42px 44px;
+    border: 1px solid var(--line-2);
+    background: rgba(0, 0, 0, 0.14);
+    color: var(--white);
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
   }
 
-  .event-card {
+  .luma-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 100% 0%, rgba(212, 169, 95, 0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .luma-banner:hover {
+    background: rgba(0, 0, 0, 0.22);
+    border-color: var(--white);
+  }
+
+  .luma-banner-content {
+    position: relative;
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: var(--paper);
-    color: var(--paper-ink);
-    text-decoration: none;
+    gap: 12px;
+    max-width: 580px;
+  }
+
+  .luma-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .luma-title {
+    font-family: 'Anton', sans-serif;
+    font-weight: 400;
+    font-size: clamp(1.5rem, 3vw, 2.15rem);
+    line-height: 1.05;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    color: var(--white);
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.32);
+  }
+
+  .luma-desc {
+    font-family: 'Archivo', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  .luma-banner-cta {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 22px;
+    border: 1px solid var(--white);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s;
+  }
+
+  .luma-banner:hover .luma-banner-cta {
+    background: var(--white);
+    color: var(--teal-deep);
+  }
+
+  .luma-arrow {
+    font-family: 'Archivo', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1;
     transition: transform 0.2s;
   }
 
-  .event-card:hover { transform: translateY(-3px); }
-
-  .event-cover {
-    position: relative;
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.14);
-    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
-  }
-
-  .event-cover img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-  }
-
-  .event-card:hover .event-cover img { transform: scale(1.04); }
-
-  .event-cover-fallback {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    color: var(--white);
-    font-family: 'Anton', sans-serif;
-    font-size: 3.5rem;
-    opacity: 0.55;
-  }
-
-  .event-cover-fallback.is-visible { display: flex; }
-
-  .event-card-body {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    padding: 20px 22px 18px;
-  }
-
-  .event-date {
-    margin-bottom: 10px;
-    color: var(--teal-dark);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .event-card h3 {
-    display: -webkit-box;
-    overflow: hidden;
-    margin: 0 0 16px;
-    color: var(--teal-deep);
-    font-family: 'Anton', sans-serif;
-    font-size: 1.16rem;
-    font-weight: 400;
-    line-height: 1.22;
-    text-transform: uppercase;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .event-card-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: auto;
-    padding-top: 13px;
-    border-top: 1px solid rgba(12, 48, 56, 0.18);
-    color: #7e8a90;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .event-card-footer .event-more {
-    color: var(--teal-dark);
-    font-weight: 500;
-    white-space: nowrap;
+  .luma-banner:hover .luma-arrow {
+    transform: translateX(5px);
   }
 
   .journal-grid {
@@ -1200,7 +1193,6 @@
 
   @media (max-width: 960px) {
     .footer-inner { grid-template-columns: 1fr 1fr; }
-    .events-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
   @media (max-width: 720px) {
@@ -1246,7 +1238,13 @@
       margin-top: 6px;
     }
 
-    .events-grid { grid-template-columns: 1fr; }
+    .luma-banner {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding: 30px 24px;
+    }
+
+    .luma-banner-cta { justify-content: center; }
 
     .doc-section { padding: 32px 24px 28px; }
     .map-wrap iframe { height: 320px; }
@@ -1393,9 +1391,20 @@
     <a href="https://luma.com/kbk.events" target="_blank" rel="noopener" class="link-out">Otwórz kalendarz</a>
   </div>
 
-  <div class="events-grid" id="events-grid" aria-live="polite">
-    <div class="journal-loading">Ładowanie najbliższych wydarzeń…</div>
-  </div>
+  <a class="luma-banner" href="https://luma.com/kbk.events" target="_blank" rel="noopener">
+    <div class="luma-banner-content">
+      <span class="luma-eyebrow">Kalendarz KBK</span>
+      <span class="luma-title">Wszystkie nadchodzące wydarzenia</span>
+      <span class="luma-desc">
+        Coworking, wieczory poezji, book club, spotkania filozoficzne i wiele innych -
+        pełen harmonogram znajdziesz w naszym kalendarzu na Luma.
+      </span>
+    </div>
+    <div class="luma-banner-cta">
+      <span>luma.com/kbk.events</span>
+      <span class="luma-arrow">→</span>
+    </div>
+  </a>
 </section>
 
 <section class="section" id="spolecznosc">
@@ -1729,8 +1738,6 @@
   }
   const HIVE_ACCOUNT = 'krolestwo';
   const HIVE_LIMIT = 3;
-  const LUMA_CALENDAR_URL = 'https://luma.com/kbk.events';
-  const EVENT_LIMIT = 3;
 
   function parseMetadata(raw) {
     if (!raw) return {};
@@ -1829,113 +1836,6 @@
   }
 
   loadHivePosts();
-
-  function showEventsMessage(message) {
-    const grid = document.getElementById('events-grid');
-    if (!grid) return;
-    grid.innerHTML = `
-      <div class="journal-loading">
-        ${escapeHtml(message)}
-        <a href="${LUMA_CALENDAR_URL}" target="_blank" rel="noopener"
-           style="color:#fff; border-bottom:1px solid rgba(255,255,255,.4); text-decoration:none;">Otwórz kalendarz Luma →</a>
-      </div>`;
-  }
-
-  function renderEvents(events) {
-    const grid = document.getElementById('events-grid');
-    if (!grid) return;
-    if (!events.length) {
-      showEventsMessage('Brak nadchodzących wydarzeń.');
-      return;
-    }
-
-    const dateFormatter = new Intl.DateTimeFormat('pl-PL', {
-      timeZone: 'Europe/Warsaw',
-      weekday: 'short',
-      day: 'numeric',
-      month: 'long',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    grid.innerHTML = events.map(function (event) {
-      const eventDate = new Date(event.startAt);
-      const dateLabel = dateFormatter.format(eventDate);
-      const hasImage = Boolean(event.image);
-      const image = hasImage
-        ? `<img src="${escapeHtml(event.image)}" alt="" loading="lazy" referrerpolicy="no-referrer"
-                onerror="this.style.display='none'; this.nextElementSibling.classList.add('is-visible');">`
-        : '';
-      const fallbackClass = hasImage ? 'event-cover-fallback' : 'event-cover-fallback is-visible';
-      return `
-        <a class="event-card" href="${escapeHtml(event.url)}" target="_blank" rel="noopener">
-          <div class="event-cover">
-            ${image}
-            <span class="${fallbackClass}" aria-hidden="true">∞</span>
-          </div>
-          <div class="event-card-body">
-            <span class="event-date">${escapeHtml(dateLabel)}</span>
-            <h3>${escapeHtml(event.name)}</h3>
-            <div class="event-card-footer">
-              <span>Królestwo Bez Kresu</span>
-              <span class="event-more">Szczegóły →</span>
-            </div>
-          </div>
-        </a>`;
-    }).join('');
-  }
-
-  function loadUpcomingEvents() {
-    const grid = document.getElementById('events-grid');
-    const webAppUrl = window.KBK_APP_CONFIG && window.KBK_APP_CONFIG.webAppUrl;
-    if (!grid) return;
-    if (!webAppUrl) {
-      showEventsMessage('Nie udało się wczytać wydarzeń.');
-      console.error('Brak adresu publicznego Web App dla wydarzeń.');
-      return;
-    }
-
-    const callbackName = 'kbkUpcomingEvents_' + Date.now() + '_' +
-      Math.random().toString(36).slice(2);
-    const script = document.createElement('script');
-    let timeoutId;
-    let finished = false;
-
-    function cleanup() {
-      if (finished) return;
-      finished = true;
-      clearTimeout(timeoutId);
-      script.remove();
-      delete window[callbackName];
-    }
-
-    window[callbackName] = function (payload) {
-      cleanup();
-      if (!payload || payload.ok !== true || !Array.isArray(payload.events)) {
-        showEventsMessage('Nie udało się wczytać wydarzeń.');
-        console.error('Publiczny backend nie zwrócił wydarzeń Luma.', payload);
-        return;
-      }
-      renderEvents(payload.events.slice(0, EVENT_LIMIT));
-    };
-
-    script.async = true;
-    script.onerror = function () {
-      cleanup();
-      showEventsMessage('Nie udało się wczytać wydarzeń.');
-      console.error('Nie udało się pobrać wydarzeń z publicznego backendu.');
-    };
-    script.src = webAppUrl + '?action=upcomingEvents&format=jsonp&callback=' +
-      encodeURIComponent(callbackName);
-    timeoutId = setTimeout(function () {
-      cleanup();
-      showEventsMessage('Nie udało się wczytać wydarzeń.');
-      console.error('Przekroczono czas oczekiwania na wydarzenia Luma.');
-    }, 15000);
-    document.head.appendChild(script);
-  }
-
-  loadUpcomingEvents();
 
   const navToggle = document.querySelector('.nav-toggle');
   const navLinks = document.querySelector('.nav-links');

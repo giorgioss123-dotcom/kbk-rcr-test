@@ -48,7 +48,6 @@ Tekst Konstytucji oraz jej preambuła pozostają po polsku również w wersji an
 ## 4. Sprawdź konfigurację
 
 - `index.html` ładuje się bez błędów w konsoli;
-- sekcja wydarzeń na stronie głównej pokazuje trzy najbliższe publiczne wydarzenia Luma w kartach dopasowanych do stylu dziennika;
 - formularze rejestracji, logowania i głosowania wskazują właściwy Web App;
 - dane `CENNIK`, `WNIOSKI` i `TRANSAKCJE` są widoczne tylko w zakresie przewidzianym dla użytkownika;
 - działają widoki mobilne oraz linki do `confirm.html`;
