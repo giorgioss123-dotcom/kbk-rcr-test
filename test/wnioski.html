@@ -565,11 +565,11 @@
     background: rgba(255,255,255,0.3);
   }
   .votes-row:last-child { border-bottom: none; }
-  .votes-row .v-login { flex: 1; font-weight: 500; }
+  .votes-row .v-login { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
   .votes-row .v-glos {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.68rem; padding: 3px 9px;
-    letter-spacing: 0.1em; text-transform: uppercase;
+    letter-spacing: 0.1em; text-transform: uppercase; text-align: center;
   }
   .votes-row .v-glos.za      { background: var(--pos-bg); color: var(--pos-dk); }
   .votes-row .v-glos.przeciw { background: var(--neg-bg); color: var(--neg-dk); }
@@ -578,15 +578,38 @@
     font-family: 'IBM Plex Mono', monospace;
     color: var(--paper-muted);
     min-width: 80px; text-align: right;
-    font-size: 0.82rem;
+    font-size: 0.82rem; white-space: nowrap;
   }
   .votes-row .v-procent {
     font-family: 'IBM Plex Mono', monospace;
     min-width: 60px; text-align: right;
-    font-size: 0.82rem;
+    font-size: 0.82rem; white-space: nowrap;
   }
 
   @media (max-width: 640px) {
+    .votes-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 12px;
+      padding: 10px 12px;
+    }
+    .votes-row .v-login { grid-column: 1; }
+    .votes-row .v-glos {
+      grid-column: 2;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .votes-row .v-waga {
+      grid-column: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .votes-row .v-procent {
+      grid-column: 2;
+      min-width: 0;
+      text-align: right;
+    }
     .wrap { padding: 36px 16px 80px; }
     .card { padding: 20px 18px 18px; }
     header { align-items: flex-start; }
