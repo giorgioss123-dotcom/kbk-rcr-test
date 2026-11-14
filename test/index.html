@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KBK - Królestwo Bez Kresu</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles/common.css">
 <style>
   :root {
@@ -1196,7 +1197,10 @@
   }
 
   @media (max-width: 720px) {
-    body { font-size: 16px; }
+    body {
+      font-size: 16px;
+      background-attachment: scroll;
+    }
 
     .hero { padding: 34px 20px 12px; }
     .hero-logo { width: 108px; height: 152px; margin-bottom: 30px; transform: scale(1.1); }
@@ -1797,7 +1801,10 @@
 
       grid.innerHTML = posts.map(post => {
         const img = extractImage(post);
-        const title = escapeHtml(post.title || 'Bez tytułu');
+        const untitledLabel = new URLSearchParams(window.location.search).get('lang') === 'en'
+          ? 'Untitled'
+          : 'Bez tytułu';
+        const title = escapeHtml(post.title || untitledLabel);
         const excerpt = escapeHtml(cleanExcerpt(post.body));
         const author = escapeHtml(post.author || HIVE_ACCOUNT);
         const url = `https://peakd.com/@${post.author}/${post.permlink}`;
@@ -1868,6 +1875,6 @@
     });
   });
 </script>
-<script src="js/i18n.js?v=20261030-1"></script>
+<script src="js/i18n.js?v=20261112-1"></script>
 </body>
 </html>

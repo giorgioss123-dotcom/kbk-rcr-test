@@ -39,6 +39,11 @@
     'Zmień PIN': 'Change PIN',
     'Zmień dane kontaktowe i zgody': 'Change contact details and consents',
     'Unieważnij obecny kod QR': 'Invalidate current QR code',
+    'Chcę otrzymywać okazjonalne upominki drogą pocztową lub odebrać w ten sposób paszport KBK (wymaga podania adresu do wysyłki).': 'I would like to receive occasional gifts by post or receive my KBK passport this way (a mailing address is required).',
+    'Do zlecenia zmiany wystarczy login. Link potwierdzający zostanie wysłany na obecny adres e-mail przypisany do konta. Zmiana nastąpi dopiero po kliknięciu linku, ważnego przez 15 minut.': 'Your username is all that is needed to request a change. A confirmation link will be sent to the email address currently associated with the account. The change will take effect only after you click the link, which is valid for 15 minutes.',
+    'Ustaw nowy, 6-cyfrowy PIN. Wyślemy link potwierdzający na adres e-mail przypisany do konta.': 'Set a new 6-digit PIN. We will send a confirmation link to the email address associated with your account.',
+    'Wypełnij ponownie dane kontaktowe i wybierz aktualne zgody. Wyślemy link potwierdzający na adres e-mail przypisany do konta.': 'Enter your contact details again and select your current consents. We will send a confirmation link to the email address associated with your account.',
+    'Wyślemy link potwierdzający unieważnienie na adres e-mail przypisany do konta.': 'We will send a confirmation link to invalidate the QR code to the email address associated with your account.',
     'Nowy PIN (6 cyfr)': 'New PIN (6 digits)',
     'Powtórz PIN': 'Repeat PIN',
     'Zapisz dane i zgody': 'Save details and consents',
@@ -67,6 +72,7 @@
     'Dane kontaktowe i dobrowolne zgody': 'Contact details and optional consents',
     'Zmiany wymagają potwierdzenia linkiem wysłanym na obecny adres e-mail konta. Link jest ważny 15 minut.': 'Changes must be confirmed using a link sent to the current email address on the account. The link is valid for 15 minutes.',
     'Wybierz operację': 'Choose an action',
+    'Wybierz poprawną operację.': 'Choose a valid action.',
     'Ustaw nowy, 6-cyfrowy PIN. Zmiana nastąpi dopiero po potwierdzeniu e-maila.': 'Set a new 6-digit PIN. It will change only after you confirm by email.',
     'Powtórz nowy PIN': 'Confirm new PIN',
     'Login, e-mail i obowiązkowa zgoda na przetwarzanie danych nie są zmieniane w tym formularzu. Zgody dobrowolne można w każdej chwili zmienić.': 'This form does not change your username, email, or required data-processing consent. You can change optional consents at any time.',
@@ -88,6 +94,9 @@
     'Podaj login i aktualny, 6-cyfrowy PIN.': 'Enter your username and current 6-digit PIN.',
     'Zeskanuj kod QR z paszportu, a następnie ponownie wybierz wysłanie linku.': 'Scan the QR code from your passport, then select Send confirmation link again.',
     'Nie udało się znaleźć danych konta.': 'Could not find account details.',
+    'Nie udało się wysłać prośby. Spróbuj ponownie później.': 'Could not submit the request. Please try again later.',
+    'Nie udało się rozpocząć operacji. Spróbuj ponownie później.': 'Could not start the operation. Please try again later.',
+    'Nie udało się ustalić wyniku prośby o zmianę konta.': 'Could not determine the result of the account-change request.',
     'Konto nie ma adresu e-mail do potwierdzenia.': 'The account has no email address for confirmation.',
     'Odśwież formularz i ustaw dobrowolne zgody ponownie.': 'Refresh the form and set your optional consents again.',
     'Sprawdź dane formularza i spróbuj ponownie.': 'Check the form details and try again.',
@@ -120,6 +129,13 @@
     'Wniosek nie istnieje lub został usunięty.': 'The proposal does not exist or has been deleted.',
     'Czas głosowania już minął.': 'The voting period has ended.',
     'Nie udało się potwierdzić głosu. Spróbuj ponownie później.': 'Could not confirm your vote. Please try again later.',
+    'Nie udało się zarejestrować konta. Spróbuj ponownie później.': 'Could not register the account. Please try again later.',
+    'Nie udało się połączyć z backendem. Spróbuj ponownie później.': 'Could not connect to the service. Please try again later.',
+    'Wybierz jedną z trzech opcji głosowania.': 'Choose one of the three voting options.',
+    'Przyjęty': 'Accepted',
+    'Nie udało się pobrać danych.': 'Could not load data.',
+    'Otrzymano nieprawidłowe dane.': 'Invalid data was received.',
+    'Nie udało się załadować danych.': 'Could not load data.',
     'PIN został zmieniony. Możesz się teraz zalogować.': 'Your PIN has been changed. You can now sign in.',
     'Link resetujący PIN jest nieprawidłowy lub wygasł.': 'The PIN reset link is invalid or has expired.',
     'Nie udało się potwierdzić danych konta.': 'Could not verify the account details.',
@@ -151,6 +167,8 @@
     'Oczekiwanie na dostęp do kamery…': 'Waiting for camera access…',
     'Przytrzymaj kod QR z paszportu przed kamerą.': 'Hold your passport QR code in front of the camera.',
     'Nie udało się odczytać kodu QR z kamery.': 'Could not read a QR code from the camera.',
+    'Nie udało się przygotować uwierzytelniania kodem QR.': 'Could not initialize QR code authentication.',
+    'Kod QR odczytany. Wysyłanie zamówienia…': 'QR code scanned. Submitting the order…',
     'Skanowanie wymaga bezpiecznego połączenia HTTPS i dostępu do kamery.': 'Scanning requires a secure HTTPS connection and camera access.',
     'Nie udało się uruchomić skanera QR. Odśwież stronę i spróbuj ponownie.': 'Could not start the QR scanner. Refresh the page and try again.',
     'Brak dostępu do kamery. Zezwól na użycie kamery i spróbuj ponownie.': 'Camera access is unavailable. Allow camera access and try again.',
@@ -248,6 +266,7 @@
     'Głosy bez wagi': 'Unweighted votes',
     'Komentarze': 'Comments',
     'Ukryj komentarze': 'Hide comments',
+    'Ukryj głosujących': 'Hide voters',
     'Brak komentarzy.': 'No comments yet.',
     'Edytuj komentarz': 'Edit comment',
     'Edytuj post': 'Edit post',
@@ -259,6 +278,41 @@
     'Typ ankiety': 'Poll type',
     'Jednokrotnego wyboru': 'Single choice',
     'Wielokrotnego wyboru': 'Multiple choice',
+    'ankieta': 'poll',
+    'ANKIETA': 'POLL',
+    'Pytanie': 'Question',
+    'Dodaj odpowiedź': 'Add answer',
+    'Dodaj odpowiedź do ankiety': 'Add an answer to the poll',
+    'Dodanie odpowiedzi nie oddaje głosu.': 'Adding an answer does not cast a vote.',
+    'Zeskanuj kod QR i opublikuj post': 'Scan the QR code to publish the post',
+    'Zeskanuj kod QR i dodaj komentarz': 'Scan the QR code to add a comment',
+    'Zeskanuj kod QR i opublikuj ankietę': 'Scan the QR code to publish the poll',
+    'Zeskanuj kod QR i dodaj odpowiedź': 'Scan the QR code to add an answer',
+    'Zeskanuj kod QR i zapisz głos': 'Scan the QR code to submit your vote',
+    'Zeskanuj kod QR i zagłosuj:': 'Scan the QR code to vote:',
+    'termin:': 'Closes:',
+    'Pokaż:': 'Show:',
+    'Wszystko': 'All',
+    'Sortuj:': 'Sort by:',
+    'Data utworzenia': 'Creation date',
+    'Tagi:': 'Tags:',
+    'Wybierz tagi': 'Choose tags',
+    'Wpisy na Tablicy': 'Board entries',
+    'Opublikuj': 'Publish',
+    'Rodzaj wpisów': 'Entry type',
+    'Pole sortowania': 'Sort field',
+    'Kierunek sortowania': 'Sort direction',
+    'Ostatnia aktywność': 'Last activity',
+    '↓ malejąco': '↓ descending',
+    '↑ rosnąco': '↑ ascending',
+    'Aktywne filtry tagów': 'Active tag filters',
+    'Wyczyść': 'Clear',
+    'Pokaż głosujących': 'Show voters',
+    'Bez tytułu': 'Untitled',
+    'odświeżanie…': 'refreshing…',
+    '(bez tytułu)': '(untitled)',
+    'bieżące': 'current',
+    'Ładowanie produktów…': 'Loading products…',
     'Sposób liczenia głosów': 'Vote calculation',
     'Bez wagi': 'Unweighted',
     'Ważone RCR': 'Weighted by RCR',
@@ -589,8 +643,7 @@
     '- KONTAKT': '- CONTACT',
     '- MEDIA': '- MEDIA',
     'Luma (wydarzenia) →': 'Luma (events) →',
-    'Królestwo Bez Kresu · Fundacja Tradycji Miast i Wsi': 'Kingdom Without Limit · Foundation of City and Village Traditions',
-    'FUNDACJA TRADYCJI MIAST I WSI': 'FOUNDATION OF CITY AND VILLAGE TRADITIONS',
+    'Królestwo Bez Kresu · Fundacja Tradycji Miast i Wsi': 'Kingdom Without Limit · Fundacja Tradycji Miast i Wsi',
     'pon.–sob. 16:00 - 23:00': 'Mon–Sat 16:00 - 23:00',
 
     'Chcę użyć rycarów:': 'I want to use:',
@@ -643,8 +696,59 @@
     if (language === 'en' && /^\d+\s+aktywnych$/i.test(normalized)) return value.replace(/aktywnych/i, 'active users');
     if (language === 'pl' && /^\d+\s+active users$/i.test(normalized)) return value.replace(/active users/i, 'aktywnych');
     const prefixes = language === 'en'
-      ? [['Zgłosił:', 'Submitted by:'], ['Pozostało do zakończenia:', 'Time remaining:'], ['Zakończono:', 'Ended:'], ['zsynchronizowano', 'synced'], ['Głosujesz nad wnioskiem:', 'Vote on proposal:'], ['FREKWENCJA:', 'VOTER TURNOUT:'], ['Zobacz transakcje:', 'View transactions:'], ['Suma zamówienia:', 'Order total:'], ['Sprawdzenie tego samego zamówienia:', 'Checking the same order:'], ['Zamówienie za', 'Order for'], ['Zamów za', 'Order for'], ['Zeskanuj kod QR i zamów za', 'Scan QR code and order for'], ['Zeskanuj QR i zagłosuj:', 'Scan QR to vote:'], ['Zeskanuj QR i złóż wniosek:', 'Scan QR and submit proposal:'], ['Wyślij głos:', 'Submit vote:'], ['Twój głos:', 'Your vote:'], ['Wniosek:', 'Proposal:'], ['wstrzymuję się ', 'abstain '], ['za ', 'for '], ['przeciw ', 'against ']]
-      : [['Submitted by:', 'Zgłosił:'], ['Time remaining:', 'Pozostało do zakończenia:'], ['Ended:', 'Zakończono:'], ['synced', 'zsynchronizowano'], ['Vote on proposal:', 'Głosujesz nad wnioskiem:'], ['VOTER TURNOUT:', 'FREKWENCJA:'], ['View transactions:', 'Zobacz transakcje:'], ['Order total:', 'Suma zamówienia:'], ['Checking the same order:', 'Sprawdzenie tego samego zamówienia:'], ['Order for', 'Zamówienie za'], ['Submit vote:', 'Wyślij głos:'], ['Your vote:', 'Twój głos:'], ['Proposal:', 'Wniosek:'], ['Scan QR code and order for', 'Zeskanuj kod QR i zamów za'], ['Scan QR to vote:', 'Zeskanuj QR i zagłosuj:'], ['Scan QR and submit proposal:', 'Zeskanuj QR i złóż wniosek:'], ['abstain ', 'wstrzymuję się '], ['for ', 'za '], ['against ', 'przeciw ']];
+      ? [
+        ['Zgłosił:', 'Submitted by:'],
+        ['Pozostało do zakończenia:', 'Time remaining:'],
+        ['Zakończono:', 'Ended:'],
+        ['termin:', 'Closes:'],
+        ['Pokaż głosujących', 'Show voters'],
+        ['Nieprawidłowa odpowiedź dla arkusza:', 'Invalid response for sheet:'],
+        ['Nie udało się załadować arkusza:', 'Could not load sheet:'],
+        ['zsynchronizowano', 'synced'],
+        ['Głosujesz nad wnioskiem:', 'Vote on proposal:'],
+        ['FREKWENCJA:', 'VOTER TURNOUT:'],
+        ['Zobacz transakcje:', 'View transactions:'],
+        ['Suma zamówienia:', 'Order total:'],
+        ['Sprawdzenie tego samego zamówienia:', 'Checking the same order:'],
+        ['Zamówienie za', 'Order for'],
+        ['Zamów za', 'Order for'],
+        ['Zeskanuj kod QR i zamów za', 'Scan QR code and order for'],
+        ['Zeskanuj kod QR i zagłosuj:', 'Scan QR code to vote:'],
+        ['Zeskanuj QR i zagłosuj:', 'Scan QR to vote:'],
+        ['Zeskanuj QR i złóż wniosek:', 'Scan QR and submit proposal:'],
+        ['Wyślij głos:', 'Submit vote:'],
+        ['Twój głos:', 'Your vote:'],
+        ['Wniosek:', 'Proposal:'],
+        ['wstrzymuję się ', 'abstain '],
+        ['za ', 'for '],
+        ['przeciw ', 'against ']
+      ]
+      : [
+        ['Submitted by:', 'Zgłosił:'],
+        ['Time remaining:', 'Pozostało do zakończenia:'],
+        ['Ended:', 'Zakończono:'],
+        ['Closes:', 'termin:'],
+        ['Show voters', 'Pokaż głosujących'],
+        ['Invalid response for sheet:', 'Nieprawidłowa odpowiedź dla arkusza:'],
+        ['Could not load sheet:', 'Nie udało się załadować arkusza:'],
+        ['synced', 'zsynchronizowano'],
+        ['Vote on proposal:', 'Głosujesz nad wnioskiem:'],
+        ['VOTER TURNOUT:', 'FREKWENCJA:'],
+        ['View transactions:', 'Zobacz transakcje:'],
+        ['Order total:', 'Suma zamówienia:'],
+        ['Checking the same order:', 'Sprawdzenie tego samego zamówienia:'],
+        ['Order for', 'Zamówienie za'],
+        ['Submit vote:', 'Wyślij głos:'],
+        ['Your vote:', 'Twój głos:'],
+        ['Proposal:', 'Wniosek:'],
+        ['Scan QR code to vote:', 'Zeskanuj kod QR i zagłosuj:'],
+        ['Scan QR code and order for', 'Zeskanuj kod QR i zamów za'],
+        ['Scan QR to vote:', 'Zeskanuj QR i zagłosuj:'],
+        ['Scan QR and submit proposal:', 'Zeskanuj QR i złóż wniosek:'],
+        ['abstain ', 'wstrzymuję się '],
+        ['for ', 'za '],
+        ['against ', 'przeciw ']
+      ];
     const prefix = prefixes.find(function (entry) {
       const sourcePrefix = normalizeText(entry[0]);
       return normalized.toLowerCase().indexOf(sourcePrefix.toLowerCase() + ' ') === 0
@@ -670,8 +774,6 @@
     if (parent.closest('option')) return false;
     if (parent.closest(editableContent)) return true;
     if (parent.closest('#constitution-full-text')) return true;
-    const constitutionContent = parent.closest('#konstytucja-content');
-    if (constitutionContent && !parent.closest('.constitution-link')) return true;
     if (parent.closest('.journal-title, .journal-excerpt, .card-title, .card-excerpt, .tx-title, .cat-title, .catalogue-product-title, #drawerLogin, #detailTitle, #detailText, #detailJustification')) return true;
     return false;
   }
@@ -692,8 +794,6 @@
 
   function isExcludedElement(element) {
     if (element.closest('#constitution-full-text')) return true;
-    const constitutionContent = element.closest('#konstytucja-content');
-    if (constitutionContent && !element.closest('.constitution-link')) return true;
     return element.matches('.journal-title, .journal-excerpt, .card-title, .card-excerpt, .tx-title, .cat-title, .catalogue-product-title, #drawerLogin, #detailTitle, #detailText, #detailJustification');
   }
 
@@ -723,11 +823,6 @@
       return;
     }
     if (element.matches && element.matches('#constitution-full-text')) return;
-    if (element.matches && element.matches('#konstytucja-content') && language === 'en') {
-      const button = element.querySelector('.constitution-link');
-      if (button) translateNode(button);
-      return;
-    }
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
     if (root !== document) translateAttributes(element);
     let node;
