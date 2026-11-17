@@ -1601,13 +1601,13 @@
         completed = true;
         const saved = data.comment || {};
         const savedComment = {
-          ID_KOMENTARZA: saved.id || '',
-          WNIOSEK_ID: saved.wniosekId || payload.wniosekId,
-          DATA_DODANIA: saved.dataDodania || new Date().toISOString(),
-          TREŚĆ: saved.tresc || payload.tresc,
-          LOGIN_AUTORA: saved.login || '',
-          STATUS_HIVE: saved.statusHive || 'OCZEKUJE',
-          LINK_HIVE: '',
+          ID_KOMENTARZA: {v: saved.id || ''},
+          WNIOSEK_ID: {v: saved.wniosekId || payload.wniosekId},
+          DATA_DODANIA: {v: saved.dataDodania || new Date().toISOString()},
+          TREŚĆ: {v: saved.tresc || payload.tresc},
+          LOGIN_AUTORA: {v: saved.login || ''},
+          STATUS_HIVE: {v: saved.statusHive || 'OCZEKUJE'},
+          LINK_HIVE: {v: ''},
           _localOnly: true
         };
         const savedCommentId = proposalCommentId(savedComment);
