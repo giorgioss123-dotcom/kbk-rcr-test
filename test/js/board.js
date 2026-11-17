@@ -154,6 +154,12 @@
   function pollId(row) { return cellText(row, ['ID_ANKIETY', 'ID ankiety']); }
   function loginOf(row) { return cellText(row, ['LOGIN_AUTORA', 'LOGIN', 'NAZWA_UŻYTKOWNIKA']); }
   function isPinned(row) { return cellText(row, ['Przypięty']).trim().toUpperCase() === 'TAK'; }
+  function commentsForEntry(type, id) {
+    var targetId = type === 'poll' ? 'poll:' + id : id;
+    return comments.filter(function (comment) {
+      return cellText(comment, ['ID_POSTA']) === targetId;
+    });
+  }
 
   function pollAnswers(poll) {
     try {
@@ -183,20 +189,21 @@
       dateValue(cellValue(post, ['DATA_UTWORZENIA'])).getTime(),
       dateValue(cellValue(post, ['OSTATNIA_AKTYWNOŚĆ'])).getTime() || 0
     );
-    var pid = postId(post);
-    comments.forEach(function (c) {
-      if (cellText(c, ['ID_POSTA']) === pid) {
-        base = Math.max(base, dateValue(cellValue(c, ['DATA_DODANIA'])).getTime() || 0);
-      }
+    commentsForEntry('post', postId(post)).forEach(function (comment) {
+      base = Math.max(base, dateValue(cellValue(comment, ['DATA_DODANIA'])).getTime() || 0);
     });
     return base;
   }
 
   function pollActivity(poll) {
-    return Math.max(
+    var base = Math.max(
       dateValue(cellValue(poll, ['DATA_UTWORZENIA'])).getTime(),
       dateValue(cellValue(poll, ['OSTATNIA_AKTYWNOŚĆ'])).getTime() || 0
     );
+    commentsForEntry('poll', pollId(poll)).forEach(function (comment) {
+      base = Math.max(base, dateValue(cellValue(comment, ['DATA_DODANIA'])).getTime() || 0);
+    });
+    return base;
   }
 
   function isPollClosed(poll) {
@@ -405,7 +412,7 @@
     var title = cellText(post, ['TYTUŁ', 'TYTUL']);
     var content = cellText(post, ['TREŚĆ', 'TRESC']);
     var author = loginOf(post);
-    var commentCount = comments.filter(function (c) { return cellText(c, ['ID_POSTA']) === id; }).length;
+    var commentCount = commentsForEntry('post', id).length;
     var meta = esc(author) + ' · ' + esc(dateLabel(cellValue(post, ['DATA_UTWORZENIA'])));
     if (commentCount > 0) {
       meta += ' · <span>' + commentCount + ' ' + commentCountLabel(commentCount) + '</span>';
@@ -430,9 +437,13 @@
     var author = loginOf(poll);
     var closed = isPollClosed(poll);
     var voterCount = pollVotes(id).length;
+    var commentCount = commentsForEntry('poll', id).length;
     var meta = esc(author) + ' · ' + esc(dateLabel(cellValue(poll, ['DATA_UTWORZENIA'])));
     if (voterCount > 0) {
       meta += ' · <span>' + voterCount + ' ' + voteCountLabel(voterCount) + '</span>';
+    }
+    if (commentCount > 0) {
+      meta += ' · <span>' + commentCount + ' ' + commentCountLabel(commentCount) + '</span>';
     }
     var badge = closed ? '<span class="card-badge closed">zakończona</span>' : '';
     return '<article class="card' + (closed ? ' is-closed' : '') + (pinned ? ' is-pinned' : '') +
@@ -485,14 +496,15 @@
 
     document.getElementById('detailTopActions').innerHTML = '';
 
-    var commentsForPost = comments.filter(function (c) {
-      return cellText(c, ['ID_POSTA']) === id;
-    }).sort(function (a, b) {
-      return dateValue(cellValue(a, ['DATA_DODANIA'])).getTime() -
-             dateValue(cellValue(b, ['DATA_DODANIA'])).getTime();
-    });
+    renderEntryComments('post', id);
+  }
 
-    var commentsHtml = commentsForPost.map(function (comment) {
+  function renderEntryComments(type, id) {
+    var entryComments = commentsForEntry(type, id).slice().sort(function (a, b) {
+      return dateValue(cellValue(a, ['DATA_DODANIA'])).getTime() -
+        dateValue(cellValue(b, ['DATA_DODANIA'])).getTime();
+    });
+    var commentsHtml = entryComments.map(function (comment) {
       var cCreated = dateValue(cellValue(comment, ['DATA_DODANIA'])).getTime();
       var cEdited = dateValue(cellValue(comment, ['OSTATNIA_AKTYWNOŚĆ'])).getTime();
       var edited = cEdited > cCreated;
@@ -511,7 +523,8 @@
     document.getElementById('detailComments').innerHTML = commentsHtml;
     document.getElementById('detailCommentAction').innerHTML =
       '<button type="button" class="comment-add-btn" data-action="add-comment" ' +
-      'data-post-id="' + esc(id) + '">+ Dodaj komentarz</button>';
+      'data-entry-type="' + esc(type) + '" data-entry-id="' + esc(id) +
+      '">+ Dodaj komentarz</button>';
     document.getElementById('detailCommentsSection').hidden = false;
   }
 
@@ -618,9 +631,7 @@
     }
     document.getElementById('detailTopActions').innerHTML = actions.join('');
 
-    document.getElementById('detailCommentsSection').hidden = true;
-    document.getElementById('detailComments').innerHTML = '';
-    document.getElementById('detailCommentAction').innerHTML = '';
+    renderEntryComments('poll', id);
   }
 
   // ---------- modals --------------------------------------------------
@@ -710,9 +721,10 @@
     if (action === 'share-entry') {
       shareEntry(button.dataset.shareType, button.dataset.shareId);
     } else if (action === 'add-comment') {
-      var postIdVal = button.dataset.postId;
+      var entryType = button.dataset.entryType;
+      var entryId = button.dataset.entryId;
       closeDetail();
-      openOperation('comment', { postId: postIdVal });
+      openOperation('comment', { entryType: entryType, entryId: entryId });
     } else if (action === 'add-poll-answer') {
       var answerPollId = button.dataset.pollId;
       closeDetail();
@@ -873,6 +885,9 @@
       dialogTitle.textContent = 'Głosuj: ' + cellText(poll, ['TYTUŁ', 'TYTUL']);
       var inputType = isMultipleChoicePoll(poll) ? 'checkbox' : 'radio';
       fields = '<p>' + esc(cellText(poll, ['PYTANIE'])) + '</p>' +
+        '<p class="meta">' + (isEnglish
+          ? 'You need at least 1 RCR in your account to vote.'
+          : 'Do oddania głosu musisz mieć na koncie co najmniej 1 RCR.') + '</p>' +
         (String(cellText(poll, ['SPOSÓB_LICZENIA'])).toUpperCase() === 'RCR'
           ? '<p class="meta">Każda zaznaczona odpowiedź otrzyma pełną wagę Twojego salda RCR.</p>' : '') +
         '<div class="poll-options">' + choices.map(function (choice, index) {
@@ -920,7 +935,7 @@
 
   function buildPayload() {
     var payload = {};
-    ['postId', 'commentId', 'pollId'].forEach(function (key) {
+    ['postId', 'commentId', 'pollId', 'entryType', 'entryId'].forEach(function (key) {
       if (pendingOperation.payload[key]) payload[key] = pendingOperation.payload[key];
     });
     if (pendingOperation.type === 'create-post') {
@@ -1023,7 +1038,7 @@
         showDialogMessage(data.message || 'Zapisano.', 'ok');
         var reopen = null;
         if (operation.type === 'comment') {
-          reopen = { type: 'post', id: payload.postId };
+          reopen = { type: payload.entryType, id: payload.entryId };
         } else if (operation.type === 'vote') {
           reopen = { type: 'poll', id: payload.pollId };
         } else if (operation.type === 'add-poll-answer') {
@@ -1043,6 +1058,12 @@
       if (data && data.error === 'account_locked' && credentials.login) {
         closeDialog();
         pinReset.open(credentials.login);
+        return;
+      }
+      if (data && data.error === 'insufficient_rcr') {
+        showDialogMessage(isEnglish
+          ? 'You need at least 1 RCR in your account to vote.'
+          : data.message, 'error');
         return;
       }
       showDialogMessage(

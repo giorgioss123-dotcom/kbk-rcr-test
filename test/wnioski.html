@@ -233,6 +233,49 @@
     text-transform: uppercase;
   }
   #detailModal .turnout { color: var(--paper-muted); }
+  .proposal-comments {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--paper-line);
+  }
+  .proposal-comments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .proposal-comments-header h3 {
+    margin: 0;
+    color: var(--teal-deep);
+    font: 400 1.15rem 'Anton', sans-serif;
+    text-transform: uppercase;
+  }
+  .proposal-comment {
+    padding: 12px 0;
+    border-top: 1px solid var(--paper-line);
+  }
+  .proposal-comment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: var(--paper-muted);
+    font: 0.68rem 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+  }
+  .proposal-comment-author { color: var(--teal-deep); font-weight: 700; }
+  .proposal-comment-text {
+    margin: 8px 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.55;
+  }
+  .proposal-comment-hive { color: var(--teal-deep); }
+  .proposal-comments-empty {
+    margin: 0;
+    color: var(--paper-muted);
+    font-size: 0.86rem;
+  }
   .detail-badges { display: flex; align-items: center; gap: 8px; }
   #detailBadge, #detailHiveLinks { flex: 0 0 auto; }
   #detailHiveLinks a.badge {
@@ -437,7 +480,8 @@
   }
 
   #voteAuth .qr-auth-methods,
-  #proposalAuth .qr-auth-methods {
+  #proposalAuth .qr-auth-methods,
+  #proposalCommentAuth .qr-auth-methods {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -452,7 +496,8 @@
     background: rgba(255, 255, 255, 0.45);
   }
   #voteAuth .qr-auth-method-row,
-  #proposalAuth .qr-auth-method-row {
+  #proposalAuth .qr-auth-method-row,
+  #proposalCommentAuth .qr-auth-method-row {
     display: flex;
     align-items: flex-start;
     flex-direction: column;
@@ -460,7 +505,8 @@
     margin: 18px 0 12px;
   }
   #voteAuth .qr-auth-method-label,
-  #proposalAuth .qr-auth-method-label {
+  #proposalAuth .qr-auth-method-label,
+  #proposalCommentAuth .qr-auth-method-label {
     margin: 0;
     color: var(--teal-deep);
     font-size: 0.68rem;
@@ -469,7 +515,8 @@
     text-transform: uppercase;
   }
   #voteAuth .qr-auth-method,
-  #proposalAuth .qr-auth-method {
+  #proposalAuth .qr-auth-method,
+  #proposalCommentAuth .qr-auth-method {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -487,7 +534,8 @@
     text-align: center;
   }
   #voteAuth .qr-auth-method.active,
-  #proposalAuth .qr-auth-method.active {
+  #proposalAuth .qr-auth-method.active,
+  #proposalCommentAuth .qr-auth-method.active {
     background: var(--teal-deep);
     color: var(--paper);
   }
@@ -616,7 +664,8 @@
     header { align-items: flex-start; }
     .modal { padding: 32px 24px 24px; }
     #voteAuth .qr-auth-method,
-    #proposalAuth .qr-auth-method { font-size: 0.74rem; }
+    #proposalAuth .qr-auth-method,
+    #proposalCommentAuth .qr-auth-method { font-size: 0.74rem; }
   }
 
   @media (max-width: 480px) {
@@ -715,6 +764,13 @@
   </div>
   <div id="votesListSection" style="margin-top:12px;"></div>
   <div id="voteSection" style="margin-top:20px;"></div>
+  <section class="proposal-comments">
+    <div class="proposal-comments-header">
+      <h3>Komentarze</h3>
+      <button class="share-proposal" id="addProposalCommentBtn" type="button">Dodaj komentarz</button>
+    </div>
+    <div id="proposalCommentsList" aria-live="polite"></div>
+  </section>
 </div>
 
 <div class="modal" id="voteModal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="voteModalTitle">
@@ -759,6 +815,25 @@
   <div class="modal-actions">
     <button class="cancel" data-close>Anuluj</button>
     <button class="confirm" id="proposalSubmitBtn">Złóż wniosek</button>
+  </div>
+</div>
+
+<div class="modal" id="proposalCommentModal" role="dialog" aria-modal="true" aria-hidden="true" inert aria-labelledby="proposalCommentModalTitle">
+  <button class="close-x" type="button" data-close aria-label="Zamknij">✕</button>
+  <h2 id="proposalCommentModalTitle" tabindex="-1">Dodaj komentarz</h2>
+  <label for="proposalCommentText">Treść komentarza</label>
+  <textarea id="proposalCommentText" maxlength="4000" required></textarea>
+  <div id="proposalCommentAuth"></div>
+  <div id="proposalCommentPinFields">
+    <label for="proposalCommentLogin">Login</label>
+    <input type="text" id="proposalCommentLogin" autocomplete="off" style="text-transform:lowercase;">
+    <label for="proposalCommentPin">PIN</label>
+    <input type="password" id="proposalCommentPin" maxlength="6" inputmode="numeric">
+  </div>
+  <div class="modal-banner" id="proposalCommentBanner" role="status" aria-live="polite"></div>
+  <div class="modal-actions">
+    <button class="cancel" data-close>Anuluj</button>
+    <button class="confirm" id="proposalCommentSubmitBtn">Dodaj komentarz</button>
   </div>
 </div>
 
@@ -810,6 +885,20 @@
     onScanError:() => { proposalQrPayload = null; },
     onQrScan:onProposalQrScan
   });
+  const proposalCommentAuth = window.KBKQrAuth.create({
+    mountId:'proposalCommentAuth',
+    pinFieldIds:['proposalCommentPinFields'],
+    loginInputId:'proposalCommentLogin',
+    pinInputId:'proposalCommentPin',
+    confirmButtonId:'proposalCommentSubmitBtn',
+    methodLabel:'Potwierdzam dodanie komentarza za pomocą:',
+    qrLabel:'Kod QR',
+    scanOnSelect:false,
+    onModeChange:onProposalCommentAuthModeChange,
+    onScanStateChange:onProposalCommentScanStateChange,
+    onScanError:() => { proposalCommentQrPayload = null; },
+    onQrScan:onProposalCommentQrScan
+  });
   const PUBLIC_SHEET_IDS = window.KBK_PUBLIC_SHEET_IDS;
   const shared = window.KBKShared;
   const safeText = shared.safeText;
@@ -828,6 +917,12 @@
       ? 'Zeskanuj kod QR i złóż wniosek'
       : 'Złóż wniosek';
   }
+  function updateProposalCommentSubmitLabel() {
+    document.getElementById('proposalCommentSubmitBtn').textContent =
+      proposalCommentAuth && proposalCommentAuth.isQrMode()
+        ? 'Zeskanuj kod QR i dodaj komentarz'
+        : 'Dodaj komentarz';
+  }
   function onVoteAuthModeChange(mode) {
     if (mode === 'pin') voteQrPayload = null;
     updateVoteSubmitLabel();
@@ -835,6 +930,10 @@
   function onProposalAuthModeChange(mode) {
     if (mode === 'pin') proposalQrPayload = null;
     updateProposalSubmitLabel();
+  }
+  function onProposalCommentAuthModeChange(mode) {
+    if (mode === 'pin') proposalCommentQrPayload = null;
+    updateProposalCommentSubmitLabel();
   }
   function onVoteScanStateChange(scanning) {
     document.querySelectorAll('#voteModal .vote-choice button').forEach(button => { button.disabled = scanning; });
@@ -850,6 +949,14 @@
     if (scanning) document.getElementById('proposalSubmitBtn').textContent = 'Przyłóż paszport do kamery…';
     else updateProposalSubmitLabel();
   }
+  function onProposalCommentScanStateChange(scanning) {
+    document.querySelectorAll('#proposalCommentModal input, #proposalCommentModal textarea').forEach(field => {
+      if (!field.classList.contains('qr-auth-method')) field.disabled = scanning;
+    });
+    document.getElementById('proposalCommentSubmitBtn').disabled = scanning;
+    if (scanning) document.getElementById('proposalCommentSubmitBtn').textContent = 'Przyłóż paszport do kamery…';
+    else updateProposalCommentSubmitLabel();
+  }
   function onVoteQrScan(qrHash) {
     const payload = voteQrPayload;
     voteQrPayload = null;
@@ -860,15 +967,23 @@
     proposalQrPayload = null;
     if (payload) submitProposal(payload, {qrHash});
   }
+  function onProposalCommentQrScan(qrHash) {
+    const payload = proposalCommentQrPayload;
+    proposalCommentQrPayload = null;
+    if (payload) submitProposalComment(payload, {qrHash});
+  }
   const REFRESH_MS = 5 * 60 * 1000;
   const PROPOSALS_CACHE_MS = 15000;
   const VOTES_CACHE_MS = 30000;
   const voteListCache = {};
 
   let proposals = [];
+  let proposalComments = [];
   let proposalsCache = null;
   let proposalsCacheTs = 0;
   let linkedProposalHandled = false;
+  let currentProposalComment = null;
+  let proposalCommentQrPayload = null;
 
   (function handleConfirmRedirect(){
     const params = new URLSearchParams(window.location.search);
@@ -906,6 +1021,59 @@
   }
   function displayLocale() {
     return new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en-GB' : 'pl-PL';
+  }
+  function proposalCommentsFor(id) {
+    return proposalComments.filter(function (row) {
+      return strFromCell(lookupCell(row, ['WNIOSEK_ID', 'WNIOSEKID'])).trim() === String(id).trim();
+    }).sort(function (a, b) {
+      return proposalCommentTimestamp(a) - proposalCommentTimestamp(b);
+    });
+  }
+  function proposalCommentTimestamp(row) {
+    const cell = lookupCell(row, ['DATA_DODANIA']);
+    const value = cell && typeof cell === 'object'
+      ? (cell.v !== undefined && cell.v !== null ? cell.v : cell.f)
+      : cell;
+    if (value instanceof Date) return value.getTime();
+    const match = /^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)$/.exec(String(value || ''));
+    const date = match
+      ? new Date(Number(match[1]), Number(match[2]), Number(match[3]),
+        Number(match[4] || 0), Number(match[5] || 0), Number(match[6] || 0))
+      : new Date(value);
+    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+  }
+  function proposalCommentDateLabel(row) {
+    const timestamp = proposalCommentTimestamp(row);
+    return timestamp
+      ? new Intl.DateTimeFormat(displayLocale(), {dateStyle:'medium', timeStyle:'short'}).format(timestamp)
+      : '—';
+  }
+  function proposalCommentCountLabel(count) {
+    if (count === 1) return 'komentarz';
+    const lastTwo = count % 100;
+    const last = count % 10;
+    return last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)
+      ? 'komentarze' : 'komentarzy';
+  }
+  function renderProposalComments(id) {
+    const rows = proposalCommentsFor(id);
+    document.getElementById('proposalCommentsList').innerHTML = rows.length
+      ? rows.map(function (row) {
+        const author = strFromCell(lookupCell(row, ['LOGIN_AUTORA', 'LOGIN']));
+        const content = strFromCell(lookupCell(row, ['TREŚĆ', 'TRESC']));
+        const hiveLink = safeHiveCommentUrl(strFromCell(lookupCell(row, ['LINK_HIVE'])));
+        const status = strFromCell(lookupCell(row, ['STATUS_HIVE'])).toUpperCase();
+        const hiveStatus = hiveLink
+          ? '<a class="proposal-comment-hive" href="' + hiveLink + '" target="_blank" rel="noopener noreferrer">Hive</a>'
+          : (status === 'OCZEKUJE' ? 'Oczekuje na Hive' : '');
+        return '<article class="proposal-comment">' +
+          '<div class="proposal-comment-meta"><span class="proposal-comment-author">' +
+          escapeHtml(author) + '</span><span>·</span><time>' +
+          escapeHtml(proposalCommentDateLabel(row)) + '</time>' +
+          (hiveStatus ? '<span>·</span><span>' + hiveStatus + '</span>' : '') +
+          '</div><p class="proposal-comment-text">' + escapeHtml(content) + '</p></article>';
+      }).join('')
+      : '<p class="proposal-comments-empty">Brak komentarzy.</p>';
   }
 
   function fmtDate(iso){
@@ -946,12 +1114,16 @@
     const remainingText = safeStatus === 'Aktywny'
       ? `Pozostało: ${formatRemainingTime(safeText(p.dataWygasniecia, ''))}`
       : `Zakończono: ${fmtDate(safeText(p.dataWygasniecia, ''))}`;
+    const commentCount = proposalCommentsFor(p.id).length;
+    const commentMeta = commentCount
+      ? ` · ${commentCount} ${proposalCommentCountLabel(commentCount)}`
+      : '';
     return `
     <div class="card ${archived ? 'archived' : ''}" data-id="${safeText(p.id, '')}" data-proposal-index="${proposals.indexOf(p)}">
       <div class="card-top">
         <div>
           <div class="card-meta">Zgłosił: ${escapeHtml(safeAutor)} · ${fmtDate(safeText(p.dataZlozenia, ''))}</div>
-          <div class="card-meta secondary">${remainingText}</div>
+          <div class="card-meta secondary">${remainingText}${commentMeta}</div>
           <h3 class="card-title">${escapeHtml(safeTitle)}</h3>
           <p class="card-excerpt">${escapeHtml(excerpt)}</p>
         </div>
@@ -979,7 +1151,7 @@
     try{
       const sheetId = await getWnioskiSheetId();
       const transakcjeSheetId = await getTransakcjeSheetId();
-      const [table, saldaTable, votesTable] = await Promise.all([
+      const [table, saldaTable, votesTable, commentsTable] = await Promise.all([
         shared.loadSheetJSONP(sheetId, 'WNIOSKI', {
           cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
         }),
@@ -988,8 +1160,12 @@
         }),
         shared.loadSheetJSONP(sheetId, 'GŁOSY', {
           cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
+        }),
+        shared.loadSheetJSONP(sheetId, 'KOMENTARZE', {
+          cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
         })
       ]);
+      proposalComments = shared.tableToObjects(commentsTable);
       const currentTotalRcr = shared.tableToObjects(saldaTable).reduce(function (sum, row) {
         const active = shared.strFromCell(shared.lookupCell(row, ['AKTYWNY', 'aktywny'])).trim().toLowerCase() === 'tak';
         return active ? sum + shared.numFromCell(shared.lookupCell(row, ['RCR', 'rcr'])) : sum;
@@ -1219,12 +1395,24 @@
       document.getElementById('openVoteBtn').addEventListener('click', () => openVoteModal(p));
     } else { voteSection.innerHTML = ''; }
 
+    renderProposalComments(p.id);
+    const addCommentButton = document.getElementById('addProposalCommentBtn');
+    addCommentButton.hidden = p.status !== 'Aktywny';
+    addCommentButton.onclick = p.status === 'Aktywny'
+      ? () => openProposalCommentModal(p)
+      : null;
     openModal('detailModal');
   }
 
   function safeHiveUrl(value) {
     const url = safeText(value, '').trim();
     const pattern = /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+$/i;
+    return pattern.test(url) ? url : '';
+  }
+
+  function safeHiveCommentUrl(value) {
+    const url = safeText(value, '').trim();
+    const pattern = /^https:\/\/hive\.blog\/@[a-z0-9.-]+\/[a-z0-9-]+(?:#@[a-z0-9.-]+\/[a-z0-9-]+)?$/i;
     return pattern.test(url) ? url : '';
   }
 
@@ -1303,6 +1491,139 @@
     document.getElementById('voteBanner').className = 'modal-banner';
     openModal('voteModal');
   }
+
+  function openProposalCommentModal(proposal) {
+    if (!proposal) return;
+    currentProposalComment = proposal;
+    proposalCommentQrPayload = null;
+    document.getElementById('proposalCommentText').value = '';
+    document.getElementById('proposalCommentLogin').value = '';
+    document.getElementById('proposalCommentPin').value = '';
+    document.getElementById('proposalCommentBanner').className = 'modal-banner';
+    proposalCommentAuth.reset();
+    proposalCommentAuth.setDisabled(false);
+    document.querySelectorAll('#proposalCommentModal .qr-auth-method, #proposalCommentModal input, #proposalCommentModal textarea')
+      .forEach(field => { field.disabled = false; });
+    const submitButton = document.getElementById('proposalCommentSubmitBtn');
+    submitButton.disabled = false;
+    updateProposalCommentSubmitLabel();
+    openModal('proposalCommentModal');
+  }
+
+  function proposalCommentErrorMessage(error) {
+    const messages = {
+      wrong_pin: 'Nieprawidłowy login lub PIN.',
+      invalid_qr: 'Nie udało się uwierzytelnić kodu QR z paszportu.',
+      invalid_comment: 'Wpisz treść komentarza i spróbuj ponownie.',
+      proposal_not_found: 'Nie znaleziono wniosku, do którego można dodać komentarz.',
+      server_error: 'Nie udało się zapisać komentarza.'
+    };
+    return Object.prototype.hasOwnProperty.call(messages, error)
+      ? messages[error] : 'Nie udało się dodać komentarza. Spróbuj ponownie później.';
+  }
+
+  function isDefinitiveProposalCommentError(error) {
+    return ['wrong_pin', 'invalid_qr', 'account_locked', 'invalid_comment', 'proposal_not_found'].indexOf(error) !== -1;
+  }
+
+  async function submitProposalComment(payload, credentials) {
+    const banner = document.getElementById('proposalCommentBanner');
+    const button = document.getElementById('proposalCommentSubmitBtn');
+    let completed = false;
+    let unknownResult = false;
+    banner.className = 'modal-banner show';
+    banner.textContent = 'Zapisywanie…';
+    button.disabled = true;
+    proposalCommentAuth.setDisabled(true);
+    document.querySelectorAll('#proposalCommentModal input, #proposalCommentModal textarea').forEach(field => {
+      field.disabled = true;
+    });
+
+    try {
+      const response = await fetch(APP_CONFIG.webAppUrl, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(Object.assign({
+          action:'addProposalComment',
+          wniosekId: payload.wniosekId,
+          tresc: payload.tresc
+        }, credentials))
+      });
+      if (!response.ok) throw new Error('Nieoczekiwany status odpowiedzi: ' + response.status);
+      const data = await response.json();
+      if (data.ok) {
+        completed = true;
+        const saved = data.comment || {};
+        proposalComments.push({
+          ID_KOMENTARZA: saved.id || '',
+          WNIOSEK_ID: saved.wniosekId || payload.wniosekId,
+          DATA_DODANIA: saved.dataDodania || new Date().toISOString(),
+          TREŚĆ: saved.tresc || payload.tresc,
+          LOGIN_AUTORA: saved.login || '',
+          STATUS_HIVE: saved.statusHive || 'OCZEKUJE',
+          LINK_HIVE: ''
+        });
+        renderProposalComments(payload.wniosekId);
+        banner.textContent = data.message || 'Komentarz został zapisany.';
+        banner.className = 'modal-banner show ok';
+        setTimeout(() => {
+          closeModals();
+          const proposal = proposals.find(item => String(item.id) === String(payload.wniosekId));
+          if (proposal) openDetail(proposal);
+        }, 600);
+      } else if (pinReset.isLocked(data)) {
+        closeModals();
+        pinReset.open(credentials.login);
+      } else {
+        unknownResult = !isDefinitiveProposalCommentError(data.error);
+        banner.textContent = unknownResult
+          ? 'Nie znamy wyniku zapisu. Sprawdź listę komentarzy przed ponowną próbą.'
+          : proposalCommentErrorMessage(data.error);
+        banner.className = 'modal-banner show error';
+        if (data.error === 'invalid_qr') proposalCommentAuth.rescan();
+      }
+    } catch (error) {
+      console.error('Nie udało się ustalić wyniku dodawania komentarza do wniosku.', error);
+      unknownResult = true;
+      banner.textContent = 'Nie znamy wyniku zapisu. Komentarz mógł zostać zapisany; sprawdź listę komentarzy przed ponowną próbą.';
+      banner.className = 'modal-banner show error';
+    } finally {
+      button.disabled = completed || unknownResult;
+      if (!completed && !unknownResult) {
+        proposalCommentAuth.setDisabled(false);
+        document.querySelectorAll('#proposalCommentModal input, #proposalCommentModal textarea').forEach(field => {
+          field.disabled = false;
+        });
+        updateProposalCommentSubmitLabel();
+      }
+    }
+  }
+
+  document.getElementById('proposalCommentSubmitBtn').addEventListener('click', () => {
+    const banner = document.getElementById('proposalCommentBanner');
+    banner.className = 'modal-banner';
+    const payload = {
+      wniosekId: currentProposalComment && currentProposalComment.id,
+      tresc: document.getElementById('proposalCommentText').value.trim()
+    };
+    if (!payload.wniosekId || !payload.tresc) {
+      banner.textContent = 'Wpisz treść komentarza.';
+      banner.className = 'modal-banner show error';
+      return;
+    }
+    if (proposalCommentAuth.isQrMode()) {
+      proposalCommentQrPayload = payload;
+      proposalCommentAuth.startScan();
+      return;
+    }
+    const credentials = proposalCommentAuth.credentials();
+    if (!credentials || !credentials.login || !/^\d{6}$/.test(credentials.pin)) {
+      banner.textContent = 'Wybierz metodę uwierzytelnienia i podaj wymagane dane.';
+      banner.className = 'modal-banner show error';
+      return;
+    }
+    submitProposalComment(payload, credentials);
+  });
 
   document.querySelectorAll('.vote-choice button').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1523,7 +1844,8 @@
     const modal = document.getElementById(id);
     modal.classList.add('open');
     const initialFocus = id === 'detailModal' ? '#detailTitle' :
-      (id === 'voteModal' ? '#voteModalTitle' : '#proposalModalTitle');
+      (id === 'voteModal' ? '#voteModalTitle' :
+        (id === 'proposalCommentModal' ? '#proposalCommentModalTitle' : '#proposalModalTitle'));
     dialogFocusRelease = window.KBKDialog.open(modal, {
       initialFocus: initialFocus,
       onEscape: closeModals

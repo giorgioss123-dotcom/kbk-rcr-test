@@ -126,3 +126,9 @@ body::before {
     height: 26px;
   }
 }
+
+@media (max-width: 720px) {
+  body {
+    background-attachment: scroll !important;
+  }
+}
