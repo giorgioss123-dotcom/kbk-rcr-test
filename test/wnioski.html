@@ -234,47 +234,81 @@
   }
   #detailModal .turnout { color: var(--paper-muted); }
   .proposal-comments {
-    margin-top: 24px;
-    padding-top: 18px;
-    border-top: 1px solid var(--paper-line);
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid var(--teal-deep);
   }
   .proposal-comments-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
   }
   .proposal-comments-header h3 {
     margin: 0;
-    color: var(--teal-deep);
-    font: 400 1.15rem 'Anton', sans-serif;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
+    color: var(--teal-deep);
   }
-  .proposal-comment {
-    padding: 12px 0;
-    border-top: 1px solid var(--paper-line);
+  .proposal-comment-add-btn {
+    background: transparent;
+    border: 1px solid var(--teal-deep);
+    color: var(--teal-deep);
+    padding: 8px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
   }
+  .proposal-comment-add-btn::before { content: '+ '; }
+  .proposal-comment-add-btn:hover { background: var(--teal-deep); color: var(--paper); }
+  .proposal-comment-add-btn[hidden] { display: none; }
+  #detailModal .proposal-comment {
+    position: relative;
+    padding: 14px 16px 14px 18px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 0;
+    border-left: 3px solid var(--teal);
+  }
+  #detailModal .proposal-comment:last-child { margin-bottom: 0; }
   .proposal-comment-meta {
     display: flex;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
-    gap: 6px;
+    margin-bottom: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
     color: var(--paper-muted);
-    font: 0.68rem 'IBM Plex Mono', monospace;
-    text-transform: uppercase;
+    overflow-wrap: anywhere;
   }
-  .proposal-comment-author { color: var(--teal-deep); font-weight: 700; }
+  .proposal-comment-author { color: var(--teal-deep); font-weight: 600; }
   .proposal-comment-text {
-    margin: 8px 0 0;
+    margin: 0;
+    font-size: 0.94rem;
+    line-height: 1.65;
+    color: var(--paper-ink);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    line-height: 1.55;
   }
   .proposal-comment-hive { color: var(--teal-deep); }
   .proposal-comments-empty {
-    margin: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
     color: var(--paper-muted);
-    font-size: 0.86rem;
+    padding: 12px 0;
+    margin: 0;
   }
   .detail-badges { display: flex; align-items: center; gap: 8px; }
   #detailBadge, #detailHiveLinks { flex: 0 0 auto; }
@@ -361,7 +395,8 @@
   }
   #detailModal #openVoteBtn:focus-visible,
   #detailModal .votes-toggle:focus-visible,
-  #detailModal .share-proposal:focus-visible {
+  #detailModal .share-proposal:focus-visible,
+  #detailModal .proposal-comment-add-btn:focus-visible {
     outline: 2px solid var(--teal-deep);
     outline-offset: 3px;
   }
@@ -767,7 +802,7 @@
   <section class="proposal-comments">
     <div class="proposal-comments-header">
       <h3>Komentarze</h3>
-      <button class="share-proposal" id="addProposalCommentBtn" type="button">Dodaj komentarz</button>
+      <button class="proposal-comment-add-btn" id="addProposalCommentBtn" type="button">Dodaj komentarz</button>
     </div>
     <div id="proposalCommentsList" aria-live="polite"></div>
   </section>
@@ -1029,6 +1064,17 @@
       return proposalCommentTimestamp(a) - proposalCommentTimestamp(b);
     });
   }
+  function proposalCommentId(row) {
+    return strFromCell(lookupCell(row, ['ID_KOMENTARZA'])).trim();
+  }
+  function mergeProposalCommentsFromSheet(table) {
+    const refreshedComments = shared.tableToObjects(table);
+    const refreshedIds = new Set(refreshedComments.map(proposalCommentId).filter(Boolean));
+    const locallyAddedComments = proposalComments.filter(function (row) {
+      return row._localOnly && !refreshedIds.has(proposalCommentId(row));
+    });
+    return refreshedComments.concat(locallyAddedComments);
+  }
   function proposalCommentTimestamp(row) {
     const cell = lookupCell(row, ['DATA_DODANIA']);
     const value = cell && typeof cell === 'object'
@@ -1165,7 +1211,7 @@
           cacheMs: PROPOSALS_CACHE_MS, timeoutMs: 15000, forceReload: forceReload
         })
       ]);
-      proposalComments = shared.tableToObjects(commentsTable);
+      proposalComments = mergeProposalCommentsFromSheet(commentsTable);
       const currentTotalRcr = shared.tableToObjects(saldaTable).reduce(function (sum, row) {
         const active = shared.strFromCell(shared.lookupCell(row, ['AKTYWNY', 'aktywny'])).trim().toLowerCase() === 'tak';
         return active ? sum + shared.numFromCell(shared.lookupCell(row, ['RCR', 'rcr'])) : sum;
@@ -1554,15 +1600,22 @@
       if (data.ok) {
         completed = true;
         const saved = data.comment || {};
-        proposalComments.push({
+        const savedComment = {
           ID_KOMENTARZA: saved.id || '',
           WNIOSEK_ID: saved.wniosekId || payload.wniosekId,
           DATA_DODANIA: saved.dataDodania || new Date().toISOString(),
           TREŚĆ: saved.tresc || payload.tresc,
           LOGIN_AUTORA: saved.login || '',
           STATUS_HIVE: saved.statusHive || 'OCZEKUJE',
-          LINK_HIVE: ''
-        });
+          LINK_HIVE: '',
+          _localOnly: true
+        };
+        const savedCommentId = proposalCommentId(savedComment);
+        if (!savedCommentId || !proposalComments.some(function (row) {
+          return proposalCommentId(row) === savedCommentId;
+        })) {
+          proposalComments.push(savedComment);
+        }
         renderProposalComments(payload.wniosekId);
         banner.textContent = data.message || 'Komentarz został zapisany.';
         banner.className = 'modal-banner show ok';
