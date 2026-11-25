@@ -15,6 +15,7 @@
   var boardLoadFailed = false;
 
   var filter = { type: 'all', tags: [] };
+  var recentActivityWindow = 3 * 24 * 60 * 60 * 1000;
   var tagFiltersOpen = false;
   var sort = { field: 'activity', dir: 'desc' };
 
@@ -209,6 +210,37 @@
   function isPollClosed(poll) {
     var t = dateValue(cellValue(poll, ['DATA_ZAMKNIĘCIA', 'DATA_ZAMKNIECIA'])).getTime();
     return t > 0 && t <= Date.now();
+  }
+
+  function isPollActive(poll) {
+    var closesAt = dateValue(cellValue(poll, ['DATA_ZAMKNIĘCIA', 'DATA_ZAMKNIECIA'])).getTime();
+    return closesAt > Date.now();
+  }
+
+  function isRecentActivity(activityAt) {
+    var now = Date.now();
+    return activityAt >= now - recentActivityWindow && activityAt <= now;
+  }
+
+  function activityBadgeHtml(type) {
+    if (type === 'poll') {
+      var pollLabel = isEnglish ? 'LIVE' : 'TRWA';
+      var pollDescription = isEnglish ? 'Poll is open for voting' : 'Ankieta otwarta — trwa głosowanie';
+      return '<span class="entry-activity-badge entry-activity-badge--poll" role="img" aria-label="' +
+        esc(pollDescription) + '" title="' + esc(pollDescription) + '">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"></circle>' +
+        '<path d="M12 9v4l2.5 1.5M9 2h6"></path></svg><span>' + pollLabel + '</span></span>';
+    }
+
+    var postLabel = isEnglish ? 'NEW' : 'NOWA';
+    var postDescription = isEnglish
+      ? 'Activity within the last 3 days'
+      : 'Aktywność z ostatnich 3 dni';
+    return '<span class="entry-activity-badge entry-activity-badge--recent" role="img" aria-label="' +
+      esc(postDescription) + '" title="' + esc(postDescription) + '">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8 8 0 0 1-3.5-.8L4 20l1.8-4.1A7.5 7.5 0 1 1 20 11.5Z"></path>' +
+      '<path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01"></path></svg><span>' +
+      postLabel + '</span></span>';
   }
 
   function getAllEntries() {
@@ -409,6 +441,7 @@
   function renderPostCard(post) {
     var id = postId(post);
     var pinned = isPinned(post);
+    var recentlyActive = isRecentActivity(postActivity(post));
     var title = cellText(post, ['TYTUŁ', 'TYTUL']);
     var content = cellText(post, ['TREŚĆ', 'TRESC']);
     var author = loginOf(post);
@@ -419,7 +452,8 @@
     }
     return '<article class="card' + (pinned ? ' is-pinned' : '') + '" data-entry-type="post" data-post-id="' + esc(id) + '">' +
       '<div class="card-top"><div>' +
-      '<div class="card-kind-row"><div class="card-kind">post</div>' + (pinned ? pinnedIconHtml() : '') + '</div>' +
+      '<div class="card-kind-row"><div class="card-kind">post</div>' +
+      (recentlyActive ? activityBadgeHtml('post') : '') + (pinned ? pinnedIconHtml() : '') + '</div>' +
       '<h3 class="card-title"><button type="button" class="card-open">' + esc(title) + '</button></h3>' +
       '<div class="card-meta">' + meta + '</div>' +
       '</div><button type="button" class="card-share" data-share-type="post" data-share-id="' +
@@ -436,6 +470,7 @@
     var question = cellText(poll, ['PYTANIE']);
     var author = loginOf(poll);
     var closed = isPollClosed(poll);
+    var active = isPollActive(poll);
     var voterCount = pollVotes(id).length;
     var commentCount = commentsForEntry('poll', id).length;
     var meta = esc(author) + ' · ' + esc(dateLabel(cellValue(poll, ['DATA_UTWORZENIA'])));
@@ -449,7 +484,8 @@
     return '<article class="card' + (closed ? ' is-closed' : '') + (pinned ? ' is-pinned' : '') +
       '" data-entry-type="poll" data-poll-id="' + esc(id) + '">' +
       '<div class="card-top"><div>' +
-      '<div class="card-kind-row"><div class="card-kind poll">ankieta</div>' + (pinned ? pinnedIconHtml() : '') + '</div>' +
+      '<div class="card-kind-row"><div class="card-kind poll">ankieta</div>' +
+      (active ? activityBadgeHtml('poll') : '') + (pinned ? pinnedIconHtml() : '') + '</div>' +
       '<h3 class="card-title"><button type="button" class="card-open">' + esc(title) + '</button></h3>' +
       '<div class="card-meta">' + meta + '</div>' +
       '</div><div class="card-tools">' + badge +

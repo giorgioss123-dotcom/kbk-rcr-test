@@ -1,6 +1,44 @@
 (function (window, document) {
   'use strict';
 
+  function ensureActivityMenu() {
+    var navInner = document.querySelector('.nav-inner');
+    if (!navInner) {
+      console.error('Nie znaleziono paska nawigacji strefy społeczności.');
+      return;
+    }
+
+    var navBack = navInner.querySelector('.nav-back');
+    if (navBack && !navBack.hasAttribute('aria-label')) {
+      navBack.setAttribute('aria-label', navBack.textContent.trim());
+    }
+    if (document.getElementById('activityMenuToggle')) return;
+
+    var navActions = document.createElement('div');
+    navActions.className = 'nav-actions';
+    if (navBack) navActions.appendChild(navBack);
+    navActions.insertAdjacentHTML('beforeend',
+      '<button class="activity-menu-toggle" id="activityMenuToggle" type="button" aria-expanded="false" aria-controls="activityPopover">' +
+        '<span class="activity-indicator">' +
+          '<svg class="activity-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path>' +
+          '</svg>' +
+          '<span class="activity-summary-count" id="activitySummaryCount" aria-live="polite">…</span>' +
+        '</span>' +
+        '<span class="activity-toggle-label">Aktywność</span>' +
+      '</button>' +
+      '<section class="activity-popover" id="activityPopover" aria-labelledby="activityHeading" hidden>' +
+        '<h2 class="activity-heading" id="activityHeading">Aktywność w społeczności</h2>' +
+        '<a class="activity-link" href="wnioski.html" data-activity="proposals"><span class="activity-label">Aktywne wnioski</span><strong class="activity-value" id="activityProposalCount">…</strong></a>' +
+        '<a class="activity-link" href="tablica.html" data-activity="polls"><span class="activity-label">Otwarte ankiety</span><strong class="activity-value" id="activityPollCount">…</strong></a>' +
+        '<a class="activity-link" href="tablica.html" data-activity="posts"><span class="activity-label">Posty z aktywnością (3 dni)</span><strong class="activity-value" id="activityPostCount">…</strong></a>' +
+        '<p class="activity-status" id="activityStatus" role="status"></p>' +
+      '</section>');
+    navInner.appendChild(navActions);
+  }
+
+  ensureActivityMenu();
+
   var shared = window.KBKShared;
   var sheetIds = window.KBK_PUBLIC_SHEET_IDS || {};
   var recentActivityWindow = 3 * 24 * 60 * 60 * 1000;
@@ -9,6 +47,11 @@
   var activityPopover = document.getElementById('activityPopover');
   var summaryCount = document.getElementById('activitySummaryCount');
   var summaryCounts = {};
+
+  if (!shared || !status || !menuToggle || !activityPopover || !summaryCount) {
+    console.error('Nie udało się uruchomić powiadomień strefy społeczności.');
+    return;
+  }
 
   function setMenuOpen(open) {
     menuToggle.setAttribute('aria-expanded', String(open));
