@@ -2,6 +2,36 @@
   'use strict';
 
   var activeScanners = [];
+  var qrBase45Alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
+
+  function decodeCompactQrHash(payload) {
+    if (typeof payload !== 'string' || payload.length !== 47) return '';
+
+    var bytes = new Array(32).fill(0);
+    for (var index = 0; index < payload.length; index++) {
+      var digit = qrBase45Alphabet.indexOf(payload.charAt(index));
+      if (digit < 0) return '';
+
+      var carry = digit;
+      for (var byteIndex = bytes.length - 1; byteIndex >= 0; byteIndex--) {
+        var value = bytes[byteIndex] * 45 + carry;
+        bytes[byteIndex] = value & 255;
+        carry = Math.floor(value / 256);
+      }
+      if (carry) return '';
+    }
+
+    return bytes.map(function (byte) {
+      return byte.toString(16).padStart(2, '0');
+    }).join('');
+  }
+
+  function normalizeQrHashPayload(payload) {
+    var rawScanned = String(payload || '');
+    var compactHash = decodeCompactQrHash(rawScanned);
+    var scanned = compactHash || rawScanned.trim();
+    return /^[a-f0-9]{64}$/i.test(scanned) ? scanned : '';
+  }
 
   function create(options) {
     var mount = document.getElementById(options.mountId);
@@ -114,8 +144,8 @@
     }
 
     function acceptPayload(payload) {
-      var scanned = String(payload || '').trim();
-      if (!/^[a-f0-9]{64}$/i.test(scanned)) {
+      var scanned = normalizeQrHashPayload(payload);
+      if (!scanned) {
         status.textContent = 'Ten kod QR nie jest prawidłowym kodem paszportu.';
         return false;
       }
